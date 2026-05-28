@@ -90,7 +90,7 @@ const storyList = [
 </script>
 
 <template>
-  <view class="min-h-[100vh] overflow-hidden bg-[linear-gradient(180deg,#fdf6f4_0%,#ffffff_100%)] text-[#4a2b24]">
+  <view class="min-h-[100vh] overflow-hidden bg-[linear-gradient(180deg,#fef7f5_0%,#ffffff_100%)] text-[#4a2b24]">
     <!-- #ifndef H5 -->
     <view :style="{ height: `${statusBarHeight}px` }" />
     <!-- #endif -->
@@ -99,7 +99,7 @@ const storyList = [
     <!-- #endif -->
 
     <!-- 顶部导航栏 -->
-    <view class="px-[26rpx] pb-[20rpx]">
+    <view class="px-[20rpx] pb-[20rpx]">
       <view class="h-[92rpx] flex items-center justify-center">
         <view class="flex items-center gap-[14rpx]">
           <image src="/static/images/logo-heart.png" mode="aspectFit" class="h-[100rpx] w-[100rpx]" />
@@ -123,18 +123,18 @@ const storyList = [
 
     <!-- 轮播 Banner -->
     <swiper
-      class="h-[220rpx] w-[100%]"
+      class="h-[260rpx] w-[100%]"
       :current="currentBanner"
-      :autoplay="true"
+      :autoplay="false"
       :interval="3000"
       :circular="true"
-      previous-margin="26rpx"
-      next-margin="26rpx"
+      previous-margin="100rpx"
+      next-margin="100rpx"
       @change="onBannerChange"
     >
       <swiper-item v-for="(item, index) in bannerList" :key="item.title">
-        <view class="relative mx-[7rpx] h-[220rpx] overflow-hidden border-[3rpx] border-[#ffffff] rounded-[24rpx] shadow-[0_12rpx_36rpx_rgba(120,70,48,0.12)]">
-          <image :src="item.image" mode="aspectFill" class="absolute inset-[0rpx] h-[100%] w-[100%]" />
+        <view class="relative mx-[8rpx] box-border h-[260rpx] overflow-hidden border-[4rpx] border-[#ffffff] rounded-[24rpx] border-solid bg-white">
+          <image :src="item.image" mode="scaleToFill" class="absolute h-[100%] rounded-[24rpx]" />
           <view v-if="index !== 2" class="absolute inset-[0rpx] bg-[linear-gradient(90deg,rgba(255,240,226,0.92),rgba(255,240,226,0.15))]" />
           <view v-if="index === 2" class="absolute inset-[0rpx] bg-[linear-gradient(180deg,rgba(255,240,226,0.0),rgba(255,230,210,0.75))]" />
           <view class="relative px-[24rpx] pt-[28rpx]">
@@ -144,10 +144,13 @@ const storyList = [
             <text v-if="item.desc" class="mt-[8rpx] block whitespace-pre-line text-[24rpx] text-[#7d4434] leading-[36rpx] font-[500]">
               {{ item.desc }}
             </text>
-            <view v-if="index === 1" class="mt-[18rpx] h-[52rpx] w-[144rpx] flex items-center justify-center rounded-[52rpx] bg-[rgb(254,137,115)]">
-              <text class="text-[24rpx] text-[#ffffff] leading-[30rpx] font-[600]">
-                查看详情 〉
-              </text>
+            <view v-if="index === 1" class="mt-[18rpx] h-[52rpx] w-[154rpx] flex items-center justify-center rounded-[52rpx] bg-[rgb(254,137,115)]">
+              <view class="flex items-center justify-center gap-[4rpx]">
+                <text class="text-[24rpx] text-[#ffffff] leading-[30rpx] font-[600]">
+                  查看详情
+                </text>
+                <view class="i-carbon-chevron-right text-[22rpx] text-white" />
+              </view>
             </view>
           </view>
         </view>
@@ -165,8 +168,8 @@ const storyList = [
     </view>
 
     <!-- 功能快捷入口 -->
-    <view class="mt-[32rpx] box-border w-full flex gap-[16rpx] px-[26rpx]">
-      <view class="box-border min-w-0 flex flex-1 flex-col gap-[16rpx] overflow-hidden rounded-[24rpx] bg-white p-[10rpx]">
+    <view class="mt-[20rpx] box-border w-full flex gap-[16rpx] px-[20rpx]">
+      <view class="box-border min-w-0 flex flex-1 flex-col gap-[16rpx] overflow-hidden rounded-[24rpx] bg-white p-[6rpx]">
         <view
           v-for="item in quickCardsLeft"
           :key="item.title"
@@ -190,7 +193,7 @@ const storyList = [
           </view>
         </view>
       </view>
-      <view class="box-border min-w-0 flex flex-1 flex-col gap-[16rpx] overflow-hidden rounded-[24rpx] bg-white p-[10rpx]">
+      <view class="box-border min-w-0 flex flex-1 flex-col gap-[16rpx] overflow-hidden rounded-[24rpx] bg-white p-[6rpx]">
         <view
           v-for="item in quickCardsRight"
           :key="item.title"
@@ -217,7 +220,7 @@ const storyList = [
     </view>
 
     <!-- 使用场景 -->
-    <view class="mt-[36rpx] px-[26rpx]">
+    <view class="mt-[36rpx] px-[20rpx]">
       <view class="flex items-center justify-between">
         <view class="flex items-center">
           <text class="text-[30rpx] text-[rgb(254,137,115)] leading-[38rpx]">
@@ -227,14 +230,17 @@ const storyList = [
             使用场景
           </text>
         </view>
-        <text class="text-[24rpx] text-[#8c756e] leading-[32rpx]">
-          更多场景 〉
-        </text>
+        <view class="flex items-center gap-[4rpx]">
+          <text class="text-[24rpx] text-[#8c756e] leading-[32rpx]">
+            更多场景
+          </text>
+          <view class="i-carbon-chevron-right text-[20rpx] text-[#8c756e]" />
+        </view>
       </view>
     </view>
 
     <scroll-view scroll-x class="mt-[20rpx] w-[100%] whitespace-nowrap" :show-scrollbar="false">
-      <view class="inline-flex gap-[16rpx] px-[26rpx]">
+      <view class="inline-flex gap-[16rpx] px-[20rpx]">
         <view
           v-for="item in sceneList"
           :key="item.title"
@@ -252,7 +258,7 @@ const storyList = [
     </scroll-view>
 
     <!-- 热门模板推荐 -->
-    <view class="mt-[36rpx] px-[26rpx]">
+    <view class="mt-[36rpx] px-[20rpx]">
       <view class="flex items-center justify-between">
         <view class="flex items-center">
           <text class="text-[28rpx] text-[rgb(254,137,115)] leading-[36rpx]">
@@ -262,14 +268,17 @@ const storyList = [
             热门模板推荐
           </text>
         </view>
-        <text class="text-[24rpx] text-[#8c756e] leading-[32rpx]">
-          查看更多 〉
-        </text>
+        <view class="flex items-center gap-[4rpx]">
+          <text class="text-[24rpx] text-[#8c756e] leading-[32rpx]">
+            查看更多
+          </text>
+          <view class="i-carbon-chevron-right text-[20rpx] text-[#8c756e]" />
+        </view>
       </view>
     </view>
 
     <scroll-view scroll-x class="mt-[20rpx] w-[100%] whitespace-nowrap" :show-scrollbar="false">
-      <view class="inline-flex gap-[16rpx] px-[26rpx]">
+      <view class="inline-flex gap-[16rpx] px-[20rpx]">
         <view
           v-for="item in templateList"
           :key="item.title"
@@ -289,7 +298,7 @@ const storyList = [
     </scroll-view>
 
     <!-- 他们的故事 -->
-    <view class="mt-[36rpx] px-[26rpx] pb-[40rpx]">
+    <view class="mt-[36rpx] px-[20rpx] pb-[40rpx]">
       <view class="flex items-center">
         <text class="text-[30rpx] text-[rgb(254,137,115)] leading-[38rpx]">
           💗
