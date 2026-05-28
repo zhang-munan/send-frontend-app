@@ -21,47 +21,47 @@ function onBannerChange(e: any) {
 
 const bannerList = [
   {
-    image: '/static/images/home/banner-1.png',
+    image: mergeOssPath('home/banner-1.png'),
     title: '惊喜礼物',
     desc: '把心意藏进每一句话',
   },
   {
-    image: '/static/images/home/banner-2.png',
+    image: mergeOssPath('home/banner-2.png'),
     title: '和好了！',
     desc: '他收到道歉短信后\n主动加回了微信',
   },
   {
-    image: '/static/images/home/banner-3.png',
+    image: mergeOssPath('home/banner-3.png'),
     title: '匿名表白，\n原来 TA 也\n喜欢我',
     desc: '',
   },
 ]
 
 const quickCardsLeft = [
-  { title: '表达心意', desc: '帮你传达真心话', image: '/static/images/home/function-heart.png', cardBg: 'from-[#fff0f0] to-[#fff9f6]', arrowBg: '#febcb5' },
-  { title: 'AI 帮写', desc: '智能生成暖心文案', image: '/static/images/home/function-ai.png', cardBg: 'from-[#f1efff] to-[#fffaff]', arrowBg: '#dbd4f9' },
+  { title: '表达心意', desc: '帮你传达真心话', image: mergeOssPath('home/function-heart.png'), cardBg: 'from-[#fff0f0] to-[#fff9f6]', arrowBg: '#febcb5' },
+  { title: 'AI 帮写', desc: '智能生成暖心文案', image: mergeOssPath('home/function-ai.png'), cardBg: 'from-[#f1efff] to-[#fffaff]', arrowBg: '#dbd4f9' },
 ]
 
 const quickCardsRight = [
-  { title: '消息模板', desc: '海量模板一键使用', image: '/static/images/home/function-msg.png', cardBg: 'from-[#fff5ed] to-[#fffdf8]', arrowBg: '#fdd6a9' },
-  { title: '我的对话', desc: '查看历史对话记录', image: '/static/images/home/function-chat.png', cardBg: 'from-[#effbf1] to-[#fbfff9]', arrowBg: '#c8e1c9' },
+  { title: '消息模板', desc: '海量模板一键使用', image: mergeOssPath('home/function-msg.png'), cardBg: 'from-[#fff5ed] to-[#fffdf8]', arrowBg: '#fdd6a9' },
+  { title: '我的对话', desc: '查看历史对话记录', image: mergeOssPath('home/function-chat.png'), cardBg: 'from-[#effbf1] to-[#fbfff9]', arrowBg: '#c8e1c9' },
 ]
 
 const sceneList = [
-  { title: '道歉和解', desc: '给彼此一个台阶', image: '/static/images/home/reconciliation.png' },
-  { title: '匿名表白', desc: '勇敢说出来', image: '/static/images/home/confession.png' },
-  { title: '节日祝福', desc: '温暖不打扰', image: '/static/images/home/blessing.png' },
-  { title: '感恩表达', desc: '让 TA 知道', image: '/static/images/home/gratitude.png' },
-  { title: '毕业告别', desc: '不说再见', image: '/static/images/home/farewell.png' },
-  { title: '重要通知', desc: '帮你转达', image: '/static/images/home/notification.png' },
+  { title: '道歉和解', desc: '给彼此一个台阶', image: mergeOssPath('home/reconciliation.png') },
+  { title: '匿名表白', desc: '勇敢说出来', image: mergeOssPath('home/confession.png') },
+  { title: '节日祝福', desc: '温暖不打扰', image: mergeOssPath('home/blessing.png') },
+  { title: '感恩表达', desc: '让 TA 知道', image: mergeOssPath('home/gratitude.png') },
+  { title: '毕业告别', desc: '不说再见', image: mergeOssPath('home/farewell.png') },
+  { title: '重要通知', desc: '帮你转达', image: mergeOssPath('home/notification.png') },
 ]
 
 const templateList = [
-  { title: '真诚道歉短信', tag: '道歉和解', image: '/static/images/home/temp-reconciliation.png' },
-  { title: '匿名喜欢你', tag: '匿名表白', image: '/static/images/home/temp-confession.png' },
-  { title: '母亲节祝福', tag: '节日祝福', image: '/static/images/home/temp-blessing.png' },
-  { title: '谢谢你的照顾', tag: '感恩表达', image: '/static/images/home/temp-gratitude.png' },
-  { title: '毕业祝福', tag: '毕业告别', image: '/static/images/home/temp-farewell.png' },
+  { title: '真诚道歉短信', tag: '道歉和解', image: mergeOssPath('home/temp-reconciliation.png') },
+  { title: '匿名喜欢你', tag: '匿名表白', image: mergeOssPath('home/temp-confession.png') },
+  { title: '母亲节祝福', tag: '节日祝福', image: mergeOssPath('home/temp-blessing.png') },
+  { title: '谢谢你的照顾', tag: '感恩表达', image: mergeOssPath('home/temp-gratitude.png') },
+  { title: '毕业祝福', tag: '毕业告别', image: mergeOssPath('home/temp-farewell.png') },
 ]
 
 const storyList = [
@@ -102,7 +102,7 @@ const storyList = [
     <view class="px-[20rpx] pb-[20rpx]">
       <view class="h-[92rpx] flex items-center justify-center">
         <view class="flex items-center gap-[14rpx]">
-          <image src="/static/images/logo-heart.png" mode="aspectFit" class="h-[100rpx] w-[100rpx]" />
+          <image :src="mergeOssPath('logo-heart.png')" mode="aspectFit" class="h-[100rpx] w-[100rpx]" />
           <text class="text-[32rpx] text-[#7a5147] leading-[40rpx] font-[900]">
             帮你说出口
           </text>
@@ -111,7 +111,7 @@ const storyList = [
 
       <!-- 提示横幅 -->
       <view class="mt-[16rpx] h-[80rpx] flex items-center border-[1rpx] border-[#f5dcc0] rounded-[20rpx] bg-[#fef1e1] px-[20rpx] shadow-[0_8rpx_24rpx_rgba(254,137,115,0.10)]">
-        <image src="/static/images/safe.png" mode="aspectFit" class="h-[42rpx] w-[42rpx] flex-shrink-0" />
+        <image :src="mergeOssPath('safe.png')" mode="aspectFit" class="h-[42rpx] w-[42rpx] flex-shrink-0" />
         <text class="ml-[16rpx] flex-1 text-[26rpx] text-[#6a3b29] leading-[36rpx] font-[600]">
           每一次善意的表达，都可能温暖一个人 💛
         </text>
