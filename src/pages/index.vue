@@ -49,7 +49,7 @@ const quickCardsRight = [
 
 const sceneList = [
   { title: '道歉和解', desc: '给彼此一个台阶', image: mergeOssPath('home/reconciliation.png') },
-  { title: '匿名表白', desc: '勇敢说出来', image: mergeOssPath('home/confession.png') },
+  { title: '匿名表白', desc: '勇敢说出来', image: mergeOssPath('confession.png') },
   { title: '节日祝福', desc: '温暖不打扰', image: mergeOssPath('home/blessing.png') },
   { title: '感恩表达', desc: '让 TA 知道', image: mergeOssPath('home/gratitude.png') },
   { title: '毕业告别', desc: '不说再见', image: mergeOssPath('home/farewell.png') },
@@ -101,22 +101,19 @@ const storyList = [
     <!-- 顶部导航栏 -->
     <view class="px-[20rpx] pb-[20rpx]">
       <view class="h-[92rpx] flex items-center justify-center">
-        <view class="flex items-center gap-[14rpx]">
-          <image :src="mergeOssPath('logo-heart.png')" mode="aspectFit" class="h-[100rpx] w-[100rpx]" />
-          <text class="text-[32rpx] text-[#7a5147] leading-[40rpx] font-[900]">
+        <view class="flex items-center gap-[16rpx]">
+          <image :src="mergeOssPath('logo-heart.png')" mode="aspectFit" class="h-[80rpx] w-[80rpx]" />
+          <text class="text-[36rpx] text-[#7a5147] font-bold leading-[40rpx]">
             帮你说出口
           </text>
         </view>
       </view>
 
       <!-- 提示横幅 -->
-      <view class="mt-[16rpx] h-[80rpx] flex items-center border-[1rpx] border-[#f5dcc0] rounded-[20rpx] bg-[#fef1e1] px-[20rpx] shadow-[0_8rpx_24rpx_rgba(254,137,115,0.10)]">
+      <view class="mt-[16rpx] h-[80rpx] flex items-center border-[1rpx] border-[#f5dcc0] rounded-[20rpx] border-solid bg-[#fef1e1] px-[20rpx] shadow-[0_8rpx_24rpx_rgba(254,137,115,0.10)]">
         <image :src="mergeOssPath('safe.png')" mode="aspectFit" class="h-[42rpx] w-[42rpx] flex-shrink-0" />
         <text class="ml-[16rpx] flex-1 text-[26rpx] text-[#6a3b29] leading-[36rpx] font-[600]">
           每一次善意的表达，都可能温暖一个人 💛
-        </text>
-        <text class="ml-[20rpx] text-[32rpx] text-[#b89688] leading-[40rpx]">
-          ×
         </text>
       </view>
     </view>
@@ -125,7 +122,7 @@ const storyList = [
     <swiper
       class="h-[260rpx] w-[100%]"
       :current="currentBanner"
-      :autoplay="false"
+      :autoplay="true"
       :interval="3000"
       :circular="true"
       previous-margin="100rpx"
