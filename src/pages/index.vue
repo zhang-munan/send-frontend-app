@@ -37,6 +37,37 @@ const bannerList = [
   },
 ]
 
+function getBannerOffset(index: number) {
+  const total = bannerList.length
+  let diff = index - currentBanner.value
+  if (diff > total / 2)
+    diff -= total
+  if (diff < -total / 2)
+    diff += total
+  return diff
+}
+
+function getBannerSlideStyle(index: number) {
+  const offset = getBannerOffset(index)
+
+  if (offset === 0) {
+    return {
+      transform: 'perspective(1200px) rotateY(0deg) scale(1)',
+      transformOrigin: 'center center',
+      opacity: '1',
+      zIndex: '3',
+    }
+  }
+
+  const rotateY = offset < 0 ? -34 : 34
+  return {
+    transform: `perspective(1200px) rotateY(${rotateY}deg) scale(0.92)`,
+    transformOrigin: offset < 0 ? 'right center' : 'left center',
+    opacity: '0.9',
+    zIndex: '1',
+  }
+}
+
 const quickCardsLeft = [
   { title: '表达心意', desc: '帮你传达真心话', image: mergeOssPath('home/function-heart.png'), cardBg: 'from-[#fff0f0] to-[#fff9f6]', arrowBg: '#febcb5' },
   { title: 'AI 帮写', desc: '智能生成暖心文案', image: mergeOssPath('home/function-ai.png'), cardBg: 'from-[#f1efff] to-[#fffaff]', arrowBg: '#dbd4f9' },
@@ -119,40 +150,45 @@ const storyList = [
     </view>
 
     <!-- 轮播 Banner -->
-    <swiper
-      class="h-[260rpx] w-[100%]"
-      :current="currentBanner"
-      :autoplay="true"
-      :interval="3000"
-      :circular="true"
-      previous-margin="100rpx"
-      next-margin="100rpx"
-      @change="onBannerChange"
-    >
-      <swiper-item v-for="(item, index) in bannerList" :key="item.title">
-        <view class="relative mx-[8rpx] box-border h-[260rpx] overflow-hidden border-[4rpx] border-[#ffffff] rounded-[24rpx] border-solid bg-white">
-          <image :src="item.image" mode="scaleToFill" class="absolute h-[100%] rounded-[24rpx]" />
-          <view v-if="index !== 2" class="absolute inset-[0rpx] bg-[linear-gradient(90deg,rgba(255,240,226,0.92),rgba(255,240,226,0.15))]" />
-          <view v-if="index === 2" class="absolute inset-[0rpx] bg-[linear-gradient(180deg,rgba(255,240,226,0.0),rgba(255,230,210,0.75))]" />
-          <view class="relative px-[24rpx] pt-[28rpx]">
-            <text class="block whitespace-pre-line text-[30rpx] text-[#6a321f] leading-[42rpx] font-[800]">
-              {{ item.title }}
-            </text>
-            <text v-if="item.desc" class="mt-[8rpx] block whitespace-pre-line text-[24rpx] text-[#7d4434] leading-[36rpx] font-[500]">
-              {{ item.desc }}
-            </text>
-            <view v-if="index === 1" class="mt-[18rpx] h-[52rpx] w-[154rpx] flex items-center justify-center rounded-[52rpx] bg-[rgb(254,137,115)]">
-              <view class="flex items-center justify-center gap-[4rpx]">
-                <text class="text-[24rpx] text-[#ffffff] leading-[30rpx] font-[600]">
-                  查看详情
-                </text>
-                <view class="i-carbon-chevron-right text-[22rpx] text-white" />
+    <view class="banner-swiper-wrap">
+      <swiper
+        class="banner-swiper h-[260rpx] w-[100%]"
+        :current="currentBanner"
+        :autoplay="true"
+        :interval="3000"
+        :circular="true"
+        previous-margin="100rpx"
+        next-margin="100rpx"
+        @change="onBannerChange"
+      >
+        <swiper-item v-for="(item, index) in bannerList" :key="item.title" class="banner-swiper-item">
+          <view
+            class="banner-slide relative box-border h-[260rpx] w-[100%] overflow-hidden border-[6rpx] border-[#ffffff] rounded-[24rpx] border-solid bg-white"
+            :style="getBannerSlideStyle(index)"
+          >
+            <image :src="item.image" mode="scaleToFill" class="absolute h-[100%] rounded-[24rpx]" />
+            <view v-if="index !== 2" class="absolute inset-[0rpx] bg-[linear-gradient(90deg,rgba(255,240,226,0.92),rgba(255,240,226,0.15))]" />
+            <view v-if="index === 2" class="absolute inset-[0rpx] bg-[linear-gradient(180deg,rgba(255,240,226,0.0),rgba(255,230,210,0.75))]" />
+            <view class="relative px-[24rpx] pt-[28rpx]">
+              <text class="block whitespace-pre-line text-[30rpx] text-[#6a321f] leading-[42rpx] font-[800]">
+                {{ item.title }}
+              </text>
+              <text v-if="item.desc" class="mt-[8rpx] block whitespace-pre-line text-[24rpx] text-[#7d4434] leading-[36rpx] font-[500]">
+                {{ item.desc }}
+              </text>
+              <view v-if="index === 1" class="mt-[18rpx] h-[52rpx] w-[154rpx] flex items-center justify-center rounded-[52rpx] bg-[rgb(254,137,115)]">
+                <view class="flex items-center justify-center gap-[4rpx]">
+                  <text class="text-[24rpx] text-[#ffffff] leading-[30rpx] font-[600]">
+                    查看详情
+                  </text>
+                  <view class="i-carbon-chevron-right text-[22rpx] text-white" />
+                </view>
               </view>
             </view>
           </view>
-        </view>
-      </swiper-item>
-    </swiper>
+        </swiper-item>
+      </swiper>
+    </view>
 
     <!-- 轮播指示点 -->
     <view class="mt-[16rpx] flex justify-center gap-[10rpx]">
@@ -220,9 +256,6 @@ const storyList = [
     <view class="mt-[36rpx] px-[20rpx]">
       <view class="flex items-center justify-between">
         <view class="flex items-center">
-          <text class="text-[30rpx] text-[rgb(254,137,115)] leading-[38rpx]">
-            🔥
-          </text>
           <text class="ml-[8rpx] text-[30rpx] text-[#4b2f28] leading-[38rpx] font-[800]">
             使用场景
           </text>
@@ -241,7 +274,7 @@ const storyList = [
         <view
           v-for="item in sceneList"
           :key="item.title"
-          class="inline-block w-[120rpx] overflow-hidden border-[1rpx] border-[#f4d7c9] rounded-[20rpx] bg-[#fffdfa] px-[10rpx] pb-[16rpx] pt-[14rpx] text-center"
+          class="inline-block w-[120rpx] overflow-hidden border-[1px] border-[#fcebe6] rounded-[20rpx] border-solid bg-[#fffdfa] px-[10rpx] pb-[16rpx] pt-[14rpx] text-center"
         >
           <image :src="item.image" mode="aspectFill" class="mx-auto h-[72rpx] w-[72rpx] rounded-[18rpx]" />
           <text class="mt-[10rpx] block truncate text-[22rpx] text-[#4b3028] leading-[30rpx] font-[700]">
@@ -258,9 +291,6 @@ const storyList = [
     <view class="mt-[36rpx] px-[20rpx]">
       <view class="flex items-center justify-between">
         <view class="flex items-center">
-          <text class="text-[28rpx] text-[rgb(254,137,115)] leading-[36rpx]">
-            🔥
-          </text>
           <text class="ml-[8rpx] text-[30rpx] text-[#4b2f28] leading-[38rpx] font-[800]">
             热门模板推荐
           </text>
@@ -274,12 +304,13 @@ const storyList = [
       </view>
     </view>
 
-    <scroll-view scroll-x class="mt-[20rpx] w-[100%] whitespace-nowrap" :show-scrollbar="false">
-      <view class="inline-flex gap-[16rpx] px-[20rpx]">
+    <scroll-view scroll-x class="w-[100%] whitespace-nowrap" :show-scrollbar="false">
+      <view class="inline-flex gap-[16rpx] px-[20rpx] py-[20rpx]">
         <view
           v-for="item in templateList"
           :key="item.title"
-          class="inline-block w-[168rpx] overflow-hidden rounded-[18rpx] bg-[#ffffff] shadow-[0_8rpx_24rpx_rgba(120,70,48,0.10)]"
+          class="inline-block w-[168rpx] overflow-hidden rounded-[18rpx] bg-[#ffffff]"
+          style="box-shadow: 0 5rpx 15rpx rgba(254,137,115,0.10);"
         >
           <image :src="item.image" mode="aspectFill" class="h-[108rpx] w-[100%]" />
           <view class="px-[12rpx] pb-[14rpx] pt-[10rpx] text-center">
@@ -295,11 +326,8 @@ const storyList = [
     </scroll-view>
 
     <!-- 他们的故事 -->
-    <view class="mt-[36rpx] px-[20rpx] pb-[40rpx]">
+    <view class="mt-[16rpx] px-[20rpx] pb-[40rpx]">
       <view class="flex items-center">
-        <text class="text-[30rpx] text-[rgb(254,137,115)] leading-[38rpx]">
-          💗
-        </text>
         <text class="ml-[8rpx] text-[30rpx] text-[#4b2f28] leading-[38rpx] font-[800]">
           他们的故事
         </text>
@@ -309,7 +337,7 @@ const storyList = [
           <view
             v-for="item in storyList"
             :key="item.name"
-            class="inline-block w-[256rpx] border-[1rpx] border-[#f2ded5] rounded-[20rpx] bg-[#fffdfb] p-[20rpx] shadow-[0_8rpx_24rpx_rgba(120,70,48,0.07)]"
+            class="inline-block w-[256rpx] border-[1px] border-[1px] border-[#fcebe6] rounded-[20rpx] border-solid bg-[#fffdfb] p-[20rpx] shadow-[0_8rpx_24rpx_rgba(120,70,48,0.07)]"
           >
             <view class="flex items-start">
               <view
@@ -327,17 +355,29 @@ const storyList = [
                 </text>
               </view>
             </view>
-            <view class="mt-[10rpx] flex items-center justify-end gap-[6rpx]">
-              <text class="text-[22rpx] text-[rgb(254,137,115)] leading-[26rpx]">
-                ♥
-              </text>
-              <text class="text-[20rpx] text-[#6d5148] leading-[26rpx]">
-                {{ item.like }}
-              </text>
-            </view>
           </view>
         </view>
       </scroll-view>
     </view>
   </view>
 </template>
+
+<style scoped>
+.banner-swiper-wrap {
+  perspective: 1200px;
+  overflow: visible;
+}
+
+.banner-swiper {
+  overflow: visible;
+}
+
+.banner-swiper-item {
+  overflow: visible;
+}
+
+.banner-slide {
+  transform-origin: center center;
+  transition: transform 0.45s ease, opacity 0.45s ease;
+}
+</style>
