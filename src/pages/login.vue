@@ -1,12 +1,34 @@
 <script setup lang="ts">
+import { getCaptcha, sendSmsCode } from '@/api/user'
+
 definePage({
   style: {
     navigationStyle: 'custom',
   },
 })
 
+const userStore = useUserStore()
+
 const showNotice = ref(false)
 const agreed = ref(false)
+const loading = ref(false)
+
+// 表单输入
+const phone = ref('')
+const smsCode = ref('')
+
+// 获取验证码倒计时
+const countdown = ref(0)
+let countdownTimer: ReturnType<typeof setInterval> | null = null
+
+// 图片验证码弹窗
+const showCaptcha = ref(false)
+const captchaImg = ref('')
+const captchaId = ref('')
+const captchaCode = ref('')
+const captchaLoading = ref(false)
+
+const sendBtnText = computed(() => (countdown.value > 0 ? `${countdown.value}s 后重发` : '获取验证码'))
 
 const statusCards = [
   {
@@ -34,6 +56,187 @@ const noticeList = [
   '收件人可回复「TD」退订，退订后不再接收',
   '违规使用将被永久封号并追究法律责任',
 ]
+
+/** 校验手机号 */
+function isValidPhone(val: string) {
+  return /^1[3-9]\d{9}$/.test(val)
+}
+
+/** 校验用户协议勾选 */
+function checkAgree() {
+  if (!agreed.value) {
+    uni.showToast({ title: '请先阅读并同意用户协议和隐私政策', icon: 'none' })
+    return false
+  }
+  return true
+}
+
+/** 启动 60 秒倒计时 */
+function startCountdown() {
+  countdown.value = 60
+  countdownTimer && clearInterval(countdownTimer)
+  countdownTimer = setInterval(() => {
+    countdown.value -= 1
+    if (countdown.value <= 0 && countdownTimer)
+      clearInterval(countdownTimer)
+  }, 1000)
+}
+
+/** 拉取图片验证码 */
+async function refreshCaptcha() {
+  try {
+    captchaLoading.value = true
+    const res = await getCaptcha({ width: 150, height: 50, color: '#fe8973' })
+    captchaId.value = res.captchaId
+    captchaImg.value = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(res.data)}`
+  }
+  catch {
+    // 错误已在请求层统一提示
+  }
+  finally {
+    captchaLoading.value = false
+  }
+}
+
+/** 点击「获取验证码」：先校验手机号，再弹出图片验证码 */
+async function onGetSmsCode() {
+  if (countdown.value > 0)
+    return
+  if (!isValidPhone(phone.value)) {
+    uni.showToast({ title: '请输入正确的手机号', icon: 'none' })
+    return
+  }
+  captchaCode.value = ''
+  showCaptcha.value = true
+  await refreshCaptcha()
+}
+
+/** 确认图片验证码并发送短信 */
+async function confirmCaptcha() {
+  if (!captchaCode.value) {
+    uni.showToast({ title: '请输入图片验证码', icon: 'none' })
+    return
+  }
+  try {
+    await sendSmsCode({ phone: phone.value, captchaId: captchaId.value, code: captchaCode.value })
+    showCaptcha.value = false
+    uni.showToast({ title: '验证码已发送', icon: 'none' })
+    startCountdown()
+  }
+  catch {
+    // 失败后刷新图片验证码，便于重试
+    refreshCaptcha()
+  }
+}
+
+/** 登录成功后返回 */
+function goAfterLogin() {
+  const pages = getCurrentPages()
+  if (pages.length > 1)
+    uni.navigateBack()
+  else
+    uni.switchTab({ url: '/pages/index' })
+}
+
+/** 手机号验证码登录 */
+async function handlePhoneLogin() {
+  if (!isValidPhone(phone.value)) {
+    uni.showToast({ title: '请输入正确的手机号', icon: 'none' })
+    return
+  }
+  if (!smsCode.value) {
+    uni.showToast({ title: '请输入验证码', icon: 'none' })
+    return
+  }
+  if (!checkAgree())
+    return
+  try {
+    loading.value = true
+    await userStore.phoneLogin(phone.value, smsCode.value)
+    uni.showToast({ title: '登录成功', icon: 'success' })
+    setTimeout(goAfterLogin, 600)
+  }
+  catch {
+    // 错误已在请求层统一提示
+  }
+  finally {
+    loading.value = false
+  }
+}
+
+// #ifdef MP-WEIXIN
+// 预获取的登录 code，保证 getPhoneNumber 的加密数据与同一次登录的 session_key 匹配
+const loginCode = ref('')
+
+/** 调用 wx.login 获取 code */
+function wxLogin(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    uni.login({
+      provider: 'weixin',
+      success: res => resolve(res.code),
+      fail: reject,
+    })
+  })
+}
+
+/** 刷新预取的登录 code */
+async function refreshLoginCode() {
+  try {
+    loginCode.value = await wxLogin()
+  }
+  catch {
+    loginCode.value = ''
+  }
+}
+
+/** 微信一键登录（小程序手机号授权） */
+async function handleWxPhone(e: any) {
+  if (!checkAgree())
+    return
+  if (e?.detail?.errMsg !== 'getPhoneNumber:ok') {
+    uni.showToast({ title: '已取消微信授权', icon: 'none' })
+    return
+  }
+  try {
+    loading.value = true
+    // 优先使用预取的 code，确保与加密数据用同一 session_key 解密
+    const code = loginCode.value || (await wxLogin())
+    await userStore.miniPhoneLogin({
+      code,
+      encryptedData: e.detail.encryptedData,
+      iv: e.detail.iv,
+    })
+    uni.showToast({ title: '登录成功', icon: 'success' })
+    setTimeout(goAfterLogin, 600)
+  }
+  catch {
+    // 错误已在请求层统一提示
+  }
+  finally {
+    loading.value = false
+    // code 为一次性，使用后刷新，便于下次重试
+    refreshLoginCode()
+  }
+}
+
+// 进入页面即预取登录 code
+onShow(() => {
+  refreshLoginCode()
+})
+// #endif
+
+/** 返回上一页 */
+function goBack() {
+  const pages = getCurrentPages()
+  if (pages.length > 1)
+    uni.navigateBack()
+  else
+    uni.switchTab({ url: '/pages/index' })
+}
+
+onUnmounted(() => {
+  countdownTimer && clearInterval(countdownTimer)
+})
 </script>
 
 <template>
@@ -46,7 +249,7 @@ const noticeList = [
     <!-- #endif -->
 
     <view class="h-[112rpx] flex items-center justify-center border-b-[1rpx] border-[#f1ded7] bg-[#fffaf7] px-[44rpx]">
-      <text class="absolute left-[44rpx] top-[58rpx] text-[58rpx] text-[#282828] leading-[58rpx]">
+      <text class="absolute left-[44rpx] top-[58rpx] text-[58rpx] text-[#282828] leading-[58rpx]" @click="goBack">
         ‹
       </text>
       <text class="text-[38rpx] text-[#111111] leading-[48rpx] font-[800]">
@@ -59,7 +262,10 @@ const noticeList = [
         <image src="https://picsum.photos/seed/login-bg-soft/750/360" mode="aspectFill" class="absolute left-[0rpx] top-[0rpx] h-[360rpx] w-[100%] opacity-[0.34]" />
 
         <view class="relative pt-[52rpx] text-center">
-          <image src="https://picsum.photos/seed/login-envelope/150/128" mode="aspectFill" class="mx-auto h-[128rpx] w-[150rpx] rounded-[26rpx]" />
+          <view class="mx-auto h-[128rpx] w-[150rpx] flex items-center justify-center rounded-[26rpx] bg-[linear-gradient(135deg,#ffc9a3_0%,#ff9d8f_100%)] shadow-[0_10rpx_28rpx_rgba(255,140,115,0.30)]">
+            <view class="i-carbon-email text-[68rpx] text-white" />
+            <view class="i-carbon-favorite-filled absolute mt-[-44rpx] text-[34rpx] text-[#ff5f6d]" />
+          </view>
           <text class="mt-[20rpx] block text-[48rpx] text-[#8c6255] leading-[62rpx] font-[900]">
             帮你说出口
           </text>
@@ -69,12 +275,15 @@ const noticeList = [
         </view>
 
         <view class="relative mx-[34rpx] mt-[38rpx] rounded-[28rpx] bg-[rgba(255,255,255,0.94)] px-[36rpx] py-[34rpx] shadow-[0_16rpx_46rpx_rgba(120,70,48,0.12)]">
-          <button class="h-[86rpx] w-[100%] flex items-center justify-center border-[0rpx] rounded-[24rpx] bg-[#55b84e] p-[0rpx] text-[#ffffff]">
-            <view class="mr-[26rpx] h-[50rpx] w-[62rpx] flex items-center justify-center">
-              <text class="text-[44rpx] text-[#ffffff] leading-[48rpx]">
-                ☁
-              </text>
-            </view>
+          <!-- 微信一键登录：仅小程序端支持手机号一键授权 -->
+          <!-- #ifdef MP-WEIXIN -->
+          <button
+            class="h-[86rpx] w-[100%] flex items-center justify-center border-[0rpx] rounded-[24rpx] bg-[#55b84e] p-[0rpx] text-[#ffffff]"
+            open-type="getPhoneNumber"
+            :loading="loading"
+            @getphonenumber="handleWxPhone"
+          >
+            <view class="i-carbon-logo-wechat mr-[18rpx] text-[44rpx] text-white" />
             <text class="text-[32rpx] text-[#ffffff] leading-[42rpx]">
               微信一键登录
             </text>
@@ -87,6 +296,7 @@ const noticeList = [
             </text>
             <view class="h-[1rpx] flex-1 bg-[#e8d8d0]" />
           </view>
+          <!-- #endif -->
 
           <view class="mt-[24rpx] h-[78rpx] flex items-center border-[1rpx] border-[#eadbd5] rounded-[16rpx] bg-[#fffdfc] px-[26rpx]">
             <text class="text-[30rpx] text-[#2b201d] leading-[38rpx]">
@@ -96,22 +306,44 @@ const noticeList = [
               ▼
             </text>
             <view class="ml-[24rpx] h-[34rpx] w-[1rpx] bg-[#eee2de]" />
-            <input class="ml-[24rpx] h-[70rpx] flex-1 text-[28rpx] text-[#33201c] leading-[70rpx]" placeholder="请输入手机号" placeholder-class="text-[#b9aaa4]" type="number">
+            <input
+              v-model="phone"
+              class="ml-[24rpx] h-[70rpx] flex-1 text-[28rpx] text-[#33201c] leading-[70rpx]"
+              placeholder="请输入手机号"
+              placeholder-class="text-[#b9aaa4]"
+              type="number"
+              :maxlength="11"
+            >
           </view>
 
           <view class="mt-[22rpx] h-[78rpx] flex items-center border-[1rpx] border-[#eadbd5] rounded-[16rpx] bg-[#fffdfc] px-[26rpx]">
-            <input class="h-[70rpx] flex-1 text-[28rpx] text-[#33201c] leading-[70rpx]" placeholder="请输入验证码" placeholder-class="text-[#b9aaa4]" type="number">
-            <button class="h-[52rpx] w-[156rpx] border-[1rpx] border-[#ffc5bc] rounded-[18rpx] bg-[#fff8f6] p-[0rpx] text-[24rpx] text-[rgb(254,137,115)] leading-[52rpx]">
-              获取验证码
+            <input
+              v-model="smsCode"
+              class="h-[70rpx] flex-1 text-[28rpx] text-[#33201c] leading-[70rpx]"
+              placeholder="请输入验证码"
+              placeholder-class="text-[#b9aaa4]"
+              type="number"
+              :maxlength="6"
+            >
+            <button
+              class="h-[52rpx] min-w-[156rpx] border-[1rpx] border-[#ffc5bc] rounded-[18rpx] bg-[#fff8f6] p-[0rpx] px-[16rpx] text-[24rpx] leading-[52rpx]"
+              :class="countdown > 0 ? 'text-[#c3b1aa]' : 'text-[rgb(254,137,115)]'"
+              @click="onGetSmsCode"
+            >
+              {{ sendBtnText }}
             </button>
           </view>
 
-          <button class="mt-[28rpx] h-[86rpx] w-[100%] border-[0rpx] rounded-[20rpx] bg-[linear-gradient(90deg,#ffd0cb_0%,#ffb9b4_100%)] p-[0rpx] text-[32rpx] text-[#ffffff] leading-[86rpx]">
+          <button
+            class="mt-[28rpx] h-[86rpx] w-[100%] border-[0rpx] rounded-[20rpx] bg-[linear-gradient(90deg,#ffd0cb_0%,#ffb9b4_100%)] p-[0rpx] text-[32rpx] text-[#ffffff] leading-[86rpx]"
+            :loading="loading"
+            @click="handlePhoneLogin"
+          >
             登录/注册
           </button>
 
           <view class="mt-[28rpx] flex items-center">
-            <view class="h-[34rpx] w-[34rpx] flex items-center justify-center border-[2rpx] border-[#cdbfb8] rounded-[8rpx]" :class="agreed ? 'bg-[rgb(254,137,115)] border-[rgb(254,137,115)]' : 'bg-[#ffffff]'" @click="agreed = !agreed">
+            <view class="h-[34rpx] w-[34rpx] flex flex-shrink-0 items-center justify-center border-[2rpx] rounded-[8rpx]" :class="agreed ? 'bg-[rgb(254,137,115)] border-[rgb(254,137,115)]' : 'bg-[#ffffff] border-[#cdbfb8]'" @click="agreed = !agreed">
               <text v-if="agreed" class="text-[24rpx] text-[#ffffff] leading-[28rpx]">
                 ✓
               </text>
@@ -131,7 +363,9 @@ const noticeList = [
           </view>
 
           <view class="mt-[22rpx] flex items-center border-[1rpx] border-[#ffd9bd] rounded-[18rpx] bg-[#fff4e8] px-[22rpx] py-[18rpx]" @click="showNotice = true">
-            <image src="https://picsum.photos/seed/warm-notice/74/74" mode="aspectFill" class="h-[74rpx] w-[74rpx] rounded-[18rpx]" />
+            <view class="h-[74rpx] w-[74rpx] flex flex-shrink-0 items-center justify-center rounded-[18rpx] bg-[linear-gradient(135deg,#ffb98f,#ff8f8a)]">
+              <view class="i-carbon-favorite-filled text-[40rpx] text-white" />
+            </view>
             <view class="ml-[22rpx] min-w-[0rpx] flex-1">
               <text class="block text-[25rpx] text-[#3d2923] leading-[34rpx] font-[800]">
                 温馨提示：
@@ -166,6 +400,41 @@ const noticeList = [
       </view>
     </scroll-view>
 
+    <!-- 图片验证码弹窗 -->
+    <view v-if="showCaptcha" class="fixed inset-[0rpx] z-[30] flex items-center justify-center bg-[rgba(44,30,25,0.28)] px-[84rpx]">
+      <view class="w-[100%] rounded-[22rpx] bg-[#fffefa] px-[36rpx] py-[36rpx] shadow-[0_18rpx_58rpx_rgba(73,42,32,0.22)]">
+        <text class="block text-center text-[34rpx] text-[#5b3a32] leading-[44rpx] font-[900]">
+          请输入图片验证码
+        </text>
+        <view class="mt-[28rpx] flex items-center gap-[18rpx]">
+          <input
+            v-model="captchaCode"
+            class="h-[80rpx] flex-1 border-[1rpx] border-[#eadbd5] rounded-[16rpx] bg-[#fffdfc] px-[24rpx] text-[28rpx] text-[#33201c] leading-[80rpx]"
+            placeholder="图片验证码"
+            placeholder-class="text-[#b9aaa4]"
+          >
+          <view class="h-[80rpx] w-[200rpx] flex items-center justify-center overflow-hidden border-[1rpx] border-[#eadbd5] rounded-[16rpx] bg-[#fff]" @click="refreshCaptcha">
+            <image v-if="captchaImg" :src="captchaImg" mode="aspectFit" class="h-[80rpx] w-[200rpx]" />
+            <text v-else class="text-[22rpx] text-[#b9aaa4] leading-[30rpx]">
+              {{ captchaLoading ? '加载中…' : '点击刷新' }}
+            </text>
+          </view>
+        </view>
+        <text class="mt-[14rpx] block text-[22rpx] text-[#9a8178] leading-[30rpx]">
+          看不清？点击图片刷新
+        </text>
+        <view class="mt-[28rpx] flex gap-[18rpx]">
+          <button class="h-[72rpx] flex-1 border-[1rpx] border-[#e3d3cc] rounded-[18rpx] bg-[#fff] p-[0rpx] text-[28rpx] text-[#7b665e] leading-[72rpx]" @click="showCaptcha = false">
+            取消
+          </button>
+          <button class="h-[72rpx] flex-1 border-[0rpx] rounded-[18rpx] bg-[rgb(254,137,115)] p-[0rpx] text-[28rpx] text-[#ffffff] leading-[72rpx]" @click="confirmCaptcha">
+            确认发送
+          </button>
+        </view>
+      </view>
+    </view>
+
+    <!-- 使用须知弹窗 -->
     <view v-if="showNotice" class="fixed inset-[0rpx] z-[20] flex items-center justify-center bg-[rgba(44,30,25,0.28)] px-[84rpx]">
       <view class="max-h-[660rpx] w-[100%] rounded-[22rpx] bg-[#fffefa] px-[32rpx] py-[34rpx] shadow-[0_18rpx_58rpx_rgba(73,42,32,0.22)]">
         <text class="block text-center text-[38rpx] text-[#5b3a32] leading-[48rpx] font-[900]">

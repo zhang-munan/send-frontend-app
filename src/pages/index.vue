@@ -10,6 +10,7 @@ definePage({
   layout: false,
   style: {
     navigationStyle: 'custom',
+    navigationBarTextStyle: 'black',
   },
 })
 
@@ -181,7 +182,7 @@ const storyList = [
                   <text class="text-[24rpx] text-[#ffffff] leading-[30rpx] font-[600]">
                     查看详情
                   </text>
-                  <view class="i-carbon-chevron-right text-[22rpx] text-white" />
+                  <view class="i-carbon-caret-right text-[22rpx] text-white" />
                 </view>
               </view>
             </view>
@@ -222,7 +223,7 @@ const storyList = [
             class="ml-[8rpx] h-[40rpx] w-[40rpx] flex flex-shrink-0 items-center justify-center rounded-[40rpx]"
             :style="{ backgroundColor: item.arrowBg }"
           >
-            <view class="i-carbon-chevron-right text-[22rpx] text-white" />
+            <view class="i-carbon-caret-right text-[22rpx] text-white" />
           </view>
         </view>
       </view>
@@ -246,7 +247,7 @@ const storyList = [
             class="ml-[8rpx] h-[40rpx] w-[40rpx] flex flex-shrink-0 items-center justify-center rounded-[40rpx]"
             :style="{ backgroundColor: item.arrowBg }"
           >
-            <view class="i-carbon-chevron-right text-[22rpx] text-white" />
+            <view class="i-carbon-caret-right text-[22rpx] text-white" />
           </view>
         </view>
       </view>
@@ -264,7 +265,7 @@ const storyList = [
           <text class="text-[24rpx] text-[#8c756e] leading-[32rpx]">
             更多场景
           </text>
-          <view class="i-carbon-chevron-right text-[20rpx] text-[#8c756e]" />
+          <view class="i-carbon-caret-right text-[20rpx] text-[#8c756e]" />
         </view>
       </view>
     </view>
@@ -299,7 +300,7 @@ const storyList = [
           <text class="text-[24rpx] text-[#8c756e] leading-[32rpx]">
             查看更多
           </text>
-          <view class="i-carbon-chevron-right text-[20rpx] text-[#8c756e]" />
+          <view class="i-carbon-caret-right text-[20rpx] text-[#8c756e]" />
         </view>
       </view>
     </view>

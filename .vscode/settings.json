@@ -1,4 +1,8 @@
 {
+  // Vue 3 项目使用 Volar，禁用 Vetur 避免类型冲突
+  "vetur.enable": false,
+  "typescript.tsdk": "node_modules/typescript/lib",
+
   // Disable the default formatter, use eslint instead
   "prettier.enable": false,
   "editor.formatOnSave": false,

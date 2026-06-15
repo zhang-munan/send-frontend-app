@@ -1,4 +1,7 @@
 {
+  "unwantedRecommendations": [
+    "octref.vetur"
+  ],
   "recommendations": [
     "antfu.vite",
     "antfu.iconify",

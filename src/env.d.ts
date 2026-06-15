@@ -1,8 +1,16 @@
 /// <reference types="vite/client" />
 
+declare module '*.vue' {
+  import type { DefineComponent } from 'vue'
+  const component: DefineComponent<object, object, unknown>
+  export default component
+}
+
 interface ImportMetaEnv {
   /** H5 部署根路径，如 / 或 /h5/ */
   readonly VITE_BASE_PATH: string
+  /** 后端接口基础地址，如 http://localhost:8001 */
+  readonly VITE_APP_BASE_URL: string
   /** OSS 开关：on | off */
   readonly VITE_APP_OSS_ON: 'on' | 'off'
   /** OSS 基础域名，如 https://cdn.example.com */
