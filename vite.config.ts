@@ -16,6 +16,14 @@ export default defineConfig({
     // https://uni-helper.js.org/vite-plugin-uni-pages
     UniHelperPages({
       dts: 'src/uni-pages.d.ts',
+      subPackages: [
+        'src/package-send',
+        'src/package-template',
+        'src/package-order',
+        'src/package-feedback',
+        'src/package-user',
+        'src/package-demo',
+      ],
     }),
     // https://uni-helper.js.org/vite-plugin-uni-layouts
     UniHelperLayouts(),

@@ -5,12 +5,22 @@
 
 type _LocationUrl =
   "/pages/index" |
-  "/pages/hi" |
-  "/pages/login" |
   "/pages/message" |
   "/pages/mine" |
-  "/pages/send" |
-  "/pages/template";
+  "/pages/template" |
+  "/package-send/conversation-detail" |
+  "/package-send/send-record-detail" |
+  "/package-send/send-records" |
+  "/package-send/send" |
+  "/package-template/template-detail" |
+  "/package-order/orders" |
+  "/package-order/pay" |
+  "/package-order/recharge" |
+  "/package-feedback/feedback-history" |
+  "/package-feedback/feedback" |
+  "/package-user/login" |
+  "/package-user/settings" |
+  "/package-demo/hi";
 
 interface NavigateToOptions {
   url: _LocationUrl;
@@ -18,7 +28,7 @@ interface NavigateToOptions {
 interface RedirectToOptions extends NavigateToOptions {}
 
 interface SwitchTabOptions {
-  url: "/pages/index" | "/pages/send" | "/pages/template" | "/pages/message" | "/pages/mine"
+  url: "/pages/index" | "/pages/template" | "/pages/message" | "/pages/mine"
 }
 
 type ReLaunchOptions = NavigateToOptions | SwitchTabOptions;

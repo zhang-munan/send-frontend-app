@@ -70,14 +70,19 @@ function getBannerSlideStyle(index: number) {
 }
 
 const quickCardsLeft = [
-  { title: '表达心意', desc: '帮你传达真心话', image: mergeOssPath('home/function-heart.png'), cardBg: 'from-[#fff0f0] to-[#fff9f6]', arrowBg: '#febcb5' },
-  { title: 'AI 帮写', desc: '智能生成暖心文案', image: mergeOssPath('home/function-ai.png'), cardBg: 'from-[#f1efff] to-[#fffaff]', arrowBg: '#dbd4f9' },
+  { title: '表达心意', desc: '帮你传达真心话', image: mergeOssPath('home/function-heart.png'), cardBg: 'from-[#fff0f0] to-[#fff9f6]', arrowBg: '#febcb5', route: '/package-send/send' },
+  { title: 'AI 帮写', desc: '智能生成暖心文案', image: mergeOssPath('home/function-ai.png'), cardBg: 'from-[#f1efff] to-[#fffaff]', arrowBg: '#dbd4f9', route: '' },
 ]
 
 const quickCardsRight = [
-  { title: '消息模板', desc: '海量模板一键使用', image: mergeOssPath('home/function-msg.png'), cardBg: 'from-[#fff5ed] to-[#fffdf8]', arrowBg: '#fdd6a9' },
-  { title: '我的对话', desc: '查看历史对话记录', image: mergeOssPath('home/function-chat.png'), cardBg: 'from-[#effbf1] to-[#fbfff9]', arrowBg: '#c8e1c9' },
+  { title: '消息模板', desc: '海量模板一键使用', image: mergeOssPath('home/function-msg.png'), cardBg: 'from-[#fff5ed] to-[#fffdf8]', arrowBg: '#fdd6a9', route: '/pages/template' },
+  { title: '我的对话', desc: '查看历史对话记录', image: mergeOssPath('home/function-chat.png'), cardBg: 'from-[#effbf1] to-[#fbfff9]', arrowBg: '#c8e1c9', route: '' },
 ]
+
+function handleQuickCardClick(route: string) {
+  if (route)
+    uni.navigateTo({ url: route })
+}
 
 const sceneList = [
   { title: '道歉和解', desc: '给彼此一个台阶', image: mergeOssPath('home/reconciliation.png') },
@@ -209,6 +214,7 @@ const storyList = [
           :key="item.title"
           class="relative box-border h-[138rpx] min-w-0 w-full flex items-center overflow-hidden rounded-[20rpx] bg-gradient-to-r px-[16rpx]"
           :class="item.cardBg"
+          @click="handleQuickCardClick(item.route)"
         >
           <image :src="item.image" mode="aspectFit" class="h-[76rpx] w-[76rpx] flex-shrink-0 rounded-[18rpx]" />
           <view class="ml-[12rpx] min-w-0 flex-1 overflow-hidden">
@@ -233,6 +239,7 @@ const storyList = [
           :key="item.title"
           class="relative box-border h-[138rpx] min-w-0 w-full flex items-center overflow-hidden rounded-[20rpx] bg-gradient-to-r px-[16rpx]"
           :class="item.cardBg"
+          @click="handleQuickCardClick(item.route)"
         >
           <image :src="item.image" mode="aspectFit" class="h-[76rpx] w-[76rpx] flex-shrink-0 rounded-[18rpx]" />
           <view class="ml-[12rpx] min-w-0 flex-1 overflow-hidden">

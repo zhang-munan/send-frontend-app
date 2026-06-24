@@ -10,7 +10,7 @@ const SUCCESS_CODE = 1000
 // 后端接口基础地址
 const BASE_URL = import.meta.env.VITE_APP_BASE_URL || ''
 // 登录页路径
-const LOGIN_PAGE = '/pages/login'
+const LOGIN_PAGE = '/package-user/login'
 
 /** 本地存储 key */
 export const STORAGE_KEY = {

@@ -2,6 +2,14 @@ import { defineUniPages } from '@uni-helper/vite-plugin-uni-pages'
 
 export default defineUniPages({
   pages: [],
+  subPackages: [
+    { root: 'package-send', pages: [] },
+    { root: 'package-template', pages: [] },
+    { root: 'package-order', pages: [] },
+    { root: 'package-feedback', pages: [] },
+    { root: 'package-user', pages: [] },
+    { root: 'package-demo', pages: [] },
+  ],
   globalStyle: {
     backgroundColor: '@bgColor',
     backgroundColorBottom: '@bgColorBottom',
@@ -24,12 +32,12 @@ export default defineUniPages({
         iconPath: 'static/images/tabbar/home-line.png',
         selectedIconPath: 'static/images/tabbar/home.png',
       },
-      {
-        pagePath: 'pages/send',
-        text: '发送',
-        iconPath: 'static/images/tabbar/send-line.png',
-        selectedIconPath: 'static/images/tabbar/send.png',
-      },
+      // {
+      //   pagePath: 'pages/send',
+      //   text: '发送',
+      //   iconPath: 'static/images/tabbar/send-line.png',
+      //   selectedIconPath: 'static/images/tabbar/send.png',
+      // },
       {
         pagePath: 'pages/template',
         text: '模板',

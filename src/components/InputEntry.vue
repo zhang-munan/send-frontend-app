@@ -3,7 +3,7 @@ const name = ref('')
 function go() {
   if (name.value) {
     uni.navigateTo({
-      url: `/pages/hi?name=${name.value}`,
+      url: `/package-demo/hi?name=${name.value}`,
     })
   }
 }

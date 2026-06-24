@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { getBalance } from '@/api/order'
+
 const statusBarHeight = ref(0)
 // #ifndef H5
 statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight || 0
@@ -29,16 +31,23 @@ const maskedPhone = computed(() => {
 })
 
 const showNotice = ref(false)
+const userQuota = ref(0)
+const userBalance = ref('0.00')
 
-// 进入页面时若已登录则刷新用户信息
+// 进入页面时若已登录则刷新用户信息和余额
 onShow(() => {
-  if (userStore.isLogin)
+  if (userStore.isLogin) {
     userStore.fetchUserInfo().catch(() => {})
+    getBalance().then((b) => {
+      userQuota.value = b.messageQuota
+      userBalance.value = Number(b.balance).toFixed(2)
+    }).catch(() => {})
+  }
 })
 
 /** 跳转登录页 */
 function goLogin() {
-  uni.navigateTo({ url: '/pages/login' })
+  uni.navigateTo({ url: '/package-user/login' })
 }
 
 /** 退出登录 */
@@ -55,29 +64,33 @@ function handleLogout() {
   })
 }
 
-const stats = [
+const stats = computed(() => [
   {
-    value: '128',
-    label: '已发送 条',
-    icon: 'i-carbon-send-alt-filled',
+    value: userBalance.value,
+    label: '账户余额(元)',
+    icon: 'i-carbon-wallet',
     bg: '#fff0f1',
     color: '#ff5f75',
+    prefix: '¥',
   },
   {
-    value: '96',
-    label: '已送达 条',
-    icon: 'i-carbon-checkmark-filled',
+    value: String(userQuota.value),
+    label: '剩余条数',
+    icon: 'i-carbon-send-alt-filled',
     bg: '#fff6df',
     color: '#ffb833',
+    prefix: '',
   },
   {
-    value: '32',
-    label: '收到回复 条',
-    icon: 'i-carbon-notification-filled',
+    value: '',
+    label: '充值中心',
+    icon: 'i-carbon-flash-filled',
     bg: '#f4eeff',
     color: '#8d68ee',
+    prefix: '',
+    action: 'recharge',
   },
-]
+])
 
 interface ServiceItem {
   title: string
@@ -124,7 +137,7 @@ const serviceGroups: ServiceGroup[] = [
       { title: '意见反馈', icon: 'i-carbon-thumbs-up-filled', bg: '#428ff2' },
       { title: '使用须知', icon: 'i-carbon-warning-alt-filled', bg: '#ffb12f', action: 'notice' },
       { title: '关于我们', icon: 'i-carbon-information-filled', bg: '#8b66ee' },
-      { title: '设置', icon: 'i-carbon-magic-wand-filled', bg: '#8b96a3' },
+      { title: '设置', icon: 'i-carbon-settings-filled', bg: '#8b96a3' },
     ],
   },
 ]
@@ -138,9 +151,41 @@ const noticeList = [
   '违规使用将被永久封号并追究法律责任',
 ]
 
-function handleItemClick(action?: string) {
-  if (action === 'notice')
+/** 需要登录才能访问的页面 */
+const AUTH_PAGES = new Set(['/package-order/orders'])
+
+function handleItemClick(item: ServiceItem) {
+  const { action, title } = item
+  if (action === 'notice') {
     showNotice.value = true
+    return
+  }
+  const navMap: Record<string, string> = {
+    '充值中心': '/package-order/recharge',
+    '账单明细': '/package-order/orders',
+    '发送记录': '/package-send/send-records',
+    '我的模板': '/pages/template',
+    '我的对话': '/pages/message',
+    '设置': '/package-user/settings',
+    '意见反馈': '/package-feedback/feedback',
+  }
+  const url = navMap[title]
+  if (!url) return
+
+  // 需要登录才能访问的页面，未登录时跳转登录页
+  if (AUTH_PAGES.has(url) && !userStore.isLogin) {
+    uni.navigateTo({ url: '/package-user/login' })
+    return
+  }
+
+  // tabBar 页用 switchTab，否则用 navigateTo
+  const tabPages = new Set(['/pages/index', '/pages/message', '/pages/template', '/pages/mine'])
+  if (tabPages.has(url)) {
+    uni.switchTab({ url })
+  }
+  else {
+    uni.navigateTo({ url })
+  }
 }
 </script>
 
@@ -231,14 +276,22 @@ function handleItemClick(action?: string) {
         <!-- 数据统计浮层 -->
         <view class="absolute bottom-[-2rpx] left-[0rpx] right-[0rpx] rounded-t-[28rpx] bg-[#ffffff] px-[20rpx] py-[48rpx] shadow-[0_-6rpx_24rpx_rgba(255,255,255,0.50)]">
           <view class="grid grid-cols-3">
-            <view v-for="(item, index) in stats" :key="item.label" class="relative flex items-center justify-center">
+            <view
+              v-for="(item, index) in stats"
+              :key="item.label"
+              class="relative flex items-center justify-center"
+              @click="item.action === 'recharge' && uni.navigateTo({ url: '/package-order/recharge' })"
+            >
               <view v-if="index > 0" class="absolute left-[0rpx] top-[8rpx] mx-8rpx h-[64rpx] w-[1rpx] bg-[#f1f1f1]" />
               <view class="h-[68rpx] w-[68rpx] flex flex-shrink-0 items-center justify-center rounded-[68rpx]" :style="{ backgroundColor: item.bg }">
                 <view class="text-[32rpx]" :class="item.icon" :style="{ color: item.color }" />
               </view>
               <view class="ml-[20rpx]">
-                <text class="block text-[34rpx] text-[#1a0e0b] font-bold leading-[42rpx]">
-                  {{ isLogin ? item.value : '-' }}
+                <text v-if="item.action === 'recharge'" class="block text-[28rpx] text-[#8d68ee] font-bold leading-[42rpx] underline">
+                  {{ isLogin ? '去充值 →' : '-' }}
+                </text>
+                <text v-else class="block text-[30rpx] text-[#1a0e0b] font-bold leading-[42rpx]">
+                  {{ isLogin ? (item.prefix || '') + item.value : '-' }}
                 </text>
                 <text class="mt-[8rpx] block text-[21rpx] text-[#7a6560] leading-[26rpx]">
                   {{ item.label }}
@@ -264,7 +317,7 @@ function handleItemClick(action?: string) {
           v-for="(item, index) in group.items"
           :key="item.title"
           class="h-[84rpx] flex items-center"
-          @click="handleItemClick(item.action)"
+          @click="handleItemClick(item)"
         >
           <view class="h-[40rpx] w-[40rpx] flex flex-shrink-0 items-center justify-center rounded-[10rpx]" :style="{ backgroundColor: item.bg }">
             <view class="text-[22rpx] text-[#ffffff]" :class="item.icon" />
