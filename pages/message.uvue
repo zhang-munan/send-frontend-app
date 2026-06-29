@@ -1,0 +1,290 @@
+<script setup lang="ts">
+import { computed, ref } from "vue";
+import { getConversationList, markConversationRead, type ConversationInfo } from '@/api/conversation'
+import { useUserStore } from '@/stores/user'
+
+const statusBarHeight = ref(0)
+// #ifndef H5
+statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight || 0
+// #endif
+
+const userStore = useUserStore()
+
+// ─── 列表状态 ────────────────────────────────────────
+const list = ref<ConversationInfo[]>([])
+const total = ref(0)
+const page = ref(1)
+const pageSize = 20
+const loading = ref(false)
+const noMore = ref(false)
+
+const totalUnread = computed(() => list.value.reduce((sum, c) => sum + (c.unreadCount || 0), 0))
+
+// ─── 加载 ────────────────────────────────────────────
+async function loadList(reset = false) {
+  if (!userStore.isLogin) return
+  if (loading.value) return
+  if (!reset && noMore.value) return
+  if (reset) {
+    page.value = 1
+    noMore.value = false
+    list.value = []
+  }
+  loading.value = true
+  try {
+    const res = await getConversationList(page.value, pageSize)
+    list.value.push(...res.list)
+    total.value = res.total
+    if (list.value.length >= res.total) noMore.value = true
+    page.value++
+  }
+  catch (err: any) {
+    uni.showToast({ title: err?.message || '加载失败', icon: 'none' })
+  }
+  finally {
+    loading.value = false
+  }
+}
+
+onShow(() => loadList(true))
+
+// ─── 全部已读 ────────────────────────────────────────
+const markingAll = ref(false)
+async function markAllRead() {
+  const unread = list.value.filter(c => c.unreadCount > 0)
+  if (!unread.length) return
+  markingAll.value = true
+  try {
+    await Promise.all(unread.map(c => markConversationRead(c.id)))
+    list.value.forEach((c) => { c.unreadCount = 0 })
+  }
+  catch {
+    // silent
+  }
+  finally {
+    markingAll.value = false
+  }
+}
+
+// ─── 滑动操作 ────────────────────────────────────────
+const swipedId = ref<number | null>(null)
+function onSwipe(id: number) {
+  swipedId.value = swipedId.value === id ? null : id
+}
+function closeSwipe() {
+  swipedId.value = null
+}
+
+async function markItemRead(conv: ConversationInfo) {
+  swipedId.value = null
+  if (!conv.unreadCount) return
+  try {
+    await markConversationRead(conv.id)
+    conv.unreadCount = 0
+  }
+  catch { /* silent */ }
+}
+
+function deleteItem(id: number) {
+  swipedId.value = null
+  list.value = list.value.filter(c => c.id !== id)
+}
+
+// ─── 导航 ────────────────────────────────────────────
+function goConversation(conv: ConversationInfo) {
+  if (swipedId.value) { closeSwipe(); return }
+  uni.navigateTo({ url: `/package-send/conversation-detail?id=${conv.id}&phone=${encodeURIComponent(conv.receiverPhoneMask)}` })
+}
+
+function goSend() {
+  uni.navigateTo({ url: '/package-send/send' })
+}
+
+function goLogin() {
+  uni.navigateTo({ url: '/package-user/login' })
+}
+
+// ─── 工具函数 ────────────────────────────────────────
+function formatTime(t?: string | null) {
+  if (!t) return ''
+  const d = new Date(t.replace('T', ' '))
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const yesterday = new Date(today.getTime() - 86400000)
+  const msgDate = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+  if (msgDate.getTime() === today.getTime()) {
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  }
+  if (msgDate.getTime() === yesterday.getTime()) return '昨天'
+  if (d.getFullYear() === now.getFullYear()) return `${d.getMonth() + 1}/${d.getDate()}`
+  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`
+}
+
+function avatarChar(phone: string) {
+  if (!phone) return '?'
+  const digits = phone.replace(/\D/g, '')
+  return digits.charAt(0) || '?'
+}
+
+// 根据手机号末位生成头像背景色
+const AVATAR_COLORS = ['#fe8973', '#f4a261', '#e76f51', '#a8dadc', '#457b9d', '#8ecae6', '#b5838d', '#c77dff', '#6a994e']
+function avatarColor(phone: string) {
+  const digits = phone.replace(/\D/g, '')
+  const last = Number(digits.charAt(digits.length - 1)) || 0
+  return AVATAR_COLORS[last % AVATAR_COLORS.length]
+}
+</script>
+
+<template>
+  <view class="min-h-[100vh] bg-[#fafafa]" @click="closeSwipe">
+    <!-- status bar -->
+    <!-- #ifndef H5 -->
+    <view :style="{ height: `${statusBarHeight}px` }" />
+    <!-- #endif -->
+    <!-- #ifdef H5 -->
+    <view class="h-[22rpx]" />
+    <!-- #endif -->
+
+    <!-- nav bar -->
+    <view class="flex flex-row h-[88rpx] items-center justify-between px-[32rpx]">
+      <text class="text-[36rpx] font-[900] text-[#1a1a1a]">消息</text>
+      <view
+        v-if="totalUnread > 0"
+        class="rounded-[16rpx] bg-[#f5ece9] px-[20rpx] py-[8rpx]"
+        @click.stop="markAllRead"
+      >
+        <text class="text-[24rpx] font-[600] text-[#fe8973]">{{ markingAll ? '处理中...' : '全部已读' }}</text>
+      </view>
+    </view>
+
+    <!-- 未登录 -->
+    <view v-if="!userStore.isLogin" class="flex flex-col items-center justify-center py-[160rpx]">
+      <text class="text-[80rpx]">💬</text>
+      <text class="mt-[20rpx] text-[28rpx] text-[#a08a84]">登录后查看消息</text>
+      <view
+        class="mt-[40rpx] rounded-[28rpx] px-[60rpx] py-[20rpx] text-[28rpx] font-[700] text-white"
+        style="background:linear-gradient(135deg,#fe8973,#fe6a5a);"
+        @click="goLogin"
+      >
+        去登录
+      </view>
+    </view>
+
+    <!-- 列表 -->
+    <scroll-view
+      v-else
+      scroll-y
+      class="h-[calc(100vh-88rpx)]"
+      @scrolltolower="loadList(false)"
+    >
+      <!-- 空状态 -->
+      <view v-if="!loading && list.length === 0" class="flex flex-col items-center justify-center py-[120rpx]">
+        <view class="relative mb-[24rpx]">
+          <text class="text-[100rpx]">💬</text>
+          <text class="absolute -right-[10rpx] -top-[10rpx] text-[50rpx]">💭</text>
+        </view>
+        <text class="text-[28rpx] text-[#a08a84]">暂时无对话</text>
+        <text class="mt-[8rpx] text-[24rpx] text-[#c4b3ae]">去发送第一条消息开始吧</text>
+        <view
+          class="mt-[40rpx] rounded-[28rpx] px-[60rpx] py-[20rpx] text-[28rpx] font-[700] text-white"
+          style="background:linear-gradient(135deg,#fe8973,#fe6a5a);"
+          @click="goSend"
+        >
+          去发送
+        </view>
+      </view>
+
+      <!-- 对话列表 -->
+      <view v-else>
+        <view
+          v-for="conv in list"
+          :key="conv.id"
+          class="relative overflow-hidden"
+          @click.stop="goConversation(conv)"
+        >
+          <!-- 主体行 -->
+          <view
+            class="flex flex-row items-center gap-[20rpx] bg-white px-[28rpx] py-[24rpx] transition-transform"
+            :style="swipedId === conv.id ? 'transform:translateX(-200rpx)' : 'transform:translateX(0)'"
+          >
+            <!-- 头像 -->
+            <view
+              class="relative h-[88rpx] w-[88rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-full"
+              :style="{ backgroundColor: avatarColor(conv.receiverPhoneMask) }"
+            >
+              <text class="text-[36rpx] font-[700] text-white">
+                {{ avatarChar(conv.receiverPhoneMask) }}
+              </text>
+              <!-- 退订标记 -->
+              <view
+                v-if="conv.isReceiverUnsubscribed"
+                class="absolute -right-[4rpx] -top-[4rpx] h-[28rpx] w-[28rpx] flex flex-row items-center justify-center rounded-full bg-[#f44336]"
+              >
+                <text class="text-[16rpx] text-white">退</text>
+              </view>
+            </view>
+
+            <!-- 内容 -->
+            <view class="min-w-0 flex-1">
+              <view class="flex flex-row items-center justify-between">
+                <view class="flex flex-row items-center gap-[12rpx]">
+                  <text class="text-[30rpx] font-[700] text-[#1a1a1a]">{{ conv.receiverPhoneMask }}</text>
+                  <!-- 对方回复了 标签 -->
+                  <view
+                    v-if="conv.lastMsgIsReply && conv.unreadCount > 0"
+                    class="rounded-[8rpx] px-[10rpx] py-[2rpx]"
+                    style="background:#fff0ee"
+                  >
+                    <text class="text-[20rpx] font-[600] text-[#fe8973]">对方回复了</text>
+                  </view>
+                </view>
+                <text class="flex-shrink-0 text-[24rpx] text-[#c4b3ae]">{{ formatTime(conv.lastMsgTime) }}</text>
+              </view>
+
+              <view class="mt-[8rpx] flex flex-row items-center justify-between">
+                <text class="flex-1 truncate text-[26rpx] text-[#7a7a7a]">{{ conv.lastMsgContent || '暂无消息' }}</text>
+                <!-- 未读数 -->
+                <view
+                  v-if="conv.unreadCount > 0"
+                  class="ml-[12rpx] flex flex-row flex-shrink-0 min-w-[36rpx] h-[36rpx] items-center justify-center rounded-full bg-[#fe8973] px-[8rpx]"
+                >
+                  <text class="text-[20rpx] font-[700] text-white">{{ conv.unreadCount > 99 ? '99+' : conv.unreadCount }}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <!-- 滑动操作按钮 -->
+          <view
+            class="absolute right-0 top-0 h-full flex flex-row"
+            :style="swipedId === conv.id ? 'transform:translateX(0)' : 'transform:translateX(200rpx)'"
+          >
+            <view
+              class="h-full w-[100rpx] flex flex-col items-center justify-center bg-[#fe8973]"
+              @click.stop="markItemRead(conv)"
+            >
+              <view class="i-carbon-checkmark text-[32rpx] text-white" />
+              <text class="mt-[4rpx] text-[20rpx] text-white">标记已读</text>
+            </view>
+            <view
+              class="h-full w-[100rpx] flex flex-col items-center justify-center bg-[#f44336]"
+              @click.stop="deleteItem(conv.id)"
+            >
+              <view class="i-carbon-trash-can text-[32rpx] text-white" />
+              <text class="mt-[4rpx] text-[20rpx] text-white">删除</text>
+            </view>
+          </view>
+
+          <!-- 分割线 -->
+          <view class="ml-[136rpx] h-[1rpx] bg-[#f5f5f5]" />
+        </view>
+
+        <!-- 底部提示 -->
+        <view class="py-[30rpx] text-center">
+          <text v-if="loading" class="text-[24rpx] text-[#c4b3ae]">加载中...</text>
+          <text v-else-if="noMore && list.length > 0" class="text-[24rpx] text-[#c4b3ae]">已显示全部对话</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</template>

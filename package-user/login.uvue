@@ -1,0 +1,465 @@
+<script setup lang="ts">
+import { computed, onUnmounted, ref } from "vue";
+import { getCaptcha, sendSmsCode } from '@/api/user'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
+
+const showNotice = ref(false)
+const agreed = ref(false)
+const loading = ref(false)
+
+// 表单输入
+const phone = ref('')
+const smsCode = ref('')
+
+// 获取验证码倒计时
+const countdown = ref(0)
+let countdownTimer: ReturnType<typeof setInterval> | null = null
+
+// 图片验证码弹窗
+const showCaptcha = ref(false)
+const captchaImg = ref('')
+const captchaId = ref('')
+const captchaCode = ref('')
+const captchaLoading = ref(false)
+
+const sendBtnText = computed(() => (countdown.value > 0 ? `${countdown.value}s 后重发` : '获取验证码'))
+
+const statusCards = [
+  {
+    image: 'https://picsum.photos/seed/empty-warm/96/96',
+    title: '空状态',
+    desc: '暂无内容时的温柔陪伴',
+  },
+  {
+    image: 'https://picsum.photos/seed/loading-warm/96/96',
+    title: '加载中',
+    desc: '请稍等，正在努力中...',
+  },
+  {
+    image: 'https://picsum.photos/seed/error-warm/96/96',
+    title: '出错啦',
+    desc: '请检查网络后重试哦',
+  },
+]
+
+const noticeList = [
+  '本平台仅用于善意的信息传递（道歉、表白、祝福、感谢等）',
+  '请尊重收件人感受，避免频繁发送造成打扰',
+  '严禁发送骚扰、威胁、侮辱、违法内容',
+  '对同一号码有发送频率限制',
+  '收件人可回复「TD」退订，退订后不再接收',
+  '违规使用将被永久封号并追究法律责任',
+]
+
+/** 校验手机号 */
+function isValidPhone(val: string) {
+  return /^1[3-9]\d{9}$/.test(val)
+}
+
+/** 校验用户协议勾选 */
+function checkAgree() {
+  if (!agreed.value) {
+    uni.showToast({ title: '请先阅读并同意用户协议和隐私政策', icon: 'none' })
+    return false
+  }
+  return true
+}
+
+/** 启动 60 秒倒计时 */
+function startCountdown() {
+  countdown.value = 60
+  countdownTimer && clearInterval(countdownTimer)
+  countdownTimer = setInterval(() => {
+    countdown.value -= 1
+    if (countdown.value <= 0 && countdownTimer)
+      clearInterval(countdownTimer)
+  }, 1000)
+}
+
+/** 拉取图片验证码 */
+async function refreshCaptcha() {
+  try {
+    captchaLoading.value = true
+    const res = await getCaptcha({ width: 150, height: 50, color: '#fe8973' })
+    captchaId.value = res.captchaId
+    captchaImg.value = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(res.data)}`
+  }
+  catch {
+    // 错误已在请求层统一提示
+  }
+  finally {
+    captchaLoading.value = false
+  }
+}
+
+/** 点击「获取验证码」：先校验手机号，再弹出图片验证码 */
+async function onGetSmsCode() {
+  if (countdown.value > 0)
+    return
+  if (!isValidPhone(phone.value)) {
+    uni.showToast({ title: '请输入正确的手机号', icon: 'none' })
+    return
+  }
+  captchaCode.value = ''
+  showCaptcha.value = true
+  await refreshCaptcha()
+}
+
+/** 确认图片验证码并发送短信 */
+async function confirmCaptcha() {
+  if (!captchaCode.value) {
+    uni.showToast({ title: '请输入图片验证码', icon: 'none' })
+    return
+  }
+  try {
+    await sendSmsCode({ phone: phone.value, captchaId: captchaId.value, code: captchaCode.value })
+    showCaptcha.value = false
+    uni.showToast({ title: '验证码已发送', icon: 'none' })
+    startCountdown()
+  }
+  catch {
+    // 失败后刷新图片验证码，便于重试
+    refreshCaptcha()
+  }
+}
+
+/** 登录成功后返回 */
+function goAfterLogin() {
+  const pages = getCurrentPages()
+  if (pages.length > 1)
+    uni.navigateBack()
+  else
+    uni.switchTab({ url: '/pages/index' })
+}
+
+/** 手机号验证码登录 */
+async function handlePhoneLogin() {
+  if (!isValidPhone(phone.value)) {
+    uni.showToast({ title: '请输入正确的手机号', icon: 'none' })
+    return
+  }
+  if (!smsCode.value) {
+    uni.showToast({ title: '请输入验证码', icon: 'none' })
+    return
+  }
+  if (!checkAgree())
+    return
+  try {
+    loading.value = true
+    await userStore.phoneLogin(phone.value, smsCode.value)
+    uni.showToast({ title: '登录成功', icon: 'success' })
+    setTimeout(goAfterLogin, 600)
+  }
+  catch {
+    // 错误已在请求层统一提示
+  }
+  finally {
+    loading.value = false
+  }
+}
+
+// #ifdef MP-WEIXIN
+// 预获取的登录 code，保证 getPhoneNumber 的加密数据与同一次登录的 session_key 匹配
+const loginCode = ref('')
+
+/** 调用 wx.login 获取 code */
+function wxLogin(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    uni.login({
+      provider: 'weixin',
+      success: res => resolve(res.code),
+      fail: reject,
+    })
+  })
+}
+
+/** 刷新预取的登录 code */
+async function refreshLoginCode() {
+  try {
+    loginCode.value = await wxLogin()
+  }
+  catch {
+    loginCode.value = ''
+  }
+}
+
+/** 微信一键登录（小程序手机号授权） */
+async function handleWxPhone(e: any) {
+  if (!checkAgree())
+    return
+  if (e?.detail?.errMsg !== 'getPhoneNumber:ok') {
+    uni.showToast({ title: '已取消微信授权', icon: 'none' })
+    return
+  }
+  try {
+    loading.value = true
+    // 优先使用预取的 code，确保与加密数据用同一 session_key 解密
+    const code = loginCode.value || (await wxLogin())
+    await userStore.miniPhoneLogin({
+      code,
+      encryptedData: e.detail.encryptedData,
+      iv: e.detail.iv,
+    })
+    uni.showToast({ title: '登录成功', icon: 'success' })
+    setTimeout(goAfterLogin, 600)
+  }
+  catch {
+    // 错误已在请求层统一提示
+  }
+  finally {
+    loading.value = false
+    // code 为一次性，使用后刷新，便于下次重试
+    refreshLoginCode()
+  }
+}
+
+// 进入页面即预取登录 code
+onShow(() => {
+  refreshLoginCode()
+})
+// #endif
+
+/** 返回上一页 */
+function goBack() {
+  const pages = getCurrentPages()
+  if (pages.length > 1)
+    uni.navigateBack()
+  else
+    uni.switchTab({ url: '/pages/index' })
+}
+
+onUnmounted(() => {
+  countdownTimer && clearInterval(countdownTimer)
+})
+</script>
+
+<template>
+  <view class="relative min-h-[100vh] overflow-hidden bg-[#fffaf7] text-[#3a2420]">
+    <!-- #ifdef H5 -->
+    <view class="h-[22rpx]" />
+    <!-- #endif -->
+    <!-- #ifndef H5 -->
+    <view class="h-[56rpx]" />
+    <!-- #endif -->
+
+    <view class="h-[112rpx] flex flex-row items-center justify-center border-b-[1rpx] border-[#f1ded7] bg-[#fffaf7] px-[44rpx]">
+      <text class="absolute left-[44rpx] top-[58rpx] text-[58rpx] text-[#282828] leading-[58rpx]" @click="goBack">
+        ‹
+      </text>
+      <text class="text-[38rpx] text-[#111111] leading-[48rpx] font-[800]">
+        登录
+      </text>
+    </view>
+
+    <scroll-view scroll-y class="h-[calc(100vh-112rpx)]" :show-scrollbar="false">
+      <view class="relative overflow-hidden bg-[linear-gradient(180deg,#ffd2c4,#fff4ee,#fffaf7)] pb-[156rpx]">
+        <image src="https://picsum.photos/seed/login-bg-soft/750/360" mode="aspectFill" class="absolute left-[0rpx] top-[0rpx] h-[360rpx] w-full opacity-34" />
+
+        <view class="relative pt-[52rpx] text-center">
+          <view class="mx-auto h-[128rpx] w-[150rpx] flex flex-row items-center justify-center rounded-[26rpx] bg-[linear-gradient(135deg,#ffc9a3,#ff9d8f)] shadow-[0_10rpx_28rpx_#ff8c734d]">
+            <view class="i-carbon-email text-[68rpx] text-white" />
+            <view class="i-carbon-favorite-filled absolute mt-[-44rpx] text-[34rpx] text-[#ff5f6d]" />
+          </view>
+          <text class="mt-[20rpx] block text-[48rpx] text-[#8c6255] leading-[62rpx] font-[900]">
+            帮你说出口
+          </text>
+          <text class="mt-[8rpx] block text-[28rpx] text-[#9b756a] leading-[38rpx]">
+            那些说不出口的话，我们帮你送达
+          </text>
+        </view>
+
+        <view class="relative mx-[34rpx] mt-[38rpx] rounded-[28rpx] bg-[#fffffff0] px-[36rpx] py-[34rpx] shadow-[0_16rpx_46rpx_#7846301f]">
+          <!-- 微信一键登录：仅小程序端支持手机号一键授权 -->
+          <!-- #ifdef MP-WEIXIN -->
+          <button
+            class="h-[86rpx] w-full flex flex-row items-center justify-center border-[0rpx] rounded-[24rpx] bg-[#55b84e] p-[0rpx] text-[#ffffff]"
+            open-type="getPhoneNumber"
+            :loading="loading"
+            @getphonenumber="handleWxPhone"
+          >
+            <view class="i-carbon-logo-wechat mr-[18rpx] text-[44rpx] text-white" />
+            <text class="text-[32rpx] text-[#ffffff] leading-[42rpx]">
+              微信一键登录
+            </text>
+          </button>
+
+          <view class="mt-[36rpx] flex flex-row items-center">
+            <view class="h-[1rpx] flex-1 bg-[#e8d8d0]" />
+            <text class="px-[34rpx] text-[24rpx] text-[#9a8077] leading-[32rpx]">
+              其他登录方式
+            </text>
+            <view class="h-[1rpx] flex-1 bg-[#e8d8d0]" />
+          </view>
+          <!-- #endif -->
+
+          <view class="mt-[24rpx] h-[78rpx] flex flex-row items-center border-[1rpx] border-[#eadbd5] rounded-[16rpx] bg-[#fffdfc] px-[26rpx]">
+            <text class="text-[30rpx] text-[#2b201d] leading-[38rpx]">
+              +86
+            </text>
+            <text class="ml-[18rpx] text-[22rpx] text-[#aa9d98] leading-[28rpx]">
+              ▼
+            </text>
+            <view class="ml-[24rpx] h-[34rpx] w-[1rpx] bg-[#eee2de]" />
+            <input
+              v-model="phone"
+              class="ml-[24rpx] h-[70rpx] flex-1 text-[28rpx] text-[#33201c] leading-[70rpx]"
+              placeholder="请输入手机号"
+              placeholder-class="text-[#b9aaa4]"
+              type="number"
+              :maxlength="11"
+            >
+          </view>
+
+          <view class="mt-[22rpx] h-[78rpx] flex flex-row items-center border-[1rpx] border-[#eadbd5] rounded-[16rpx] bg-[#fffdfc] px-[26rpx]">
+            <input
+              v-model="smsCode"
+              class="h-[70rpx] flex-1 text-[28rpx] text-[#33201c] leading-[70rpx]"
+              placeholder="请输入验证码"
+              placeholder-class="text-[#b9aaa4]"
+              type="number"
+              :maxlength="6"
+            >
+            <button
+              class="h-[52rpx] min-w-[156rpx] border-[1rpx] border-[#ffc5bc] rounded-[18rpx] bg-[#fff8f6] p-[0rpx] px-[16rpx] text-[24rpx] leading-[52rpx]"
+              :class="countdown > 0 ? 'text-[#c3b1aa]' : 'text-[#fe8973]'"
+              @click="onGetSmsCode"
+            >
+              {{ sendBtnText }}
+            </button>
+          </view>
+
+          <button
+            class="mt-[28rpx] h-[86rpx] w-full border-[0rpx] rounded-[20rpx] bg-[linear-gradient(90deg,#ffd0cb,#ffb9b4)] p-[0rpx] text-[32rpx] text-[#ffffff] leading-[86rpx]"
+            :loading="loading"
+            @click="handlePhoneLogin"
+          >
+            登录/注册
+          </button>
+
+          <view class="mt-[28rpx] flex flex-row items-center">
+            <view class="h-[34rpx] w-[34rpx] flex flex-row flex-shrink-0 items-center justify-center border-[2rpx] rounded-[8rpx]" :class="agreed ? 'bg-[#fe8973] border-[#fe8973]' : 'bg-[#ffffff] border-[#cdbfb8]'" @click="agreed = !agreed">
+              <text v-if="agreed" class="text-[24rpx] text-[#ffffff] leading-[28rpx]">
+                ✓
+              </text>
+            </view>
+            <text class="ml-[18rpx] text-[25rpx] text-[#6b5b55] leading-[34rpx]">
+              我已阅读并同意
+            </text>
+            <text class="text-[25rpx] text-[#fe8973] leading-[34rpx]" @click="showNotice = true">
+              《用户协议》
+            </text>
+            <text class="text-[25rpx] text-[#6b5b55] leading-[34rpx]">
+              和
+            </text>
+            <text class="text-[25rpx] text-[#fe8973] leading-[34rpx]" @click="showNotice = true">
+              《隐私政策》
+            </text>
+          </view>
+
+          <view class="mt-[22rpx] flex flex-row items-center border-[1rpx] border-[#ffd9bd] rounded-[18rpx] bg-[#fff4e8] px-[22rpx] py-[18rpx]" @click="showNotice = true">
+            <view class="h-[74rpx] w-[74rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-[18rpx] bg-[linear-gradient(135deg,#ffb98f,#ff8f8a)]">
+              <view class="i-carbon-favorite-filled text-[40rpx] text-white" />
+            </view>
+            <view class="ml-[22rpx] min-w-[0rpx] flex-1">
+              <text class="block text-[25rpx] text-[#3d2923] leading-[34rpx] font-[800]">
+                温馨提示：
+              </text>
+              <text class="mt-[4rpx] block text-[25rpx] text-[#7b665e] leading-[34rpx]">
+                我们只帮你传递善意的话语，守护每一次真诚表达。
+              </text>
+            </view>
+          </view>
+        </view>
+
+        <view class="relative mt-[30rpx] px-[46rpx]">
+          <view class="flex flex-row items-center justify-center">
+            <view class="h-[1rpx] w-[120rpx] bg-[#f0d4c4]" />
+            <text class="mx-[18rpx] text-[24rpx] text-[#9b766b] leading-[32rpx]">
+              ✦ 体验小提示
+            </text>
+            <view class="h-[1rpx] w-[120rpx] bg-[#f0d4c4]" />
+          </view>
+          <view class="grid grid-cols-3 mt-[16rpx] gap-[16rpx]">
+            <view v-for="item in statusCards" :key="item.title" class="h-[118rpx] border-[1rpx] border-[#f5dcd2] rounded-[16rpx] bg-[#ffffffb8] px-[10rpx] py-[12rpx] text-center">
+              <image :src="item.image" mode="aspectFill" class="mx-auto h-[44rpx] w-[44rpx] rounded-[14rpx]" />
+              <text class="mt-[6rpx] block truncate text-[20rpx] text-[#3c2a25] leading-[26rpx] font-[700]">
+                {{ item.title }}
+              </text>
+              <text class="mt-[2rpx] block truncate text-[17rpx] text-[#9a8178] leading-[22rpx]">
+                {{ item.desc }}
+              </text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+
+    <!-- 图片验证码弹窗 -->
+    <view v-if="showCaptcha" class="fixed inset-[0rpx] z-[30] flex flex-row items-center justify-center bg-[#2c1e1947] px-[84rpx]">
+      <view class="w-full rounded-[22rpx] bg-[#fffefa] px-[36rpx] py-[36rpx] shadow-[0_18rpx_58rpx_#492a2038]">
+        <text class="block text-center text-[34rpx] text-[#5b3a32] leading-[44rpx] font-[900]">
+          请输入图片验证码
+        </text>
+        <view class="mt-[28rpx] flex flex-row items-center gap-[18rpx]">
+          <input
+            v-model="captchaCode"
+            class="h-[80rpx] flex-1 border-[1rpx] border-[#eadbd5] rounded-[16rpx] bg-[#fffdfc] px-[24rpx] text-[28rpx] text-[#33201c] leading-[80rpx]"
+            placeholder="图片验证码"
+            placeholder-class="text-[#b9aaa4]"
+          >
+          <view class="h-[80rpx] w-[200rpx] flex flex-row items-center justify-center overflow-hidden border-[1rpx] border-[#eadbd5] rounded-[16rpx] bg-[#fff]" @click="refreshCaptcha">
+            <image v-if="captchaImg" :src="captchaImg" mode="aspectFit" class="h-[80rpx] w-[200rpx]" />
+            <text v-else class="text-[22rpx] text-[#b9aaa4] leading-[30rpx]">
+              {{ captchaLoading ? '加载中…' : '点击刷新' }}
+            </text>
+          </view>
+        </view>
+        <text class="mt-[14rpx] block text-[22rpx] text-[#9a8178] leading-[30rpx]">
+          看不清？点击图片刷新
+        </text>
+        <view class="mt-[28rpx] flex flex-row gap-[18rpx]">
+          <button class="h-[72rpx] flex-1 border-[1rpx] border-[#e3d3cc] rounded-[18rpx] bg-[#fff] p-[0rpx] text-[28rpx] text-[#7b665e] leading-[72rpx]" @click="showCaptcha = false">
+            取消
+          </button>
+          <button class="h-[72rpx] flex-1 border-[0rpx] rounded-[18rpx] bg-[#fe8973] p-[0rpx] text-[28rpx] text-[#ffffff] leading-[72rpx]" @click="confirmCaptcha">
+            确认发送
+          </button>
+        </view>
+      </view>
+    </view>
+
+    <!-- 使用须知弹窗 -->
+    <view v-if="showNotice" class="fixed inset-[0rpx] z-[20] flex flex-row items-center justify-center bg-[#2c1e1947] px-[84rpx]">
+      <view class="max-h-[660rpx] w-full rounded-[22rpx] bg-[#fffefa] px-[32rpx] py-[34rpx] shadow-[0_18rpx_58rpx_#492a2038]">
+        <text class="block text-center text-[38rpx] text-[#5b3a32] leading-[48rpx] font-[900]">
+          使用须知
+        </text>
+        <view class="mt-[12rpx] flex flex-row items-center justify-center">
+          <view class="h-[2rpx] w-[52rpx] bg-[#ffb099]" />
+          <text class="mx-[18rpx] text-[24rpx] text-[#fe8973] leading-[28rpx]">
+            ♥
+          </text>
+          <view class="h-[2rpx] w-[52rpx] bg-[#ffb099]" />
+        </view>
+        <scroll-view scroll-y class="mt-[24rpx] max-h-[360rpx]" :show-scrollbar="true">
+          <text class="block text-[25rpx] text-[#5b3f37] leading-[38rpx]">
+            感谢你来到「帮你说出口」。在使用之前，请了解以下约定：
+          </text>
+          <view v-for="(item, index) in noticeList" :key="item" class="mt-[14rpx] flex flex-row">
+            <text class="w-[40rpx] text-[25rpx] text-[#5b3f37] leading-[38rpx]">
+              {{ index + 1 }}.
+            </text>
+            <text class="flex-1 text-[25rpx] text-[#5b3f37] leading-[38rpx]">
+              {{ item }}
+            </text>
+          </view>
+        </scroll-view>
+        <button class="mt-[28rpx] h-[72rpx] w-full border-[0rpx] rounded-[18rpx] bg-[#fe8973] p-[0rpx] text-[30rpx] text-[#ffffff] leading-[72rpx]" @click="showNotice = false">
+          我已阅读并同意
+        </button>
+      </view>
+    </view>
+  </view>
+</template>

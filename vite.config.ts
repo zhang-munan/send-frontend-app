@@ -1,49 +1,32 @@
-import Uni from '@uni-helper/plugin-uni'
-import UniHelperComponents from '@uni-helper/vite-plugin-uni-components'
-import UniHelperLayouts from '@uni-helper/vite-plugin-uni-layouts'
-import UniHelperManifest from '@uni-helper/vite-plugin-uni-manifest'
-import UniHelperPages from '@uni-helper/vite-plugin-uni-pages'
-import UnoCSS from 'unocss/vite'
-import AutoImport from 'unplugin-auto-import/vite'
-import { defineConfig } from 'vite'
-import UniPolyfill from 'vite-plugin-uni-polyfill'
+import { defineConfig } from "vite";
+import { cool } from "@cool-vue/unix";
+import { proxy } from "./config/proxy";
+import tailwindcss from "tailwindcss";
+import { join } from "node:path";
+import uni from "@dcloudio/vite-plugin-uni";
 
-// https://vitejs.dev/config/
+const resolve = (dir: string) => join(__dirname, dir);
+
+for (const i in proxy) {
+	proxy[`/${i}/`] = proxy[i];
+}
+
 export default defineConfig({
-  plugins: [
-    // https://uni-helper.js.org/vite-plugin-uni-manifest
-    UniHelperManifest(),
-    // https://uni-helper.js.org/vite-plugin-uni-pages
-    UniHelperPages({
-      dts: 'src/uni-pages.d.ts',
-      subPackages: [
-        'src/package-send',
-        'src/package-template',
-        'src/package-order',
-        'src/package-feedback',
-        'src/package-user',
-        'src/package-demo',
-      ],
-    }),
-    // https://uni-helper.js.org/vite-plugin-uni-layouts
-    UniHelperLayouts(),
-    // https://uni-helper.js.org/vite-plugin-uni-components
-    UniHelperComponents({
-      dts: 'src/components.d.ts',
-      directoryAsNamespace: true,
-    }),
-    // https://uni-helper.js.org/plugin-uni
-    Uni(),
-    UniPolyfill(),
-    // https://github.com/antfu/unplugin-auto-import
-    AutoImport({
-      imports: ['vue', '@vueuse/core', 'uni-app'],
-      dts: 'src/auto-imports.d.ts',
-      dirs: ['src/composables', 'src/stores', 'src/utils'],
-      vueTemplate: true,
-    }),
-    // https://github.com/antfu/unocss
-    // see unocss.config.ts for config
-    UnoCSS(),
-  ],
-})
+	plugins: [
+		uni(),
+		cool({
+			proxy
+		})
+	],
+
+	server: {
+		port: 9900,
+		proxy
+	},
+
+	css: {
+		postcss: {
+			plugins: [tailwindcss({ config: resolve("./tailwind.config.ts") })]
+		}
+	}
+});

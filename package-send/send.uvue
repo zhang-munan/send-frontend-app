@@ -1,0 +1,466 @@
+<script setup lang="ts">
+import { computed, onMounted, ref } from "vue";
+import { createOrder, getBalance } from '@/api/order'
+import { sendMessage } from '@/api/message'
+
+const statusBarHeight = ref(0)
+// #ifndef H5
+statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight || 0
+// #endif
+
+const phone = ref('')
+const message = ref('对不起，之前是我太冲动了。其实我一直很在意你的感受，也真心希望我们还能好好说话。如果你愿意，我想认真向你道歉。')
+const isAnonymous = ref(true)
+const sendMode = ref<'immediate' | 'scheduled'>('immediate')
+const showTemplatePanel = ref(true)
+const showConfirmModal = ref(false)
+const activeCategory = ref('全部')
+const isCreatingOrder = ref(false)
+
+/** 用户剩余配额 */
+const userQuota = ref(0)
+/** 是否已加载过余额 */
+const balanceLoaded = ref(false)
+
+const MESSAGE_LIMIT = 500
+
+/** 本次发送计费条数 */
+const smsCount = computed(() => Math.ceil((message.value.length || 1) / 70))
+
+/** 预估费用：按 70 字/条，每条 0.05 元 */
+const estimatedFee = computed(() => (smsCount.value * 0.05).toFixed(2))
+
+/** 是否有足够配额直接发送 */
+const hasEnoughQuota = computed(() => userQuota.value >= smsCount.value)
+
+onLoad((options) => {
+  if (options?.content) {
+    message.value = decodeURIComponent(options.content)
+    showTemplatePanel.value = false
+  }
+})
+
+onMounted(async () => {
+  try {
+    const bal = await getBalance()
+    userQuota.value = bal.messageQuota
+  }
+  catch { /* 未登录或接口失败，不影响页面加载 */ }
+  finally {
+    balanceLoaded.value = true
+  }
+})
+
+const categories = ['全部', '道歉和解', '感恩感谢', '表白爱意', '祝福鼓励', '致谢感恩', '温暖关心']
+
+const templates = [
+  {
+    id: 1,
+    title: '真诚道歉',
+    preview: '对不起，之前是我太冲动了，没有处理好情绪，冷静之后，我想...',
+    tag: '道歉和解',
+    emoji: '🌹',
+    bgColor: '#ffc8c8',
+  },
+  {
+    id: 2,
+    title: '和好如初',
+    preview: '影不想因为一时的冲动，影响我们之间的关系，我很珍惜这段关系...',
+    tag: '道歉和解',
+    emoji: '💕',
+    bgColor: '#ffd4e0',
+  },
+  {
+    id: 3,
+    title: '温柔关心',
+    preview: '最近还好吗？天气转凉了，记得照顾好自己，希望你每天都...',
+    tag: '温暖关心',
+    emoji: '💐',
+    bgColor: '#e8d4f0',
+  },
+]
+
+const filteredTemplates = computed(() => {
+  if (activeCategory.value === '全部')
+    return templates
+  return templates.filter(t => t.tag === activeCategory.value)
+})
+
+const maskedPhone = computed(() => {
+  const p = phone.value.replace(/\s/g, '')
+  if (!p || p.length < 7)
+    return '138****8000'
+  return p.replace(/^(\d{3})\d{4}(\d{4})$/, '$1****$2')
+})
+
+const confirmItems = [
+  '消息内容善意、得体',
+  '不会给对方造成困扰',
+  '我已了解平台使用规范',
+]
+
+function goBack() {
+  uni.navigateBack()
+}
+
+function handleSelectTemplate(tpl: typeof templates[0]) {
+  message.value = tpl.preview
+  showTemplatePanel.value = false
+}
+
+/** 点击「确认发送」：根据配额情况走不同路径 */
+async function handleConfirmSend() {
+  const rawPhone = phone.value.replace(/\s/g, '')
+  if (!rawPhone || !/^1\d{10}$/.test(rawPhone)) {
+    uni.showToast({ title: '请输入正确的11位手机号', icon: 'none' })
+    return
+  }
+  if (!message.value.trim()) {
+    uni.showToast({ title: '请输入消息内容', icon: 'none' })
+    return
+  }
+
+  isCreatingOrder.value = true
+  showConfirmModal.value = false
+
+  try {
+    if (hasEnoughQuota.value) {
+      // ── 场景 A：配额充足，直接调用发送接口 ──
+      await sendMessage({
+        receiverPhone: rawPhone,
+        content: message.value,
+        isAnonymous: isAnonymous.value ? 1 : 0,
+        sendType: sendMode.value === 'scheduled' ? 2 : 1,
+      })
+      // 本地更新配额显示
+      userQuota.value = Math.max(0, userQuota.value - smsCount.value)
+      uni.showToast({ title: '发送成功，等待审核', icon: 'success' })
+      setTimeout(() => uni.navigateBack(), 1500)
+    }
+    else {
+      // ── 场景 B：无配额，创建订单后跳支付页 ──
+      const order = await createOrder({
+        receiverPhone: rawPhone,
+        content: message.value,
+        isAnonymous: isAnonymous.value ? 1 : 0,
+        sendType: sendMode.value === 'scheduled' ? 2 : 1,
+      })
+      uni.navigateTo({ url: `/package-order/pay?orderId=${order.id}` })
+    }
+  }
+  catch (err: any) {
+    uni.showToast({ title: err?.message || '操作失败，请重试', icon: 'none' })
+    showConfirmModal.value = true
+  }
+  finally {
+    isCreatingOrder.value = false
+  }
+}
+</script>
+
+<template>
+  <view class="min-h-[100vh] bg-[#fef7f5] text-[#4a2b24]">
+    <!-- Status bar -->
+    <!-- #ifndef H5 -->
+    <view :style="{ height: `${statusBarHeight}px` }" />
+    <!-- #endif -->
+    <!-- #ifdef H5 -->
+    <view class="h-[22rpx]" />
+    <!-- #endif -->
+
+    <!-- Nav bar -->
+    <view class="relative h-[88rpx] flex flex-row items-center px-[20rpx]">
+      <view class="h-[72rpx] w-[72rpx] flex flex-row items-center" @click="goBack">
+        <view class="i-carbon-chevron-left text-[40rpx] text-[#4a2b24]" />
+      </view>
+      <text class="pointer-events-none absolute left-0 right-0 text-center text-[34rpx] leading-[88rpx] font-[800] text-[#4a2b24]">
+        表达心意
+      </text>
+      <view class="ml-auto flex flex-row items-center gap-[6rpx]">
+        <view class="i-carbon-recently-viewed text-[26rpx] text-[#7a5147]" />
+        <text class="text-[26rpx] text-[#7a5147]">发送记录</text>
+      </view>
+    </view>
+
+    <!-- Scrollable content -->
+    <view class="px-[24rpx] pb-[200rpx]">
+
+      <!-- Warning banner -->
+      <view class="h-[72rpx] flex flex-row items-center border border-solid border-[#f5dcc0] rounded-[18rpx] bg-[#fef1e1] px-[18rpx]">
+        <view class="i-carbon-shield flex-shrink-0 text-[32rpx] text-[#fe8973]" />
+        <text class="ml-[12rpx] flex-1 text-[23rpx] text-[#6a3b29] leading-[32rpx] font-[600]">
+          善意是沟通的起点 💛 请确保你的消息真诚、得体，尊重对方的感受
+        </text>
+      </view>
+
+      <!-- 收件人 section -->
+      <view class="mt-[20rpx] rounded-[20rpx] bg-white px-[24rpx] pb-[20rpx] pt-[24rpx]" style="box-shadow: 0 4rpx 16rpx #fe89730f;">
+        <view class="flex flex-row items-center gap-[16rpx]">
+          <input
+            v-model="phone"
+            type="number"
+            class="min-w-0 flex-1 h-[56rpx] text-[36rpx] font-[700] leading-[56rpx] text-[#4a2b24]"
+            placeholder="138 0000 0000"
+            placeholder-style="color: #d4c4be; font-size: 32rpx; font-weight: 400;"
+          />
+          <view
+            class="flex flex-row flex-shrink-0 items-center gap-[8rpx] rounded-[14rpx] bg-[#fff0ed] px-[18rpx] py-[14rpx]"
+          >
+            <view class="i-carbon-user-avatar-filled-alt text-[26rpx] text-[#fe8973]" />
+            <text class="text-[23rpx] text-[#fe8973] font-[600]">从通讯录导入</text>
+          </view>
+        </view>
+        <text class="mt-[10rpx] block text-[23rpx] text-[#c4b3ae]">
+          请输入收件人手机号，我们将帮你把心意送达
+        </text>
+      </view>
+
+      <!-- 消息内容 section -->
+      <view class="mt-[16rpx] rounded-[20rpx] bg-white px-[24rpx] pb-[20rpx] pt-[20rpx]" style="box-shadow: 0 4rpx 16rpx #fe89730f;">
+        <view class="mb-[14rpx] flex flex-row items-center justify-between">
+          <text class="text-[28rpx] font-[700] text-[#4a2b24]">消息内容</text>
+          <text class="text-[22rpx] text-[#c4b3ae]">已输入 {{ message.length }}/{{ MESSAGE_LIMIT }} 字</text>
+        </view>
+        <textarea
+          v-model="message"
+          :maxlength="MESSAGE_LIMIT"
+          class="h-[200rpx] w-full text-[28rpx] text-[#4a2b24] leading-[44rpx]"
+          placeholder="请输入你想传达的话..."
+          placeholder-style="color: #c4b3ae;"
+        />
+        <view class="mt-[16rpx] flex flex-row items-center justify-between">
+          <!-- AI 帮我写 -->
+          <view class="flex flex-row items-center gap-[8rpx] rounded-[50rpx] border border-solid border-[#dfd0f8] bg-[#faf7ff] px-[22rpx] py-[12rpx]">
+            <view class="i-carbon-magic-wand-filled text-[24rpx] text-[#9b6ee0]" />
+            <text class="text-[24rpx] font-[600] text-[#9b6ee0]">AI 帮我写</text>
+          </view>
+          <!-- 选择模板 -->
+          <view
+            class="flex flex-row items-center gap-[8rpx] rounded-[50rpx] border border-solid border-[#f0e8e4] bg-[#fffaf8] px-[22rpx] py-[12rpx]"
+            @click="showTemplatePanel = !showTemplatePanel"
+          >
+            <view class="i-carbon-template text-[24rpx] text-[#a08a84]" />
+            <text class="text-[24rpx] text-[#7a5147]">选择模板</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- Template panel (conditional) -->
+      <view v-if="showTemplatePanel" class="mt-[16rpx] rounded-[20rpx] bg-white px-[24rpx] pb-[24rpx] pt-[20rpx]" style="box-shadow: 0 4rpx 16rpx #fe89730f;">
+        <!-- Header -->
+        <view class="mb-[16rpx] flex flex-row items-center justify-between">
+          <text class="text-[26rpx] font-[700] text-[#4a2b24]">选择模板</text>
+          <view class="h-[44rpx] w-[44rpx] flex flex-row items-center justify-center" @click="showTemplatePanel = false">
+            <view class="i-carbon-close text-[28rpx] text-[#a08a84]" />
+          </view>
+        </view>
+        <!-- Category tabs -->
+        <scroll-view scroll-x class="mb-[18rpx] whitespace-nowrap" :show-scrollbar="false">
+          <view class="inline-flex flex-row gap-[12rpx]">
+            <view
+              v-for="cat in categories"
+              :key="cat"
+              class="inline-flex flex-row items-center rounded-[50rpx] px-[22rpx] py-[9rpx]"
+              :class="activeCategory === cat ? 'bg-[#fe8973]' : 'bg-[#f5ece9]'"
+              @click="activeCategory = cat"
+            >
+              <text
+                class="text-[23rpx] font-[600]"
+                :class="activeCategory === cat ? 'text-white' : 'text-[#7a5147]'"
+              >
+                {{ cat }}
+              </text>
+            </view>
+          </view>
+        </scroll-view>
+        <!-- Template cards grid (3 columns) -->
+        <view class="grid grid-cols-3 gap-[14rpx]">
+          <view
+            v-for="tpl in filteredTemplates"
+            :key="tpl.id"
+            class="overflow-hidden rounded-[14rpx] bg-white"
+            style="box-shadow: 0 2rpx 10rpx #fe89731a;"
+            @click="handleSelectTemplate(tpl)"
+          >
+            <view
+              class="h-[110rpx] w-full flex flex-row items-center justify-center"
+              :style="{ backgroundColor: tpl.bgColor }"
+            >
+              <text class="text-[48rpx]">{{ tpl.emoji }}</text>
+            </view>
+            <view class="bg-white px-[10rpx] pb-[12rpx] pt-[8rpx]">
+              <text class="block text-[22rpx] font-[700] text-[#4a2b24]">{{ tpl.title }}</text>
+              <text class="mt-[4rpx] block text-[18rpx] text-[#a08a84] leading-[26rpx]" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                {{ tpl.preview }}
+              </text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 发送方式 section -->
+      <view class="mt-[16rpx] rounded-[20rpx] bg-white px-[24rpx] py-[24rpx]" style="box-shadow: 0 4rpx 16rpx #fe89730f;">
+        <view class="flex flex-row items-center justify-between">
+          <view class="flex flex-row min-w-0 flex-1 items-center gap-[16rpx]">
+            <view class="h-[64rpx] w-[64rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-[18rpx] bg-[#fff0ed]">
+              <text class="text-[34rpx]">🎭</text>
+            </view>
+            <view class="min-w-0 flex-1">
+              <text class="block text-[28rpx] font-[700] text-[#4a2b24]">匿名发送</text>
+              <text class="mt-[4rpx] block text-[22rpx] text-[#c4b3ae] leading-[32rpx]">
+                收件人将收到一条来自「帮你说出口」的匿名消息，不会暴露你的身份
+              </text>
+            </view>
+          </view>
+          <switch
+            class="ml-[16rpx] flex-shrink-0"
+            :checked="isAnonymous"
+            color="#fe8973"
+            @change="(e: any) => isAnonymous = e.detail.value"
+          />
+        </view>
+      </view>
+
+      <!-- Send timing section -->
+      <view class="mt-[16rpx] rounded-[20rpx] bg-white px-[24rpx] py-[24rpx]" style="box-shadow: 0 4rpx 16rpx #fe89730f;">
+        <view class="flex flex-row gap-[16rpx]">
+          <view
+            class="h-[80rpx] flex flex-row flex-1 items-center justify-center gap-[10rpx] rounded-[16rpx]"
+            :class="sendMode === 'immediate' ? 'bg-[#fe8973]' : 'border border-solid border-[#f0e8e4] bg-[#fffaf8]'"
+            @click="sendMode = 'immediate'"
+          >
+            <view
+              class="i-carbon-lightning text-[28rpx]"
+              :class="sendMode === 'immediate' ? 'text-white' : 'text-[#7a5147]'"
+            />
+            <text
+              class="text-[28rpx] font-[700]"
+              :class="sendMode === 'immediate' ? 'text-white' : 'text-[#7a5147]'"
+            >
+              立即发送
+            </text>
+          </view>
+          <view
+            class="h-[80rpx] flex flex-row flex-1 items-center justify-center gap-[10rpx] rounded-[16rpx]"
+            :class="sendMode === 'scheduled' ? 'bg-[#fe8973]' : 'border border-solid border-[#f0e8e4] bg-[#fffaf8]'"
+            @click="sendMode = 'scheduled'"
+          >
+            <view
+              class="i-carbon-time text-[28rpx]"
+              :class="sendMode === 'scheduled' ? 'text-white' : 'text-[#7a5147]'"
+            />
+            <text
+              class="text-[28rpx] font-[700]"
+              :class="sendMode === 'scheduled' ? 'text-white' : 'text-[#7a5147]'"
+            >
+              定时发送
+            </text>
+          </view>
+        </view>
+        <text class="mt-[12rpx] block text-[22rpx] text-[#c4b3ae]">
+          定时发送最早可选时间：当前时间 + 30分钟
+        </text>
+      </view>
+    </view>
+
+    <!-- Fixed bottom action bar -->
+    <view class="fixed bottom-0 left-0 right-0 border-t border-t-solid border-t-[#f0e8e4] bg-white px-[24rpx] pb-[48rpx] pt-[20rpx]">
+      <view class="flex flex-row items-center gap-[20rpx]">
+        <view class="flex flex-col flex-shrink-0">
+          <text v-if="hasEnoughQuota" class="text-[22rpx] text-[#7a5147]">
+            扣减 {{ smsCount }} 条配额（剩余 {{ userQuota }} 条）
+          </text>
+          <text v-else class="text-[22rpx] text-[#7a5147]">预计费用</text>
+          <view class="flex flex-row items-center gap-[6rpx]">
+            <text v-if="hasEnoughQuota" class="text-[30rpx] font-[800] leading-[46rpx] text-[#4caf50]">
+              免支付
+            </text>
+            <text v-else class="text-[38rpx] font-[800] leading-[46rpx] text-[#fe8973]">
+              ¥{{ estimatedFee }}
+            </text>
+            <view class="i-carbon-help text-[24rpx] text-[#c4b3ae]" />
+          </view>
+        </view>
+        <view
+          class="h-[88rpx] flex flex-row flex-1 items-center justify-center rounded-[22rpx] bg-[#fe8973]"
+          style="box-shadow: 0 8rpx 24rpx #fe89735c;"
+          @click="showConfirmModal = true"
+        >
+          <text class="text-[32rpx] font-[800] text-white">确认发送</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- Confirmation modal overlay -->
+    <view
+      v-if="showConfirmModal"
+      class="fixed inset-0 z-[20] flex flex-row items-center justify-center bg-[#2c1e196b] px-[40rpx]"
+      @click="showConfirmModal = false"
+    >
+      <view
+        class="relative w-full rounded-[28rpx] bg-white px-[36rpx] pb-[36rpx] pt-[36rpx]"
+        @click.stop
+      >
+        <!-- Heart decoration -->
+        <text class="absolute right-[28rpx] top-[-20rpx] text-[44rpx]">💕</text>
+        <!-- Title -->
+        <text class="block text-center text-[34rpx] font-[800] text-[#4a2b24]">发送确认</text>
+        <!-- Subtitle -->
+        <text class="mt-[16rpx] block text-[26rpx] text-[#7a5147]">在发送之前，请确认：</text>
+        <!-- Check items -->
+        <view class="mt-[14rpx] flex flex-col gap-[14rpx]">
+          <view v-for="item in confirmItems" :key="item" class="flex flex-row items-center gap-[14rpx]">
+            <view class="h-[36rpx] w-[36rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-full bg-[#fe8973]">
+              <view class="i-carbon-checkmark text-[20rpx] text-white" />
+            </view>
+            <text class="text-[26rpx] text-[#4a2b24]">{{ item }}</text>
+          </view>
+        </view>
+        <!-- Info card -->
+        <view class="mt-[20rpx] rounded-[16rpx] bg-[#fdf8f6] px-[20rpx] py-[4rpx]">
+          <view class="flex flex-row items-center justify-between border-b border-b-solid border-b-[#f0e8e4] py-[14rpx]">
+            <text class="text-[24rpx] text-[#7a5147]">收件人</text>
+            <text class="text-[24rpx] font-[600] text-[#4a2b24]">{{ maskedPhone }}</text>
+          </view>
+          <view class="border-b border-b-solid border-b-[#f0e8e4] py-[14rpx]">
+            <text class="text-[24rpx] text-[#7a5147]">消息预览</text>
+            <text class="mt-[6rpx] block text-[24rpx] text-[#4a2b24] leading-[36rpx]" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+              {{ message }}
+            </text>
+          </view>
+          <view class="flex flex-row items-center justify-between border-b border-b-solid border-b-[#f0e8e4] py-[14rpx]">
+            <text class="text-[24rpx] text-[#7a5147]">发送方式</text>
+            <text class="text-[24rpx] text-[#4a2b24]">{{ isAnonymous ? '匿名发送' : '实名发送' }}</text>
+          </view>
+          <view class="flex flex-row items-center justify-between py-[14rpx]">
+            <text class="text-[24rpx] text-[#7a5147]">费用</text>
+            <view class="flex flex-col items-end">
+              <text v-if="hasEnoughQuota" class="text-[24rpx] font-[700] text-[#4caf50]">
+                免支付（扣 {{ smsCount }} 条配额）
+              </text>
+              <text v-else class="text-[24rpx] font-[700] text-[#fe8973]">¥{{ estimatedFee }}</text>
+            </view>
+          </view>
+        </view>
+        <!-- Action buttons -->
+        <view class="mt-[24rpx] flex flex-row gap-[16rpx]">
+          <view
+            class="h-[80rpx] flex flex-row flex-1 items-center justify-center rounded-[16rpx] border border-solid border-[#f0e8e4]"
+            @click="showConfirmModal = false"
+          >
+            <text class="text-[28rpx] text-[#7a5147]">返回修改</text>
+          </view>
+          <view
+            class="h-[80rpx] flex flex-row flex-1 items-center justify-center rounded-[16rpx]"
+            :class="isCreatingOrder ? 'bg-[#fbb9ad]' : 'bg-[#fe8973]'"
+            @click="!isCreatingOrder && handleConfirmSend()"
+          >
+            <text class="text-[28rpx] font-[700] text-white">
+              {{ isCreatingOrder ? '处理中...' : hasEnoughQuota ? '确认发送' : '去支付' }}
+            </text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>

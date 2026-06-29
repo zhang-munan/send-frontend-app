@@ -1,0 +1,149 @@
+<script setup lang="ts">
+import { onMounted, ref } from "vue";
+import type { FeedbackInfo } from '@/api/feedback'
+import { FEEDBACK_STATUS, FEEDBACK_TYPES, getMyFeedbackList } from '@/api/feedback'
+
+const statusBarHeight = ref(0)
+// #ifndef H5
+statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight || 0
+// #endif
+
+const list = ref<FeedbackInfo[]>([])
+const loading = ref(true)
+const previewItem = ref<FeedbackInfo | null>(null)
+
+onMounted(async () => {
+  await loadList()
+})
+
+async function loadList() {
+  loading.value = true
+  try {
+    list.value = await getMyFeedbackList()
+  }
+  catch {
+    // error handled in request util
+  }
+  finally {
+    loading.value = false
+  }
+}
+
+function getTypeLabel(type: number) {
+  return FEEDBACK_TYPES.find(t => t.value === type)?.label || '其他'
+}
+
+function getStatusLabel(status: number) {
+  return FEEDBACK_STATUS.find(s => s.value === status)?.label || '待处理'
+}
+
+function getStatusClass(status: number) {
+  if (status === 1)
+    return 'text-[#35c96d] bg-[#eafbf1]'
+  if (status === 2)
+    return 'text-[#999] bg-[#f5f5f5]'
+  return 'text-[#ff8873] bg-[#fff2ef]'
+}
+
+function previewImages(images: string[], idx: number) {
+  uni.previewImage({
+    current: images[idx],
+    urls: images,
+  })
+}
+
+function goBack() {
+  uni.navigateBack()
+}
+
+</script>
+
+<template>
+  <view class="min-h-[100vh] bg-[#fff8f6]">
+    <!-- #ifndef H5 -->
+    <view :style="{ height: `${statusBarHeight}px` }" />
+    <!-- #endif -->
+
+    <!-- 顶部导航 -->
+    <view class="flex flex-row items-center px-[32rpx] py-[24rpx]">
+      <view class="flex flex-row h-[64rpx] w-[64rpx] items-center justify-center rounded-full bg-white/70" @tap="goBack">
+        <text class="i-carbon-chevron-left text-[36rpx] text-[#4a2b24]" />
+      </view>
+      <view class="flex-1 text-center text-[34rpx] font-semibold text-[#4a2b24]">
+        我的反馈
+      </view>
+      <view class="w-[64rpx]" />
+    </view>
+
+    <!-- 加载中 -->
+    <view v-if="loading" class="flex flex-col items-center justify-center pt-[200rpx]">
+      <view class="i-carbon-circle-dash animate-spin text-[80rpx] text-[#ff8873]" />
+      <text class="mt-[20rpx] text-[26rpx] text-[#c0a89a]">加载中...</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view v-else-if="list.length === 0" class="flex flex-col items-center justify-center pt-[200rpx]">
+      <text class="i-carbon-document-blank text-[120rpx] text-[#e0c8c0]" />
+      <text class="mt-[24rpx] text-[28rpx] text-[#b09090]">还没有提交过反馈</text>
+      <view
+        class="mt-[40rpx] rounded-full bg-[#ff8873] px-[48rpx] py-[16rpx] text-[26rpx] text-white"
+        @tap="goBack"
+      >
+        去提交反馈
+      </view>
+    </view>
+
+    <!-- 反馈列表 -->
+    <view v-else class="px-[28rpx] pb-[60rpx]">
+      <view
+        v-for="item in list"
+        :key="item.id"
+        class="mb-[24rpx] rounded-[20rpx] bg-white p-[28rpx] shadow-sm"
+      >
+        <!-- 顶部：类型 + 状态 + 时间 -->
+        <view class="mb-[16rpx] flex flex-row items-center justify-between">
+          <view class="flex flex-row items-center gap-[12rpx]">
+            <view class="rounded-full bg-[#fff2ef] px-[16rpx] py-[6rpx] text-[22rpx] font-semibold text-[#ff6b54]">
+              {{ getTypeLabel(item.type) }}
+            </view>
+            <view class="rounded-full px-[16rpx] py-[6rpx] text-[22rpx] font-semibold" :class="getStatusClass(item.status)">
+              {{ getStatusLabel(item.status) }}
+            </view>
+          </view>
+          <text class="text-[22rpx] text-[#c0a89a]">{{ item.createTime }}</text>
+        </view>
+
+        <!-- 反馈内容 -->
+        <text class="mb-[16rpx] block text-[26rpx] leading-[44rpx] text-[#4a2b24]">{{ item.content }}</text>
+
+        <!-- 图片 -->
+        <view v-if="item.images && item.images.length > 0" class="mb-[16rpx] flex flex-row flex-wrap gap-[12rpx]">
+          <image
+            v-for="(img, idx) in item.images"
+            :key="idx"
+            :src="img"
+            class="h-[120rpx] w-[120rpx] rounded-[8rpx] object-cover"
+            mode="aspectFill"
+            @tap="previewImages(item.images, idx)"
+          />
+        </view>
+
+        <!-- 联系方式 -->
+        <view v-if="item.contact" class="mb-[16rpx] flex flex-row items-center gap-[8rpx] text-[22rpx] text-[#b09090]">
+          <text class="i-carbon-phone text-[22rpx]" />
+          <text>{{ item.contact }}</text>
+        </view>
+
+        <!-- 管理员回复 -->
+        <view v-if="item.reply" class="rounded-[12rpx] bg-[#fff6f0] p-[20rpx]">
+          <view class="mb-[10rpx] flex flex-row items-center gap-[8rpx]">
+            <text class="i-carbon-chat-filled text-[24rpx] text-[#ff8873]" />
+            <text class="text-[22rpx] font-semibold text-[#ff6b54]">官方回复</text>
+            <text class="ml-auto text-[20rpx] text-[#c0a89a]">{{ item.replyTime }}</text>
+          </view>
+          <text class="text-[24rpx] leading-[40rpx] text-[#7a5c54]">{{ item.reply }}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
