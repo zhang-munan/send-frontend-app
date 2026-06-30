@@ -7,7 +7,7 @@ export function hasTextColor(className: string): boolean {
 	if (className == "") return false;
 
 	const regex =
-		/\btext-(primary|surface|red|blue|green|yellow|purple|pink|indigo|gray|grey|black|white|orange|amber|lime|emerald|teal|cyan|sky|violet|fuchsia|rose|slate|zinc|neutral|stone)(?:-\d+)?\b/;
+		/\btext-(primary|surface|red|blue|green|yellow|purple|pink|indigo|gray|grey|black|white|orange|amber|lime|emerald|teal|cyan|sky|violet|fuchsia|rose|slate|zinc|neutral|stone)(?:-\d+)?\b|\btext-\[(#|rgb|rgba|hsl|hsla|var\()[^\]]+\]/;
 
 	return regex.test(className);
 }

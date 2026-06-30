@@ -263,14 +263,14 @@ function avatarColor(phone: string) {
               class="h-full w-[100rpx] flex flex-col items-center justify-center bg-[#fe8973]"
               @click.stop="markItemRead(conv)"
             >
-              <view class="i-carbon-checkmark text-[32rpx] text-white" />
+              <cl-icon name="check-line" :size="16" :pt="{ className: 'text-white' }" />
               <text class="mt-[4rpx] text-[20rpx] text-white">标记已读</text>
             </view>
             <view
               class="h-full w-[100rpx] flex flex-col items-center justify-center bg-[#f44336]"
               @click.stop="deleteItem(conv.id)"
             >
-              <view class="i-carbon-trash-can text-[32rpx] text-white" />
+              <cl-icon name="delete-bin-line" :size="16" :pt="{ className: 'text-white' }" />
               <text class="mt-[4rpx] text-[20rpx] text-white">删除</text>
             </view>
           </view>

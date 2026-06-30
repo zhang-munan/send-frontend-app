@@ -106,7 +106,7 @@ async function handleSubmit() {
     <!-- 顶部导航 -->
     <view class="flex flex-row items-center px-[32rpx] py-[24rpx]">
       <view class="flex flex-row h-[64rpx] w-[64rpx] items-center justify-center rounded-full bg-white/70" @tap="goBack">
-        <text class="i-carbon-chevron-left text-[36rpx] text-[#4a2b24]" />
+        <cl-icon name="arrow-left-s-line" :size="18" :pt="{ className: 'text-[#4a2b24]' }" />
       </view>
       <view class="flex-1 text-center text-[34rpx] font-semibold">
         意见反馈
@@ -119,7 +119,7 @@ async function handleSubmit() {
     <!-- Banner -->
     <view class="mx-[28rpx] mb-[28rpx] flex flex-row items-center gap-[24rpx] rounded-[20rpx] bg-[linear-gradient(120deg,#fff3e0,#ffe8d6)] px-[28rpx] py-[24rpx] shadow-sm">
       <view class="flex flex-row h-[88rpx] w-[88rpx] flex-shrink-0 items-center justify-center rounded-[20rpx] bg-[linear-gradient(135deg,#ffd97d,#ff9b58)] shadow-md">
-        <text class="i-carbon-favorite-filled text-[44rpx] text-white" />
+        <cl-icon name="heart-fill" :size="22" :pt="{ className: 'text-white' }" />
       </view>
       <view>
         <view class="text-[28rpx] font-semibold text-[#4a2b24]">
@@ -154,7 +154,7 @@ async function handleSubmit() {
               : 'border border-[#e8d5cf] bg-[#fff8f6] text-[#7a5c54]'"
             @tap="selectType(item.value)"
           >
-            <text v-if="selectedType === item.value" class="i-carbon-checkmark text-[22rpx]" />
+            <cl-icon v-if="selectedType === item.value" name="check-line" :size="11" />
             <text>{{ item.label }}</text>
           </view>
         </view>
@@ -198,7 +198,7 @@ async function handleSubmit() {
               class="absolute right-[6rpx] top-[6rpx] flex flex-row h-[36rpx] w-[36rpx] items-center justify-center rounded-full bg-black/50"
               @tap="removeImage(idx)"
             >
-              <text class="i-carbon-close text-[22rpx] text-white" />
+              <cl-icon name="close-line" :size="11" :pt="{ className: 'text-white' }" />
             </view>
           </view>
           <!-- 添加按钮 -->
@@ -207,7 +207,7 @@ async function handleSubmit() {
             class="flex h-[160rpx] w-[160rpx] flex-col items-center justify-center gap-[8rpx] rounded-[12rpx] border-[2rpx] border-dashed border-[#e0c8c0] bg-[#fff8f6]"
             @tap="chooseImage"
           >
-            <text class="i-carbon-add text-[48rpx] text-[#e0a898]" />
+            <cl-icon name="add-line" :size="24" :pt="{ className: 'text-[#e0a898]' }" />
             <text class="text-[22rpx] text-[#c0a89a]">添加图片</text>
           </view>
         </view>
@@ -221,7 +221,7 @@ async function handleSubmit() {
           <text class="text-[28rpx] font-semibold">联系方式 <text class="text-[22rpx] font-normal text-[#b09090]">（可选）</text></text>
         </view>
         <view class="flex flex-row items-center gap-[16rpx] rounded-[12rpx] bg-[#fff8f6] px-[20rpx] py-[16rpx]">
-          <text class="i-carbon-phone text-[32rpx] text-[#ff6b54]" />
+          <cl-icon name="phone-line" :size="16" :pt="{ className: 'text-[#ff6b54]' }" />
           <input
             v-model="contact"
             class="flex-1 text-[26rpx] text-[#4a2b24]"
@@ -243,7 +243,7 @@ async function handleSubmit() {
 
       <!-- 底部提示 -->
       <view class="mb-[60rpx] flex flex-row items-center justify-center gap-[8rpx]">
-        <text class="i-carbon-security text-[22rpx] text-[#c0a89a]" />
+        <cl-icon name="shield-check-line" :size="11" :pt="{ className: 'text-[#c0a89a]' }" />
         <text class="text-[22rpx] text-[#c0a89a]">你的反馈将被严格保密，我们会尽快处理</text>
       </view>
     </view>

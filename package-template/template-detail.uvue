@@ -168,7 +168,7 @@ onLoad((options) => {
         class="h-[64rpx] w-[64rpx] flex flex-row items-center justify-center rounded-[64rpx] bg-[#ffffffd9]"
         @click="goBack"
       >
-        <view class="i-carbon-chevron-left text-[32rpx] text-[#4a2b24]" />
+        <cl-icon name="arrow-left-s-line" :size="16" :pt="{ className: 'text-[#4a2b24]' }" />
       </view>
       <text class="text-[32rpx] text-[#2c1810] leading-[44rpx] font-[700]">
         模板详情
@@ -178,16 +178,17 @@ onLoad((options) => {
           class="h-[64rpx] w-[64rpx] flex flex-row items-center justify-center rounded-[64rpx] bg-[#ffffffd9]"
           @click="toggleCollect"
         >
-          <view
-            class="text-[30rpx]"
-            :class="detail?.isCollected ? 'i-carbon-favorite-filled text-[#fe8973]' : 'i-carbon-favorite text-[#7a5147]'"
+          <cl-icon
+            :name="detail?.isCollected ? 'heart-fill' : 'heart-line'"
+            :size="15"
+            :color="detail?.isCollected ? '#fe8973' : '#7a5147'"
           />
         </view>
         <view
           class="h-[64rpx] w-[64rpx] flex flex-row items-center justify-center rounded-[64rpx] bg-[#ffffffd9]"
           @click="onShare"
         >
-          <view class="i-carbon-share text-[28rpx] text-[#7a5147]" />
+          <cl-icon name="share-line" :size="14" :pt="{ className: 'text-[#7a5147]' }" />
         </view>
       </view>
     </view>
@@ -205,7 +206,7 @@ onLoad((options) => {
             class="flex flex-row items-center gap-[8rpx] rounded-[30rpx] px-[20rpx] py-[8rpx]"
             style="background: #ffffff8c;"
           >
-            <view class="i-carbon-infinite text-[22rpx] text-[#7a4a3c]" />
+            <cl-icon name="links-line" :size="11" :pt="{ className: 'text-[#7a4a3c]' }" />
             <text class="text-[22rpx] text-[#7a4a3c] leading-[28rpx] font-[600]">
               匿名消息
             </text>
@@ -239,7 +240,7 @@ onLoad((options) => {
             class="flex flex-row items-center gap-[6rpx]"
             @click="copyContent"
           >
-            <view class="i-carbon-copy text-[22rpx] text-[#7a4a3c]" />
+            <cl-icon name="file-copy-line" :size="11" :pt="{ className: 'text-[#7a4a3c]' }" />
             <text class="text-[22rpx] text-[#7a4a3c] leading-[28rpx]">
               点击可复制全文
             </text>
@@ -265,7 +266,7 @@ onLoad((options) => {
             {{ detail?.content || '' }}
           </text>
           <view class="mt-[12rpx] flex flex-row items-center gap-[6rpx]">
-            <view class="i-carbon-group text-[22rpx] text-[#fe8973]" />
+            <cl-icon name="group-line" :size="11" :pt="{ className: 'text-[#fe8973]' }" />
             <text class="text-[22rpx] text-[#a07870] leading-[28rpx]">
               已有 <text class="text-[#fe8973] font-[700]">{{ formatCount(detail?.useCount || 0) }}</text> 人使用
             </text>
@@ -283,7 +284,7 @@ onLoad((options) => {
           class="h-[72rpx] w-[72rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-[18rpx]"
           style="background: linear-gradient(135deg, #ffd36a, #ffb933);"
         >
-          <view class="i-carbon-security text-[36rpx] text-[#ffffff]" />
+          <cl-icon name="shield-check-line" :size="18" :pt="{ className: 'text-[#ffffff]' }" />
         </view>
         <view class="min-w-[0rpx] flex-1">
           <text class="block text-[26rpx] text-[#7a5c00] leading-[36rpx] font-[800]">
@@ -308,7 +309,7 @@ onLoad((options) => {
             <text class="text-[24rpx] text-[#8c756e] leading-[32rpx]">
               查看更多
             </text>
-            <view class="i-carbon-caret-right text-[20rpx] text-[#8c756e]" />
+            <cl-icon name="arrow-right-s-fill" :size="10" :pt="{ className: 'text-[#8c756e]' }" />
           </view>
         </view>
         <view class="grid grid-cols-4 gap-[12rpx]">
@@ -348,9 +349,10 @@ onLoad((options) => {
         :class="detail?.isCollected ? 'border-[#fe8973] bg-[#fff5f3]' : 'border-[#d4b8b2] bg-[#ffffff]'"
         @click="toggleCollect"
       >
-        <view
-          class="text-[30rpx]"
-          :class="detail?.isCollected ? 'i-carbon-favorite-filled text-[#fe8973]' : 'i-carbon-favorite text-[#7a5147]'"
+        <cl-icon
+          :name="detail?.isCollected ? 'heart-fill' : 'heart-line'"
+          :size="15"
+          :color="detail?.isCollected ? '#fe8973' : '#7a5147'"
         />
         <text
           class="text-[28rpx] leading-[36rpx] font-[700]"

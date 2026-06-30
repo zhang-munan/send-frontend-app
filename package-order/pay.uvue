@@ -178,7 +178,7 @@ function goBack() {
     <!-- Nav bar -->
     <view class="relative h-[88rpx] flex flex-row items-center px-[20rpx]">
       <view class="h-[72rpx] w-[72rpx] flex flex-row items-center" @click="goBack">
-        <view class="i-carbon-chevron-left text-[40rpx] text-[#4a2b24]" />
+        <cl-icon name="arrow-left-s-line" :size="20" :pt="{ className: 'text-[#4a2b24]' }" />
       </view>
       <text class="pointer-events-none absolute left-0 right-0 text-center text-[34rpx] leading-[88rpx] font-[800] text-[#4a2b24]">
         确认支付
@@ -187,7 +187,7 @@ function goBack() {
 
     <!-- Loading skeleton -->
     <view v-if="loading" class="flex flex-col items-center justify-center py-[120rpx]">
-      <view class="i-carbon-progress-bar text-[60rpx] text-[#fe8973] animate-spin" />
+      <cl-icon name="loader-4-line" :size="30" :pt="{ className: 'text-[#fe8973] animate-spin' }" />
       <text class="mt-[20rpx] text-[26rpx] text-[#a08a84]">加载中...</text>
     </view>
 
@@ -282,7 +282,7 @@ function goBack() {
               v-if="!method.disabled && selectedPayment === method.id"
               class="h-[40rpx] w-[40rpx] flex flex-row items-center justify-center rounded-full bg-[#fe8973]"
             >
-              <view class="i-carbon-checkmark text-[22rpx] text-white" />
+              <cl-icon name="check-line" :size="11" :pt="{ className: 'text-white' }" />
             </view>
             <view
               v-else-if="!method.disabled"
@@ -304,7 +304,7 @@ function goBack() {
           <text class="text-[80rpx]">💕</text>
         </view>
         <view class="flex flex-row items-start gap-[14rpx]">
-          <view class="i-carbon-shield mt-[2rpx] flex-shrink-0 text-[34rpx] text-[#fe8973]" />
+          <cl-icon name="shield-check-line" :size="17" :pt="{ className: 'mt-[2rpx] flex-shrink-0 text-[#fe8973]' }" />
           <text class="flex-1 text-[24rpx] text-[#6a3b29] leading-[38rpx]">
             温馨提示：支付成功后，消息将进入审核队列，审核通过后自动送达。
           </text>

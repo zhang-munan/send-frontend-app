@@ -223,13 +223,13 @@ function formatItemTime(time: string) {
     <!-- nav bar -->
     <view class="relative h-[104rpx] flex flex-row items-center px-[24rpx]">
       <view class="h-[72rpx] w-[72rpx] flex flex-row items-center" @click="goBack">
-        <view class="i-carbon-chevron-left text-[46rpx] text-[#3f2119]" />
+        <cl-icon name="arrow-left-s-line" :size="23" :pt="{ className: 'text-[#3f2119]' }" />
       </view>
       <text class="pointer-events-none absolute left-0 right-0 text-center text-[40rpx] text-[#4a2b24] leading-[104rpx] font-[800]">
         账单明细
       </text>
       <view class="ml-auto h-[72rpx] flex flex-row items-center gap-[8rpx]" @click="showFilter">
-        <view class="i-carbon-filter text-[34rpx] text-[#4a2b24]" />
+        <cl-icon name="filter-line" :size="17" :pt="{ className: 'text-[#4a2b24]' }" />
         <text class="text-[30rpx] text-[#4a2b24]">
           筛选
         </text>
@@ -275,7 +275,7 @@ function formatItemTime(time: string) {
               <text class="text-[24rpx] text-[#5c352c]">
                 明细
               </text>
-              <view class="i-carbon-chevron-right text-[24rpx] text-[#5c352c]" />
+              <cl-icon name="arrow-right-s-line" :size="12" :pt="{ className: 'text-[#5c352c]' }" />
             </view>
           </view>
 
@@ -292,7 +292,7 @@ function formatItemTime(time: string) {
               <text class="text-[24rpx] text-[#5c352c]">
                 明细
               </text>
-              <view class="i-carbon-chevron-right text-[24rpx] text-[#5c352c]" />
+              <cl-icon name="arrow-right-s-line" :size="12" :pt="{ className: 'text-[#5c352c]' }" />
             </view>
           </view>
         </view>
@@ -320,17 +320,17 @@ function formatItemTime(time: string) {
           class="h-[58rpx] flex flex-row items-center gap-[10rpx] border border-[#ddd0cb] rounded-[32rpx] border-solid bg-[#ffffffa3] px-[22rpx]"
           @click="showFilter"
         >
-          <view class="i-carbon-calendar text-[28rpx] text-[#827570]" />
+          <cl-icon name="calendar-line" :size="14" :pt="{ className: 'text-[#827570]' }" />
           <text class="text-[26rpx] text-[#827570]">
             {{ periodLabel }}
           </text>
-          <view class="i-carbon-chevron-down text-[24rpx] text-[#827570]" />
+          <cl-icon name="arrow-down-s-line" :size="12" :pt="{ className: 'text-[#827570]' }" />
         </view>
       </view>
 
       <!-- empty state -->
       <view v-if="!loading && monthGroups.length === 0" class="flex flex-col items-center justify-center py-[150rpx]">
-        <view class="i-carbon-receipt text-[88rpx] text-[#f0c9c2]" />
+        <cl-icon name="bill-line" :size="44" :pt="{ className: 'text-[#f0c9c2]' }" />
         <text class="mt-[18rpx] text-[28rpx] text-[#a08a84]">
           暂无账单记录
         </text>
@@ -372,9 +372,9 @@ function formatItemTime(time: string) {
             class="h-[78rpx] w-[78rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-full"
             :style="item.iconBg"
           >
-            <view v-if="item.billType === 'recharge'" class="i-carbon-growth text-[42rpx] text-[#26bd58]" />
-            <view v-else-if="item.billType === 'refund'" class="i-carbon-undo text-[42rpx] text-[#288bf2]" />
-            <view v-else class="i-carbon-arrow-down-right text-[42rpx] text-[#ff4f59]" />
+            <cl-icon v-if="item.billType === 'recharge'" name="line-chart-line" :size="21" :pt="{ className: 'text-[#26bd58]' }" />
+            <cl-icon v-else-if="item.billType === 'refund'" name="refund-line" :size="21" :pt="{ className: 'text-[#288bf2]' }" />
+            <cl-icon v-else name="arrow-right-down-line" :size="21" :pt="{ className: 'text-[#ff4f59]' }" />
           </view>
           <view class="ml-[24rpx] min-w-0 flex-1">
             <text class="block truncate text-[30rpx] text-[#1f1715] leading-[38rpx] font-[600]">
@@ -387,7 +387,7 @@ function formatItemTime(time: string) {
           <text class="ml-[16rpx] w-[150rpx] text-right text-[31rpx] font-[900]" :style="{ color: item.amountColor }">
             {{ item.amountText }}
           </text>
-          <view class="i-carbon-chevron-right ml-[12rpx] flex-shrink-0 text-[30rpx] text-[#8d8581]" />
+          <cl-icon name="arrow-right-s-line" :size="15" :pt="{ className: 'ml-[12rpx] flex-shrink-0 text-[#8d8581]' }" />
         </view>
       </view>
 

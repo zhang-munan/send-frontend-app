@@ -198,7 +198,7 @@ catch {}
     <!-- 导航栏 -->
     <view class="sticky top-0 z-10 flex flex-row h-[88rpx] items-center bg-[#fffaf9] px-[28rpx] shadow-[0_2rpx_12rpx_#59392d0f]">
       <view class="h-[64rpx] w-[64rpx] flex flex-row items-center justify-center rounded-[64rpx]" @click="goBack">
-        <view class="i-carbon-chevron-left text-[36rpx] text-[#4a2b24]" />
+        <cl-icon name="arrow-left-s-line" :size="18" :pt="{ className: 'text-[#4a2b24]' }" />
       </view>
       <text class="ml-[12rpx] text-[32rpx] text-[#1a0e0b] font-[700]">
         设置
@@ -215,7 +215,7 @@ catch {}
           <view class="flex flex-row h-[100rpx] items-center justify-between border-b-[1rpx] border-b-solid border-b-[#f0e8e4] px-[32rpx]">
             <view class="flex flex-row items-center gap-[18rpx]">
               <view class="h-[48rpx] w-[48rpx] flex flex-row items-center justify-center rounded-[14rpx] bg-[#fff0f1]">
-                <view class="i-carbon-checkmark-filled text-[26rpx] text-[#ff5b67]" />
+                <cl-icon name="checkbox-circle-fill" :size="13" :pt="{ className: 'text-[#ff5b67]' }" />
               </view>
               <text class="text-[28rpx] text-[#1a0e0b]">发送结果通知</text>
             </view>
@@ -228,7 +228,7 @@ catch {}
           <view class="flex flex-row h-[100rpx] items-center justify-between border-b-[1rpx] border-b-solid border-b-[#f0e8e4] px-[32rpx]">
             <view class="flex flex-row items-center gap-[18rpx]">
               <view class="h-[48rpx] w-[48rpx] flex flex-row items-center justify-center rounded-[14rpx] bg-[#f4eeff]">
-                <view class="i-carbon-reply-filled text-[26rpx] text-[#8d68ee]" />
+                <cl-icon name="reply-fill" :size="13" :pt="{ className: 'text-[#8d68ee]' }" />
               </view>
               <text class="text-[28rpx] text-[#1a0e0b]">回复通知</text>
             </view>
@@ -241,7 +241,7 @@ catch {}
           <view class="flex flex-row h-[100rpx] items-center justify-between px-[32rpx]">
             <view class="flex flex-row items-center gap-[18rpx]">
               <view class="h-[48rpx] w-[48rpx] flex flex-row items-center justify-center rounded-[14rpx] bg-[#fff6df]">
-                <view class="i-carbon-notification-filled text-[26rpx] text-[#ffb833]" />
+                <cl-icon name="notification-4-fill" :size="13" :pt="{ className: 'text-[#ffb833]' }" />
               </view>
               <text class="text-[28rpx] text-[#1a0e0b]">活动推送通知</text>
             </view>
@@ -263,7 +263,7 @@ catch {}
           <view class="flex flex-row h-[100rpx] items-center justify-between border-b-[1rpx] border-b-solid border-b-[#f0e8e4] px-[32rpx]">
             <view class="flex flex-row items-center gap-[18rpx]">
               <view class="h-[48rpx] w-[48rpx] flex flex-row items-center justify-center rounded-[14rpx] bg-[#e8f6ff]">
-                <view class="i-carbon-user-avatar text-[26rpx] text-[#3f97f4]" />
+                <cl-icon name="user-line" :size="13" :pt="{ className: 'text-[#3f97f4]' }" />
               </view>
               <view>
                 <text class="text-[28rpx] text-[#1a0e0b]">匿名发送默认开启</text>
@@ -282,13 +282,13 @@ catch {}
           >
             <view class="flex flex-row items-center gap-[18rpx]">
               <view class="h-[48rpx] w-[48rpx] flex flex-row items-center justify-center rounded-[14rpx] bg-[#e8f6ff]">
-                <view class="i-carbon-phone text-[26rpx] text-[#3f97f4]" />
+                <cl-icon name="phone-line" :size="13" :pt="{ className: 'text-[#3f97f4]' }" />
               </view>
               <text class="text-[28rpx] text-[#1a0e0b]">通讯录访问权限</text>
             </view>
             <view class="flex flex-row items-center gap-[8rpx]">
               <text class="text-[24rpx] text-[#c4b3ae]">前往系统设置</text>
-              <view class="i-carbon-chevron-right text-[26rpx] text-[#c4b3ae]" />
+              <cl-icon name="arrow-right-s-line" :size="13" :pt="{ className: 'text-[#c4b3ae]' }" />
             </view>
           </view>
         </view>
@@ -306,11 +306,11 @@ catch {}
           >
             <view class="flex flex-row items-center gap-[18rpx]">
               <view class="h-[48rpx] w-[48rpx] flex flex-row items-center justify-center rounded-[14rpx] bg-[#e8f6ff]">
-                <view class="i-carbon-mobile text-[26rpx] text-[#3f97f4]" />
+                <cl-icon name="smartphone-line" :size="13" :pt="{ className: 'text-[#3f97f4]' }" />
               </view>
               <text class="text-[28rpx] text-[#1a0e0b]">修改手机号</text>
             </view>
-            <view class="i-carbon-chevron-right text-[26rpx] text-[#c4b3ae]" />
+            <cl-icon name="arrow-right-s-line" :size="13" :pt="{ className: 'text-[#c4b3ae]' }" />
           </view>
           <view
             class="flex flex-row h-[100rpx] items-center justify-between border-b-[1rpx] border-b-solid border-b-[#f0e8e4] px-[32rpx]"
@@ -318,13 +318,13 @@ catch {}
           >
             <view class="flex flex-row items-center gap-[18rpx]">
               <view class="h-[48rpx] w-[48rpx] flex flex-row items-center justify-center rounded-[14rpx] bg-[#edfff4]">
-                <view class="i-carbon-certificate text-[26rpx] text-[#35c96d]" />
+                <cl-icon name="verified-badge-line" :size="13" :pt="{ className: 'text-[#35c96d]' }" />
               </view>
               <text class="text-[28rpx] text-[#1a0e0b]">实名认证</text>
             </view>
             <view class="flex flex-row items-center gap-[8rpx]">
               <text class="text-[24rpx] text-[#c4b3ae]">未认证</text>
-              <view class="i-carbon-chevron-right text-[26rpx] text-[#c4b3ae]" />
+              <cl-icon name="arrow-right-s-line" :size="13" :pt="{ className: 'text-[#c4b3ae]' }" />
             </view>
           </view>
           <view
@@ -333,11 +333,11 @@ catch {}
           >
             <view class="flex flex-row items-center gap-[18rpx]">
               <view class="h-[48rpx] w-[48rpx] flex flex-row items-center justify-center rounded-[14rpx] bg-[#fff0f1]">
-                <view class="i-carbon-trash-can text-[26rpx] text-[#ff5b67]" />
+                <cl-icon name="delete-bin-line" :size="13" :pt="{ className: 'text-[#ff5b67]' }" />
               </view>
               <text class="text-[28rpx] text-[#ff5b67]">注销账号</text>
             </view>
-            <view class="i-carbon-chevron-right text-[26rpx] text-[#c4b3ae]" />
+            <cl-icon name="arrow-right-s-line" :size="13" :pt="{ className: 'text-[#c4b3ae]' }" />
           </view>
         </view>
       </view>
@@ -354,13 +354,13 @@ catch {}
           >
             <view class="flex flex-row items-center gap-[18rpx]">
               <view class="h-[48rpx] w-[48rpx] flex flex-row items-center justify-center rounded-[14rpx] bg-[#fff6df]">
-                <view class="i-carbon-clean text-[26rpx] text-[#ffb833]" />
+                <cl-icon name="delete-bin-line" :size="13" :pt="{ className: 'text-[#ffb833]' }" />
               </view>
               <text class="text-[28rpx] text-[#1a0e0b]">清除缓存</text>
             </view>
             <view class="flex flex-row items-center gap-[8rpx]">
               <text class="text-[24rpx] text-[#c4b3ae]">{{ cacheSize }}</text>
-              <view class="i-carbon-chevron-right text-[26rpx] text-[#c4b3ae]" />
+              <cl-icon name="arrow-right-s-line" :size="13" :pt="{ className: 'text-[#c4b3ae]' }" />
             </view>
           </view>
           <view
@@ -369,11 +369,11 @@ catch {}
           >
             <view class="flex flex-row items-center gap-[18rpx]">
               <view class="h-[48rpx] w-[48rpx] flex flex-row items-center justify-center rounded-[14rpx] bg-[#f4eeff]">
-                <view class="i-carbon-document text-[26rpx] text-[#8d68ee]" />
+                <cl-icon name="file-paper-line" :size="13" :pt="{ className: 'text-[#8d68ee]' }" />
               </view>
               <text class="text-[28rpx] text-[#1a0e0b]">用户协议</text>
             </view>
-            <view class="i-carbon-chevron-right text-[26rpx] text-[#c4b3ae]" />
+            <cl-icon name="arrow-right-s-line" :size="13" :pt="{ className: 'text-[#c4b3ae]' }" />
           </view>
           <view
             class="flex flex-row h-[100rpx] items-center justify-between border-b-[1rpx] border-b-solid border-b-[#f0e8e4] px-[32rpx]"
@@ -381,11 +381,11 @@ catch {}
           >
             <view class="flex flex-row items-center gap-[18rpx]">
               <view class="h-[48rpx] w-[48rpx] flex flex-row items-center justify-center rounded-[14rpx] bg-[#f4eeff]">
-                <view class="i-carbon-security text-[26rpx] text-[#8d68ee]" />
+                <cl-icon name="shield-check-line" :size="13" :pt="{ className: 'text-[#8d68ee]' }" />
               </view>
               <text class="text-[28rpx] text-[#1a0e0b]">隐私政策</text>
             </view>
-            <view class="i-carbon-chevron-right text-[26rpx] text-[#c4b3ae]" />
+            <cl-icon name="arrow-right-s-line" :size="13" :pt="{ className: 'text-[#c4b3ae]' }" />
           </view>
           <view
             class="flex flex-row h-[100rpx] items-center justify-between border-b-[1rpx] border-b-solid border-b-[#f0e8e4] px-[32rpx]"
@@ -393,16 +393,16 @@ catch {}
           >
             <view class="flex flex-row items-center gap-[18rpx]">
               <view class="h-[48rpx] w-[48rpx] flex flex-row items-center justify-center rounded-[14rpx] bg-[#fff6df]">
-                <view class="i-carbon-warning-alt text-[26rpx] text-[#ffb833]" />
+                <cl-icon name="error-warning-line" :size="13" :pt="{ className: 'text-[#ffb833]' }" />
               </view>
               <text class="text-[28rpx] text-[#1a0e0b]">使用须知</text>
             </view>
-            <view class="i-carbon-chevron-right text-[26rpx] text-[#c4b3ae]" />
+            <cl-icon name="arrow-right-s-line" :size="13" :pt="{ className: 'text-[#c4b3ae]' }" />
           </view>
           <view class="flex flex-row h-[100rpx] items-center justify-between px-[32rpx]">
             <view class="flex flex-row items-center gap-[18rpx]">
               <view class="h-[48rpx] w-[48rpx] flex flex-row items-center justify-center rounded-[14rpx] bg-[#e8f6ff]">
-                <view class="i-carbon-information text-[26rpx] text-[#3f97f4]" />
+                <cl-icon name="information-2-line" :size="13" :pt="{ className: 'text-[#3f97f4]' }" />
               </view>
               <text class="text-[28rpx] text-[#1a0e0b]">当前版本</text>
             </view>
@@ -417,7 +417,7 @@ catch {}
         class="mt-[32rpx] h-[96rpx] flex flex-row items-center justify-center rounded-[24rpx] bg-[#ffffff] shadow-[0_8rpx_24rpx_#59392d12]"
         @click="handleLogout"
       >
-        <view class="i-carbon-logout mr-[14rpx] text-[30rpx] text-[#ff5b67]" />
+        <cl-icon name="logout-circle-line" :size="15" :pt="{ className: 'mr-[14rpx] text-[#ff5b67]' }" />
         <text class="text-[30rpx] text-[#ff5b67] font-[700]">退出登录</text>
       </view>
 
@@ -438,7 +438,7 @@ catch {}
             class="h-[56rpx] w-[56rpx] flex flex-row items-center justify-center rounded-[56rpx] bg-[#f5eeec]"
             @click="docModal.visible = false"
           >
-            <view class="i-carbon-close text-[28rpx] text-[#7a5147]" />
+            <cl-icon name="close-line" :size="14" :pt="{ className: 'text-[#7a5147]' }" />
           </view>
         </view>
         <!-- 内容 -->

@@ -24,9 +24,6 @@ importers:
       '@dcloudio/types':
         specifier: ^3.4.16
         version: 3.4.31
-      '@iconify-json/carbon':
-        specifier: ^1.2.23
-        version: 1.2.23
       '@types/node':
         specifier: ^24.0.15
         version: 24.13.2
@@ -74,12 +71,6 @@ packages:
 
   '@dcloudio/types@3.4.31':
     resolution: {integrity: sha512-YAqOfJpcAwMs4Fagv2oP+iRHSCJOJoN8JUYyoRD6gwfANhsI9QaYj4/j22FzSopfHkqjX50B7YkG/VRAyz9OnA==}
-
-  '@iconify-json/carbon@1.2.23':
-    resolution: {integrity: sha512-7apXetbRmEiWDXIQyikFJZyq7pCVBKHYRzmeLdtT7wWoHYdWHwnFcBAzpuLoSh+ZEAfXZapSWEe8iuS6dUqf+Q==}
-
-  '@iconify/types@2.0.0':
-    resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
 
   '@esbuild/aix-ppc64@0.25.12':
     resolution: {integrity: sha512-Hhmwd6CInZ3dwpuGTF8fJG6yoWmsToE+vYgD4nytZVxcu1ulHpUQRAB1UJ8+N1Am3Mz4+xOByoQoSZf4D+CpkA==}
@@ -1089,12 +1080,6 @@ snapshots:
       - supports-color
 
   '@dcloudio/types@3.4.31': {}
-
-  '@iconify-json/carbon@1.2.23':
-    dependencies:
-      '@iconify/types': 2.0.0
-
-  '@iconify/types@2.0.0': {}
 
   '@esbuild/aix-ppc64@0.25.12':
     optional: true

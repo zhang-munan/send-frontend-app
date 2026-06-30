@@ -112,11 +112,11 @@ function goBack() { uni.navigateBack() }
     <!-- nav bar -->
     <view class="flex flex-row h-[88rpx] flex-shrink-0 items-center justify-between bg-white px-[20rpx]" style="border-bottom:1rpx solid #f5f5f5">
       <view class="h-[72rpx] w-[72rpx] flex flex-row items-center" @click="goBack">
-        <view class="i-carbon-chevron-left text-[40rpx] text-[#4a2b24]" />
+        <cl-icon name="arrow-left-s-line" :size="20" :pt="{ className: 'text-[#4a2b24]' }" />
       </view>
       <text class="text-[32rpx] font-[800] text-[#1a1a1a]">{{ phoneLabel }}</text>
       <view class="h-[72rpx] w-[72rpx] flex flex-row items-center justify-center" @click="showMenu">
-        <view class="i-carbon-overflow-menu-horizontal text-[36rpx] text-[#a08a84]" />
+        <cl-icon name="more-2-fill" :size="18" :pt="{ className: 'text-[#a08a84]' }" />
       </view>
     </view>
 
@@ -126,12 +126,12 @@ function goBack() { uni.navigateBack() }
       class="flex flex-row flex-shrink-0 items-center gap-[12rpx] px-[24rpx] py-[16rpx]"
       style="background:#fffbef; border-bottom:1rpx solid #f5e9c0;"
     >
-      <view class="i-carbon-shield-check flex-shrink-0 text-[30rpx] text-[#e6a817]" />
+      <cl-icon name="shield-check-line" :size="15" :pt="{ className: 'flex-shrink-0 text-[#e6a817]' }" />
       <text class="flex-1 text-[24rpx] leading-[38rpx] text-[#7a6010]">
         保持真诚和尊重，好的沟通是双向的 💛
       </text>
       <view class="h-[40rpx] w-[40rpx] flex flex-row flex-shrink-0 items-center justify-center" @click="showBanner = false">
-        <view class="i-carbon-close text-[24rpx] text-[#a0a0a0]" />
+        <cl-icon name="close-line" :size="12" :pt="{ className: 'text-[#a0a0a0]' }" />
       </view>
     </view>
 
@@ -172,7 +172,7 @@ function goBack() { uni.navigateBack() }
             </view>
             <view class="mt-[8rpx] flex flex-row items-center justify-end gap-[12rpx]">
               <text v-if="msg.feeAmount" class="text-[20rpx] text-[#a08a84]">¥{{ Number(msg.feeAmount).toFixed(2) }}</text>
-              <view class="i-carbon-checkmark-outline text-[22rpx] text-[#a0a0a0]" />
+              <cl-icon name="checkbox-circle-line" :size="11" :pt="{ className: 'text-[#a0a0a0]' }" />
             </view>
           </view>
         </view>
@@ -184,7 +184,7 @@ function goBack() { uni.navigateBack() }
             class="h-[72rpx] w-[72rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-full"
             style="background:#e0e0e0"
           >
-            <view class="i-carbon-user-avatar text-[36rpx] text-[#888]" />
+            <cl-icon name="user-line" :size="18" :pt="{ className: 'text-[#888]' }" />
           </view>
           <view class="max-w-[540rpx]">
             <text class="mb-[6rpx] block text-[22rpx] text-[#a08a84]">对方回复</text>
@@ -214,7 +214,7 @@ function goBack() { uni.navigateBack() }
           style="background:linear-gradient(135deg,#fe8973,#fe6a5a)"
           @click="goSend"
         >
-          <view class="i-carbon-send-alt-filled text-[28rpx] text-white" />
+          <cl-icon name="send-plane-fill" :size="14" :pt="{ className: 'text-white' }" />
           <text class="text-[28rpx] font-[700] text-white">发送消息</text>
         </view>
       </view>

@@ -67,7 +67,7 @@ function goBack() {
     <!-- 顶部导航 -->
     <view class="flex flex-row items-center px-[32rpx] py-[24rpx]">
       <view class="flex flex-row h-[64rpx] w-[64rpx] items-center justify-center rounded-full bg-white/70" @tap="goBack">
-        <text class="i-carbon-chevron-left text-[36rpx] text-[#4a2b24]" />
+        <cl-icon name="arrow-left-s-line" :size="18" :pt="{ className: 'text-[#4a2b24]' }" />
       </view>
       <view class="flex-1 text-center text-[34rpx] font-semibold text-[#4a2b24]">
         我的反馈
@@ -77,13 +77,13 @@ function goBack() {
 
     <!-- 加载中 -->
     <view v-if="loading" class="flex flex-col items-center justify-center pt-[200rpx]">
-      <view class="i-carbon-circle-dash animate-spin text-[80rpx] text-[#ff8873]" />
+      <cl-icon name="loader-4-line" :size="40" :pt="{ className: 'animate-spin text-[#ff8873]' }" />
       <text class="mt-[20rpx] text-[26rpx] text-[#c0a89a]">加载中...</text>
     </view>
 
     <!-- 空状态 -->
     <view v-else-if="list.length === 0" class="flex flex-col items-center justify-center pt-[200rpx]">
-      <text class="i-carbon-document-blank text-[120rpx] text-[#e0c8c0]" />
+      <cl-icon name="file-list-line" :size="60" :pt="{ className: 'text-[#e0c8c0]' }" />
       <text class="mt-[24rpx] text-[28rpx] text-[#b09090]">还没有提交过反馈</text>
       <view
         class="mt-[40rpx] rounded-full bg-[#ff8873] px-[48rpx] py-[16rpx] text-[26rpx] text-white"
@@ -130,14 +130,14 @@ function goBack() {
 
         <!-- 联系方式 -->
         <view v-if="item.contact" class="mb-[16rpx] flex flex-row items-center gap-[8rpx] text-[22rpx] text-[#b09090]">
-          <text class="i-carbon-phone text-[22rpx]" />
+          <cl-icon name="phone-line" :size="11" />
           <text>{{ item.contact }}</text>
         </view>
 
         <!-- 管理员回复 -->
         <view v-if="item.reply" class="rounded-[12rpx] bg-[#fff6f0] p-[20rpx]">
           <view class="mb-[10rpx] flex flex-row items-center gap-[8rpx]">
-            <text class="i-carbon-chat-filled text-[24rpx] text-[#ff8873]" />
+            <cl-icon name="chat-4-fill" :size="12" :pt="{ className: 'text-[#ff8873]' }" />
             <text class="text-[22rpx] font-semibold text-[#ff6b54]">官方回复</text>
             <text class="ml-auto text-[20rpx] text-[#c0a89a]">{{ item.replyTime }}</text>
           </view>

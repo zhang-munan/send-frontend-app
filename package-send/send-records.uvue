@@ -31,18 +31,18 @@ const noMore = ref(false)
 // ─── 状态映射 ────────────────────────────────────────
 interface StatusMeta { label: string; color: string; icon: string; bgColor: string }
 const STATUS_META: Record<number, StatusMeta> = {
-  0: { label: '待审核', color: '#ff8c00', icon: 'i-carbon-time', bgColor: '#fff7ed' },
-  1: { label: '审核通过', color: '#34c759', icon: 'i-carbon-checkmark-outline', bgColor: '#f0fdf4' },
-  2: { label: '审核拒绝', color: '#f44336', icon: 'i-carbon-close-outline', bgColor: '#fef2f2' },
-  3: { label: '待发送', color: '#a0a0a0', icon: 'i-carbon-time', bgColor: '#f5f5f5' },
-  4: { label: '发送中', color: '#1e7cf5', icon: 'i-carbon-hourglass', bgColor: '#eff6ff' },
-  5: { label: '已送达', color: '#34c759', icon: 'i-carbon-checkmark-filled', bgColor: '#f0fdf4' },
-  6: { label: '发送失败', color: '#f44336', icon: 'i-carbon-close-filled', bgColor: '#fef2f2' },
-  7: { label: '已取消', color: '#a0a0a0', icon: 'i-carbon-subtract-alt', bgColor: '#f5f5f5' },
+  0: { label: '待审核', color: '#ff8c00', icon: 'time-line', bgColor: '#fff7ed' },
+  1: { label: '审核通过', color: '#34c759', icon: 'checkbox-circle-line', bgColor: '#f0fdf4' },
+  2: { label: '审核拒绝', color: '#f44336', icon: 'close-circle-line', bgColor: '#fef2f2' },
+  3: { label: '待发送', color: '#a0a0a0', icon: 'time-line', bgColor: '#f5f5f5' },
+  4: { label: '发送中', color: '#1e7cf5', icon: '24-hours-line', bgColor: '#eff6ff' },
+  5: { label: '已送达', color: '#34c759', icon: 'checkbox-circle-fill', bgColor: '#f0fdf4' },
+  6: { label: '发送失败', color: '#f44336', icon: 'close-circle-fill', bgColor: '#fef2f2' },
+  7: { label: '已取消', color: '#a0a0a0', icon: 'subtract-line', bgColor: '#f5f5f5' },
 }
 
 function statusMeta(status: number): StatusMeta {
-  return STATUS_META[status] ?? { label: '未知', color: '#a0a0a0', icon: 'i-carbon-help', bgColor: '#f5f5f5' }
+  return STATUS_META[status] ?? { label: '未知', color: '#a0a0a0', icon: 'question-line', bgColor: '#f5f5f5' }
 }
 
 // ─── 日期分组 ────────────────────────────────────────
@@ -151,13 +151,13 @@ onMounted(() => loadList(true))
     <!-- nav bar -->
     <view class="relative h-[88rpx] flex flex-row items-center px-[20rpx]">
       <view class="h-[72rpx] w-[72rpx] flex flex-row items-center" @click="goBack">
-        <view class="i-carbon-chevron-left text-[40rpx] text-[#4a2b24]" />
+        <cl-icon name="arrow-left-s-line" :size="20" :pt="{ className: 'text-[#4a2b24]' }" />
       </view>
       <text class="pointer-events-none absolute left-0 right-0 text-center text-[34rpx] leading-[88rpx] font-[800] text-[#4a2b24]">
         发送记录
       </text>
       <view class="ml-auto h-[72rpx] w-[72rpx] flex flex-row items-center justify-center" @click="showFilter = !showFilter">
-        <view class="i-carbon-filter text-[36rpx] text-[#a08a84]" />
+        <cl-icon name="filter-line" :size="18" :pt="{ className: 'text-[#a08a84]' }" />
       </view>
     </view>
 
@@ -219,10 +219,10 @@ onMounted(() => loadList(true))
               class="h-[72rpx] w-[72rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-full"
               :style="{ backgroundColor: statusMeta(item.status).bgColor }"
             >
-              <view
-                class="text-[36rpx]"
-                :class="statusMeta(item.status).icon"
-                :style="{ color: statusMeta(item.status).color }"
+              <cl-icon
+                :name="statusMeta(item.status).icon"
+                :size="18"
+                :color="statusMeta(item.status).color"
               />
             </view>
 
@@ -270,7 +270,7 @@ onMounted(() => loadList(true))
             </view>
 
             <!-- 箭头 -->
-            <view class="i-carbon-chevron-right flex-shrink-0 text-[28rpx] text-[#d4c4bf]" />
+            <cl-icon name="arrow-right-s-line" :size="14" :pt="{ className: 'flex-shrink-0 text-[#d4c4bf]' }" />
           </view>
         </view>
       </view>

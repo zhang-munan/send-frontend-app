@@ -171,13 +171,13 @@ async function handleConfirmSend() {
     <!-- Nav bar -->
     <view class="relative h-[88rpx] flex flex-row items-center px-[20rpx]">
       <view class="h-[72rpx] w-[72rpx] flex flex-row items-center" @click="goBack">
-        <view class="i-carbon-chevron-left text-[40rpx] text-[#4a2b24]" />
+        <cl-icon name="arrow-left-s-line" :size="20" :pt="{ className: 'text-[#4a2b24]' }" />
       </view>
       <text class="pointer-events-none absolute left-0 right-0 text-center text-[34rpx] leading-[88rpx] font-[800] text-[#4a2b24]">
         表达心意
       </text>
       <view class="ml-auto flex flex-row items-center gap-[6rpx]">
-        <view class="i-carbon-recently-viewed text-[26rpx] text-[#7a5147]" />
+        <cl-icon name="history-line" :size="13" :pt="{ className: 'text-[#7a5147]' }" />
         <text class="text-[26rpx] text-[#7a5147]">发送记录</text>
       </view>
     </view>
@@ -187,7 +187,7 @@ async function handleConfirmSend() {
 
       <!-- Warning banner -->
       <view class="h-[72rpx] flex flex-row items-center border border-solid border-[#f5dcc0] rounded-[18rpx] bg-[#fef1e1] px-[18rpx]">
-        <view class="i-carbon-shield flex-shrink-0 text-[32rpx] text-[#fe8973]" />
+        <cl-icon name="shield-check-line" :size="16" :pt="{ className: 'flex-shrink-0 text-[#fe8973]' }" />
         <text class="ml-[12rpx] flex-1 text-[23rpx] text-[#6a3b29] leading-[32rpx] font-[600]">
           善意是沟通的起点 💛 请确保你的消息真诚、得体，尊重对方的感受
         </text>
@@ -206,7 +206,7 @@ async function handleConfirmSend() {
           <view
             class="flex flex-row flex-shrink-0 items-center gap-[8rpx] rounded-[14rpx] bg-[#fff0ed] px-[18rpx] py-[14rpx]"
           >
-            <view class="i-carbon-user-avatar-filled-alt text-[26rpx] text-[#fe8973]" />
+            <cl-icon name="user-fill" :size="13" :pt="{ className: 'text-[#fe8973]' }" />
             <text class="text-[23rpx] text-[#fe8973] font-[600]">从通讯录导入</text>
           </view>
         </view>
@@ -231,7 +231,7 @@ async function handleConfirmSend() {
         <view class="mt-[16rpx] flex flex-row items-center justify-between">
           <!-- AI 帮我写 -->
           <view class="flex flex-row items-center gap-[8rpx] rounded-[50rpx] border border-solid border-[#dfd0f8] bg-[#faf7ff] px-[22rpx] py-[12rpx]">
-            <view class="i-carbon-magic-wand-filled text-[24rpx] text-[#9b6ee0]" />
+            <cl-icon name="sparkling-fill" :size="12" :pt="{ className: 'text-[#9b6ee0]' }" />
             <text class="text-[24rpx] font-[600] text-[#9b6ee0]">AI 帮我写</text>
           </view>
           <!-- 选择模板 -->
@@ -239,7 +239,7 @@ async function handleConfirmSend() {
             class="flex flex-row items-center gap-[8rpx] rounded-[50rpx] border border-solid border-[#f0e8e4] bg-[#fffaf8] px-[22rpx] py-[12rpx]"
             @click="showTemplatePanel = !showTemplatePanel"
           >
-            <view class="i-carbon-template text-[24rpx] text-[#a08a84]" />
+            <cl-icon name="draft-line" :size="12" :pt="{ className: 'text-[#a08a84]' }" />
             <text class="text-[24rpx] text-[#7a5147]">选择模板</text>
           </view>
         </view>
@@ -251,7 +251,7 @@ async function handleConfirmSend() {
         <view class="mb-[16rpx] flex flex-row items-center justify-between">
           <text class="text-[26rpx] font-[700] text-[#4a2b24]">选择模板</text>
           <view class="h-[44rpx] w-[44rpx] flex flex-row items-center justify-center" @click="showTemplatePanel = false">
-            <view class="i-carbon-close text-[28rpx] text-[#a08a84]" />
+            <cl-icon name="close-line" :size="14" :pt="{ className: 'text-[#a08a84]' }" />
           </view>
         </view>
         <!-- Category tabs -->
@@ -329,10 +329,7 @@ async function handleConfirmSend() {
             :class="sendMode === 'immediate' ? 'bg-[#fe8973]' : 'border border-solid border-[#f0e8e4] bg-[#fffaf8]'"
             @click="sendMode = 'immediate'"
           >
-            <view
-              class="i-carbon-lightning text-[28rpx]"
-              :class="sendMode === 'immediate' ? 'text-white' : 'text-[#7a5147]'"
-            />
+            <cl-icon name="sparkling-line" :size="14" :color="sendMode === 'immediate' ? '#ffffff' : '#7a5147'" />
             <text
               class="text-[28rpx] font-[700]"
               :class="sendMode === 'immediate' ? 'text-white' : 'text-[#7a5147]'"
@@ -345,10 +342,7 @@ async function handleConfirmSend() {
             :class="sendMode === 'scheduled' ? 'bg-[#fe8973]' : 'border border-solid border-[#f0e8e4] bg-[#fffaf8]'"
             @click="sendMode = 'scheduled'"
           >
-            <view
-              class="i-carbon-time text-[28rpx]"
-              :class="sendMode === 'scheduled' ? 'text-white' : 'text-[#7a5147]'"
-            />
+            <cl-icon name="time-line" :size="14" :color="sendMode === 'scheduled' ? '#ffffff' : '#7a5147'" />
             <text
               class="text-[28rpx] font-[700]"
               :class="sendMode === 'scheduled' ? 'text-white' : 'text-[#7a5147]'"
@@ -378,7 +372,7 @@ async function handleConfirmSend() {
             <text v-else class="text-[38rpx] font-[800] leading-[46rpx] text-[#fe8973]">
               ¥{{ estimatedFee }}
             </text>
-            <view class="i-carbon-help text-[24rpx] text-[#c4b3ae]" />
+            <cl-icon name="question-line" :size="12" :pt="{ className: 'text-[#c4b3ae]' }" />
           </view>
         </view>
         <view
@@ -411,7 +405,7 @@ async function handleConfirmSend() {
         <view class="mt-[14rpx] flex flex-col gap-[14rpx]">
           <view v-for="item in confirmItems" :key="item" class="flex flex-row items-center gap-[14rpx]">
             <view class="h-[36rpx] w-[36rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-full bg-[#fe8973]">
-              <view class="i-carbon-checkmark text-[20rpx] text-white" />
+              <cl-icon name="check-line" :size="10" :pt="{ className: 'text-white' }" />
             </view>
             <text class="text-[26rpx] text-[#4a2b24]">{{ item }}</text>
           </view>

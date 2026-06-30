@@ -67,7 +67,7 @@ const stats = computed(() => [
   {
     value: userBalance.value,
     label: '账户余额(元)',
-    icon: 'i-carbon-wallet',
+    icon: 'wallet-line',
     bg: '#fff0f1',
     color: '#ff5f75',
     prefix: '¥',
@@ -75,7 +75,7 @@ const stats = computed(() => [
   {
     value: String(userQuota.value),
     label: '剩余条数',
-    icon: 'i-carbon-send-alt-filled',
+    icon: 'send-plane-fill',
     bg: '#fff6df',
     color: '#ffb833',
     prefix: '',
@@ -83,7 +83,7 @@ const stats = computed(() => [
   {
     value: '',
     label: '充值中心',
-    icon: 'i-carbon-flash-filled',
+    icon: 'sparkling-fill',
     bg: '#f4eeff',
     color: '#8d68ee',
     prefix: '',
@@ -110,33 +110,33 @@ interface ServiceGroup {
 const serviceGroups: ServiceGroup[] = [
   {
     title: '消息服务',
-    icon: 'i-carbon-favorite-filled',
+    icon: 'heart-fill',
     iconColor: '#ff5b67',
     items: [
-      { title: '我的模板', icon: 'i-carbon-bookmark-filled', bg: '#ff5a72' },
-      { title: '发送记录', icon: 'i-carbon-time-filled', bg: '#3f97f4' },
-      { title: '我的对话', icon: 'i-carbon-phone-filled', bg: '#8c66ee' },
+      { title: '我的模板', icon: 'bookmark-fill', bg: '#ff5a72' },
+      { title: '发送记录', icon: 'time-fill', bg: '#3f97f4' },
+      { title: '我的对话', icon: 'phone-fill', bg: '#8c66ee' },
     ],
   },
   {
     title: '财务管理',
-    icon: 'i-carbon-star-filled',
+    icon: 'star-fill',
     iconColor: '#ffae2d',
     items: [
-      { title: '充值中心', icon: 'i-carbon-flash-filled', bg: '#ff8618', badge: '首充优惠' },
-      { title: '账单明细', icon: 'i-carbon-view-filled', bg: '#35c96d' },
-      { title: '优惠券', icon: 'i-carbon-percentage-filled', bg: '#ff5365', extra: '3 张可用' },
+      { title: '充值中心', icon: 'sparkling-fill', bg: '#ff8618', badge: '首充优惠' },
+      { title: '账单明细', icon: 'eye-fill', bg: '#35c96d' },
+      { title: '优惠券', icon: 'percent-fill', bg: '#ff5365', extra: '3 张可用' },
     ],
   },
   {
     title: '其他服务',
-    icon: 'i-carbon-rule-filled',
+    icon: 'task-fill',
     iconColor: '#4da1ff',
     items: [
-      { title: '意见反馈', icon: 'i-carbon-thumbs-up-filled', bg: '#428ff2' },
-      { title: '使用须知', icon: 'i-carbon-warning-alt-filled', bg: '#ffb12f', action: 'notice' },
-      { title: '关于我们', icon: 'i-carbon-information-filled', bg: '#8b66ee' },
-      { title: '设置', icon: 'i-carbon-settings-filled', bg: '#8b96a3' },
+      { title: '意见反馈', icon: 'thumb-up-fill', bg: '#428ff2' },
+      { title: '使用须知', icon: 'error-warning-fill', bg: '#ffb12f', action: 'notice' },
+      { title: '关于我们', icon: 'information-2-fill', bg: '#8b66ee' },
+      { title: '设置', icon: 'settings-fill', bg: '#8b96a3' },
     ],
   },
 ]
@@ -208,7 +208,7 @@ function handleItemClick(item: ServiceItem) {
               <image :src="avatarUrl" mode="aspectFill" class="h-full w-full rounded-[184rpx]" />
             </view>
             <view class="absolute bottom-[4rpx] right-[4rpx] z-[1] box-border h-[48rpx] w-[48rpx] flex flex-row items-center justify-center border-[3rpx] border-[#ffffff] rounded-[48rpx] border-solid bg-[#fe8973]">
-              <view class="i-carbon-edit text-[24rpx] text-white" />
+              <cl-icon name="edit-line" :size="12" :pt="{ className: 'text-white' }" />
             </view>
           </view>
 
@@ -244,7 +244,7 @@ function handleItemClick(item: ServiceItem) {
             <text class="text-[22rpx] text-[#694c42] leading-[28rpx]">
               个人主页
             </text>
-            <view class="i-carbon-chevron-right text-[18rpx] text-[#694c42]" />
+            <cl-icon name="arrow-right-s-line" :size="9" :pt="{ className: 'text-[#694c42]' }" />
           </view>
         </view>
 
@@ -252,7 +252,7 @@ function handleItemClick(item: ServiceItem) {
         <view v-else class="relative flex flex-row items-center" @click="goLogin">
           <view class="relative h-[184rpx] w-[184rpx] flex-shrink-0 shadow-[0_8rpx_20rpx_#723f2c26]">
             <view class="box-border h-full w-full flex flex-row items-center justify-center overflow-hidden border-[4rpx] border-[#ffffff] rounded-[184rpx] border-solid bg-[#ffffff73]">
-              <view class="i-carbon-user-avatar-filled-alt text-[110rpx] text-white" />
+              <cl-icon name="user-fill" :size="55" :pt="{ className: 'text-white' }" />
             </view>
           </view>
 
@@ -267,7 +267,7 @@ function handleItemClick(item: ServiceItem) {
               <text class="text-[24rpx] text-[#a23a2f] leading-[30rpx] font-[700]">
                 立即登录
               </text>
-              <view class="i-carbon-chevron-right text-[20rpx] text-[#a23a2f]" />
+              <cl-icon name="arrow-right-s-line" :size="10" :pt="{ className: 'text-[#a23a2f]' }" />
             </view>
           </view>
         </view>
@@ -283,7 +283,7 @@ function handleItemClick(item: ServiceItem) {
             >
               <view v-if="index > 0" class="absolute left-[0rpx] top-[8rpx] mx-8rpx h-[64rpx] w-[1rpx] bg-[#f1f1f1]" />
               <view class="h-[68rpx] w-[68rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-[68rpx]" :style="{ backgroundColor: item.bg }">
-                <view class="text-[32rpx]" :class="item.icon" :style="{ color: item.color }" />
+                <cl-icon :name="item.icon" :size="16" :color="item.color" />
               </view>
               <view class="ml-[20rpx]">
                 <text v-if="item.action === 'recharge'" class="block text-[28rpx] text-[#8d68ee] font-bold leading-[42rpx] underline">
@@ -305,7 +305,7 @@ function handleItemClick(item: ServiceItem) {
       <view v-for="group in serviceGroups" :key="group.title" class="mt-[16rpx] rounded-[24rpx] bg-[#ffffff] px-[28rpx] py-[24rpx] shadow-[0_12rpx_34rpx_#59392d1a]">
         <!-- 分组标题 -->
         <view class="mb-[8rpx] flex flex-row items-center">
-          <view class="text-[26rpx] leading-[34rpx]" :class="group.icon" :style="{ color: group.iconColor }" />
+          <cl-icon :name="group.icon" :size="13" :color="group.iconColor" />
           <text class="ml-[10rpx] text-[26rpx] text-[#7a5147] leading-[34rpx] font-[700]">
             {{ group.title }}
           </text>
@@ -319,7 +319,7 @@ function handleItemClick(item: ServiceItem) {
           @click="handleItemClick(item)"
         >
           <view class="h-[40rpx] w-[40rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-[10rpx]" :style="{ backgroundColor: item.bg }">
-            <view class="text-[22rpx] text-[#ffffff]" :class="item.icon" />
+            <cl-icon :name="item.icon" :size="11" color="#ffffff" />
           </view>
           <view
             class="ml-[24rpx] h-[84rpx] min-w-[0rpx] flex flex-row flex-1 items-center border-[#f0e8e4]"
@@ -335,7 +335,7 @@ function handleItemClick(item: ServiceItem) {
               <text v-if="item.extra" class="text-[24rpx] text-[#fe8973] leading-[32rpx]">
                 {{ item.extra }}
               </text>
-              <view class="i-carbon-chevron-right text-[28rpx] text-[#c4b3ae]" />
+              <cl-icon name="arrow-right-s-line" :size="14" :pt="{ className: 'text-[#c4b3ae]' }" />
             </view>
           </view>
         </view>
@@ -347,7 +347,7 @@ function handleItemClick(item: ServiceItem) {
         class="mt-[16rpx] h-[88rpx] flex flex-row items-center justify-center rounded-[24rpx] bg-[#ffffff] shadow-[0_12rpx_34rpx_#59392d1a]"
         @click="handleLogout"
       >
-        <view class="i-carbon-logout mr-[10rpx] text-[28rpx] text-[#ff5b67]" />
+        <cl-icon name="logout-circle-line" :size="14" :pt="{ className: 'mr-[10rpx] text-[#ff5b67]' }" />
         <text class="text-[28rpx] text-[#ff5b67] leading-[36rpx] font-[700]">
           退出登录
         </text>
@@ -362,7 +362,7 @@ function handleItemClick(item: ServiceItem) {
         </text>
         <view class="mt-[12rpx] flex flex-row items-center justify-center">
           <view class="h-[2rpx] w-[48rpx] bg-[#ffb099]" />
-          <view class="i-carbon-favorite-filled mx-[16rpx] text-[22rpx] text-[#fe8973]" />
+          <cl-icon name="heart-fill" :size="11" :pt="{ className: 'mx-[16rpx] text-[#fe8973]' }" />
           <view class="h-[2rpx] w-[48rpx] bg-[#ffb099]" />
         </view>
         <scroll-view scroll-y class="mt-[22rpx] max-h-[360rpx]" :show-scrollbar="true">

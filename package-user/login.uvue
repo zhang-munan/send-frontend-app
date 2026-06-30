@@ -259,8 +259,8 @@ onUnmounted(() => {
 
         <view class="relative pt-[52rpx] text-center">
           <view class="mx-auto h-[128rpx] w-[150rpx] flex flex-row items-center justify-center rounded-[26rpx] bg-[linear-gradient(135deg,#ffc9a3,#ff9d8f)] shadow-[0_10rpx_28rpx_#ff8c734d]">
-            <view class="i-carbon-email text-[68rpx] text-white" />
-            <view class="i-carbon-favorite-filled absolute mt-[-44rpx] text-[34rpx] text-[#ff5f6d]" />
+            <cl-icon name="mail-line" :size="34" :pt="{ className: 'text-white' }" />
+            <cl-icon name="heart-fill" :size="17" :pt="{ className: 'absolute mt-[-44rpx] text-[#ff5f6d]' }" />
           </view>
           <text class="mt-[20rpx] block text-[48rpx] text-[#8c6255] leading-[62rpx] font-[900]">
             帮你说出口
@@ -279,7 +279,7 @@ onUnmounted(() => {
             :loading="loading"
             @getphonenumber="handleWxPhone"
           >
-            <view class="i-carbon-logo-wechat mr-[18rpx] text-[44rpx] text-white" />
+            <cl-icon name="wechat-fill" :size="22" :pt="{ className: 'mr-[18rpx] text-white' }" />
             <text class="text-[32rpx] text-[#ffffff] leading-[42rpx]">
               微信一键登录
             </text>
@@ -360,7 +360,7 @@ onUnmounted(() => {
 
           <view class="mt-[22rpx] flex flex-row items-center border-[1rpx] border-[#ffd9bd] rounded-[18rpx] bg-[#fff4e8] px-[22rpx] py-[18rpx]" @click="showNotice = true">
             <view class="h-[74rpx] w-[74rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-[18rpx] bg-[linear-gradient(135deg,#ffb98f,#ff8f8a)]">
-              <view class="i-carbon-favorite-filled text-[40rpx] text-white" />
+              <cl-icon name="heart-fill" :size="20" :pt="{ className: 'text-white' }" />
             </view>
             <view class="ml-[22rpx] min-w-[0rpx] flex-1">
               <text class="block text-[25rpx] text-[#3d2923] leading-[34rpx] font-[800]">

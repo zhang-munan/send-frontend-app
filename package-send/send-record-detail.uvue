@@ -120,7 +120,7 @@ function goBack() { uni.navigateBack() }
     <!-- nav bar -->
     <view class="relative h-[88rpx] flex flex-row items-center px-[20rpx]">
       <view class="h-[72rpx] w-[72rpx] flex flex-row items-center" @click="goBack">
-        <view class="i-carbon-chevron-left text-[40rpx] text-[#4a2b24]" />
+        <cl-icon name="arrow-left-s-line" :size="20" :pt="{ className: 'text-[#4a2b24]' }" />
       </view>
       <text class="pointer-events-none absolute left-0 right-0 text-center text-[34rpx] leading-[88rpx] font-[800] text-[#4a2b24]">
         发送详情
