@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref } from "vue";
-import { getCaptcha, sendSmsCode } from '@/api/user'
-import { useUserStore } from '@/stores/user'
+import { getCaptcha, loginByMiniPhone, loginByPhone, sendSmsCode } from '@/api/user'
+import { useStore } from '@/.cool'
+import { mergeOssPath } from '@/utils/oss'
 
-const userStore = useUserStore()
+const { user } = useStore()
 
 const showNotice = ref(false)
 const agreed = ref(false)
@@ -148,7 +149,9 @@ async function handlePhoneLogin() {
     return
   try {
     loading.value = true
-    await userStore.phoneLogin(phone.value, smsCode.value)
+    const token = await loginByPhone(phone.value, smsCode.value)
+    user.setToken(token)
+    await user.get()
     uni.showToast({ title: '登录成功', icon: 'success' })
     setTimeout(goAfterLogin, 600)
   }
@@ -197,11 +200,13 @@ async function handleWxPhone(e: any) {
     loading.value = true
     // 优先使用预取的 code，确保与加密数据用同一 session_key 解密
     const code = loginCode.value || (await wxLogin())
-    await userStore.miniPhoneLogin({
+    const token = await loginByMiniPhone({
       code,
       encryptedData: e.detail.encryptedData,
       iv: e.detail.iv,
     })
+    user.setToken(token)
+    await user.get()
     uni.showToast({ title: '登录成功', icon: 'success' })
     setTimeout(goAfterLogin, 600)
   }
@@ -237,31 +242,16 @@ onUnmounted(() => {
 
 <template>
   <view class="relative min-h-[100vh] overflow-hidden bg-[#fffaf7] text-[#3a2420]">
-    <!-- #ifdef H5 -->
-    <view class="h-[22rpx]" />
-    <!-- #endif -->
-    <!-- #ifndef H5 -->
-    <view class="h-[56rpx]" />
-    <!-- #endif -->
-
-    <view class="h-[112rpx] flex flex-row items-center justify-center border-b-[1rpx] border-[#f1ded7] bg-[#fffaf7] px-[44rpx]">
-      <text class="absolute left-[44rpx] top-[58rpx] text-[58rpx] text-[#282828] leading-[58rpx]" @click="goBack">
-        ‹
-      </text>
-      <text class="text-[38rpx] text-[#111111] leading-[48rpx] font-[800]">
-        登录
-      </text>
-    </view>
+    <cl-topbar :fixed="true" safeAreaTop title="登录"></cl-topbar>
 
     <scroll-view scroll-y class="h-[calc(100vh-112rpx)]" :show-scrollbar="false">
       <view class="relative overflow-hidden bg-[linear-gradient(180deg,#ffd2c4,#fff4ee,#fffaf7)] pb-[156rpx]">
-        <image src="https://picsum.photos/seed/login-bg-soft/750/360" mode="aspectFill" class="absolute left-[0rpx] top-[0rpx] h-[360rpx] w-full opacity-34" />
+        <image :src="mergeOssPath('bg.png')" mode="aspectFill" class="absolute left-[0rpx] top-[0rpx] h-[600rpx] w-full" />
 
         <view class="relative pt-[52rpx] text-center">
-          <view class="mx-auto h-[128rpx] w-[150rpx] flex flex-row items-center justify-center rounded-[26rpx] bg-[linear-gradient(135deg,#ffc9a3,#ff9d8f)] shadow-[0_10rpx_28rpx_#ff8c734d]">
-            <cl-icon name="mail-line" :size="34" :pt="{ className: 'text-white' }" />
-            <cl-icon name="heart-fill" :size="17" :pt="{ className: 'absolute mt-[-44rpx] text-[#ff5f6d]' }" />
-          </view>
+          <view class="flex items-center">
+			  <image :src="mergeOssPath('logo-heart.png')" mode="aspectFill" class="h-[150rpx] w-[150rpx]"></image>
+		  </view>
           <text class="mt-[20rpx] block text-[48rpx] text-[#8c6255] leading-[62rpx] font-[900]">
             帮你说出口
           </text>
@@ -273,17 +263,18 @@ onUnmounted(() => {
         <view class="relative mx-[34rpx] mt-[38rpx] rounded-[28rpx] bg-[#fffffff0] px-[36rpx] py-[34rpx] shadow-[0_16rpx_46rpx_#7846301f]">
           <!-- 微信一键登录：仅小程序端支持手机号一键授权 -->
           <!-- #ifdef MP-WEIXIN -->
-          <button
-            class="h-[86rpx] w-full flex flex-row items-center justify-center border-[0rpx] rounded-[24rpx] bg-[#55b84e] p-[0rpx] text-[#ffffff]"
+          <cl-button
+            class="w-full"
+            size="large"
+            type="success"
+            icon="wechat-fill"
             open-type="getPhoneNumber"
             :loading="loading"
+            :pt="{ className: '!h-[86rpx] !rounded-[24rpx] !border-[#55b84e] !bg-[#55b84e]', icon: { className: 'text-white' }, label: { className: 'text-[32rpx] leading-[42rpx]' } }"
             @getphonenumber="handleWxPhone"
           >
-            <cl-icon name="wechat-fill" :size="22" :pt="{ className: 'mr-[18rpx] text-white' }" />
-            <text class="text-[32rpx] text-[#ffffff] leading-[42rpx]">
-              微信一键登录
-            </text>
-          </button>
+            手机号一键登录
+          </cl-button>
 
           <view class="mt-[36rpx] flex flex-row items-center">
             <view class="h-[1rpx] flex-1 bg-[#e8d8d0]" />
@@ -294,7 +285,7 @@ onUnmounted(() => {
           </view>
           <!-- #endif -->
 
-          <view class="mt-[24rpx] h-[78rpx] flex flex-row items-center border-[1rpx] border-[#eadbd5] rounded-[16rpx] bg-[#fffdfc] px-[26rpx]">
+          <view class="mt-[24rpx] h-[78rpx] flex flex-row items-center border-solid border-[1px] border-[#eadbd5] rounded-[16rpx] bg-[#fffdfc] px-[26rpx]">
             <text class="text-[30rpx] text-[#2b201d] leading-[38rpx]">
               +86
             </text>
@@ -312,7 +303,7 @@ onUnmounted(() => {
             >
           </view>
 
-          <view class="mt-[22rpx] h-[78rpx] flex flex-row items-center border-[1rpx] border-[#eadbd5] rounded-[16rpx] bg-[#fffdfc] px-[26rpx]">
+          <view class="mt-[22rpx] h-[78rpx] flex flex-row items-center border-solid border-[1px] border-[#eadbd5] rounded-[16rpx] bg-[#fffdfc] px-[26rpx]">
             <input
               v-model="smsCode"
               class="h-[70rpx] flex-1 text-[28rpx] text-[#33201c] leading-[70rpx]"
@@ -321,25 +312,29 @@ onUnmounted(() => {
               type="number"
               :maxlength="6"
             >
-            <button
-              class="h-[52rpx] min-w-[156rpx] border-[1rpx] border-[#ffc5bc] rounded-[18rpx] bg-[#fff8f6] p-[0rpx] px-[16rpx] text-[24rpx] leading-[52rpx]"
-              :class="countdown > 0 ? 'text-[#c3b1aa]' : 'text-[#fe8973]'"
+            <cl-button
+              size="small"
+              type="light"
+              border
+			  color="#fe8973"
+              :disabled="countdown > 0"
+              :pt="{ className: '!h-[52rpx] min-w-[156rpx] !rounded-[18rpx] !border-[#ffc5bc] !bg-[#fff8f6] px-[16rpx]', label: { className: countdown > 0 ? 'text-[24rpx] leading-[52rpx]' : 'text-[24rpx] leading-[52rpx]' } }"
               @click="onGetSmsCode"
             >
               {{ sendBtnText }}
-            </button>
+            </cl-button>
           </view>
 
-          <button
-            class="mt-[28rpx] h-[86rpx] w-full border-[0rpx] rounded-[20rpx] bg-[linear-gradient(90deg,#ffd0cb,#ffb9b4)] p-[0rpx] text-[32rpx] text-[#ffffff] leading-[86rpx]"
-            :loading="loading"
-            @click="handlePhoneLogin"
+          <cl-button
+			size="large"
+			class="mt-[30rpx]"
+			@click="handlePhoneLogin"
           >
             登录/注册
-          </button>
+          </cl-button>
 
           <view class="mt-[28rpx] flex flex-row items-center">
-            <view class="h-[34rpx] w-[34rpx] flex flex-row flex-shrink-0 items-center justify-center border-[2rpx] rounded-[8rpx]" :class="agreed ? 'bg-[#fe8973] border-[#fe8973]' : 'bg-[#ffffff] border-[#cdbfb8]'" @click="agreed = !agreed">
+            <view class="h-[34rpx] w-[34rpx] flex flex-row flex-shrink-0 items-center justify-center border-solid border-[1px] rounded-[8rpx]" :class="agreed ? 'bg-[#fe8973] border-[#fe8973]' : 'bg-[#ffffff] border-[#cdbfb8]'" @click="agreed = !agreed">
               <text v-if="agreed" class="text-[24rpx] text-[#ffffff] leading-[28rpx]">
                 ✓
               </text>
@@ -358,22 +353,20 @@ onUnmounted(() => {
             </text>
           </view>
 
-          <view class="mt-[22rpx] flex flex-row items-center border-[1rpx] border-[#ffd9bd] rounded-[18rpx] bg-[#fff4e8] px-[22rpx] py-[18rpx]" @click="showNotice = true">
-            <view class="h-[74rpx] w-[74rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-[18rpx] bg-[linear-gradient(135deg,#ffb98f,#ff8f8a)]">
-              <cl-icon name="heart-fill" :size="20" :pt="{ className: 'text-white' }" />
-            </view>
+          <view class="mt-[22rpx] flex flex-row items-center border-[1px] border-[#ffd9bd] rounded-[18rpx] bg-[#fff4e8] px-[22rpx] py-[18rpx]" @click="showNotice = true">
+            <image :src="mergeOssPath('safe.png')" mode="aspectFit" class="h-[84rpx] w-[84rpx] flex-shrink-0" />
             <view class="ml-[22rpx] min-w-[0rpx] flex-1">
-              <text class="block text-[25rpx] text-[#3d2923] leading-[34rpx] font-[800]">
+              <text class="block text-[25rpx] text-[#3d2923] leading-[34rpx] font-[500]">
                 温馨提示：
               </text>
-              <text class="mt-[4rpx] block text-[25rpx] text-[#7b665e] leading-[34rpx]">
+              <text class="mt-[6rpx] block text-[25rpx] text-[#7b665e] leading-[34rpx]">
                 我们只帮你传递善意的话语，守护每一次真诚表达。
               </text>
             </view>
           </view>
         </view>
 
-        <view class="relative mt-[30rpx] px-[46rpx]">
+        <!-- <view class="relative mt-[30rpx] px-[46rpx]">
           <view class="flex flex-row items-center justify-center">
             <view class="h-[1rpx] w-[120rpx] bg-[#f0d4c4]" />
             <text class="mx-[18rpx] text-[24rpx] text-[#9b766b] leading-[32rpx]">
@@ -382,7 +375,7 @@ onUnmounted(() => {
             <view class="h-[1rpx] w-[120rpx] bg-[#f0d4c4]" />
           </view>
           <view class="grid grid-cols-3 mt-[16rpx] gap-[16rpx]">
-            <view v-for="item in statusCards" :key="item.title" class="h-[118rpx] border-[1rpx] border-[#f5dcd2] rounded-[16rpx] bg-[#ffffffb8] px-[10rpx] py-[12rpx] text-center">
+            <view v-for="item in statusCards" :key="item.title" class="h-[118rpx] border-[1px] border-[#f5dcd2] rounded-[16rpx] bg-[#ffffffb8] px-[10rpx] py-[12rpx] text-center">
               <image :src="item.image" mode="aspectFill" class="mx-auto h-[44rpx] w-[44rpx] rounded-[14rpx]" />
               <text class="mt-[6rpx] block truncate text-[20rpx] text-[#3c2a25] leading-[26rpx] font-[700]">
                 {{ item.title }}
@@ -392,7 +385,7 @@ onUnmounted(() => {
               </text>
             </view>
           </view>
-        </view>
+        </view> -->
       </view>
     </scroll-view>
 
@@ -405,11 +398,11 @@ onUnmounted(() => {
         <view class="mt-[28rpx] flex flex-row items-center gap-[18rpx]">
           <input
             v-model="captchaCode"
-            class="h-[80rpx] flex-1 border-[1rpx] border-[#eadbd5] rounded-[16rpx] bg-[#fffdfc] px-[24rpx] text-[28rpx] text-[#33201c] leading-[80rpx]"
+            class="h-[80rpx] flex-1 border-[1px] border-[#eadbd5] rounded-[16rpx] bg-[#fffdfc] px-[24rpx] text-[28rpx] text-[#33201c] leading-[80rpx]"
             placeholder="图片验证码"
             placeholder-class="text-[#b9aaa4]"
           >
-          <view class="h-[80rpx] w-[200rpx] flex flex-row items-center justify-center overflow-hidden border-[1rpx] border-[#eadbd5] rounded-[16rpx] bg-[#fff]" @click="refreshCaptcha">
+          <view class="h-[80rpx] w-[200rpx] flex flex-row items-center justify-center overflow-hidden border-[1px] border-[#eadbd5] rounded-[16rpx] bg-[#fff]" @click="refreshCaptcha">
             <image v-if="captchaImg" :src="captchaImg" mode="aspectFit" class="h-[80rpx] w-[200rpx]" />
             <text v-else class="text-[22rpx] text-[#b9aaa4] leading-[30rpx]">
               {{ captchaLoading ? '加载中…' : '点击刷新' }}
@@ -420,7 +413,7 @@ onUnmounted(() => {
           看不清？点击图片刷新
         </text>
         <view class="mt-[28rpx] flex flex-row gap-[18rpx]">
-          <button class="h-[72rpx] flex-1 border-[1rpx] border-[#e3d3cc] rounded-[18rpx] bg-[#fff] p-[0rpx] text-[28rpx] text-[#7b665e] leading-[72rpx]" @click="showCaptcha = false">
+          <button class="h-[72rpx] flex-1 border-[1px] border-[#e3d3cc] rounded-[18rpx] bg-[#fff] p-[0rpx] text-[28rpx] text-[#7b665e] leading-[72rpx]" @click="showCaptcha = false">
             取消
           </button>
           <button class="h-[72rpx] flex-1 border-[0rpx] rounded-[18rpx] bg-[#fe8973] p-[0rpx] text-[28rpx] text-[#ffffff] leading-[72rpx]" @click="confirmCaptcha">

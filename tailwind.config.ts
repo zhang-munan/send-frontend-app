@@ -251,17 +251,17 @@ export const PRIMARY_COLOR_PALETTES = [
 	{
 		name: "pink",
 		palette: {
-			50: "#fdf2f8",
-			100: "#fce7f3",
-			200: "#fbcfe8",
-			300: "#f9a8d4",
-			400: "#f472b6",
-			500: "#ec4899",
-			600: "#db2777",
-			700: "#be185d",
-			800: "#9d174d",
-			900: "#831843",
-			950: "#500724"
+			50: "#fff2f0",
+			100: "#ffe2de",
+			200: "#ffc9c1",
+			300: "#ffa89b",
+			400: "#ff8977",
+			500: "#fd725e",
+			600: "#ef4f38",
+			700: "#c93a27",
+			800: "#a63123",
+			900: "#892f24",
+			950: "#4b130c"
 		}
 	}
 ];
@@ -435,6 +435,7 @@ function getSurface(name: surfaceColor): Record<string, string> {
 	Object.entries(color.palette).forEach(([key, value]) => {
 		result[key == "0" ? "surface" : `surface-${key}`] = value;
 	});
+	console.log("result",result)
 	return result;
 }
 
@@ -452,8 +453,8 @@ export default {
 	theme: {
 		extend: {
 			colors: {
-				...getPrimary("teal"),
-				...getSurface("zinc")
+				...getPrimary("pink"),
+				...getSurface("neutral")
 			},
 			fontSize: {
 				md: ["1rem", "1.5rem"]

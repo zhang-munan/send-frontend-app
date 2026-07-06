@@ -140,7 +140,7 @@ const storyList = [
       </view>
 
       <!-- 提示横幅 -->
-      <view class="mt-[16rpx] h-[80rpx] flex flex-row items-center border-[1rpx] border-[#f5dcc0] rounded-[20rpx] border-solid bg-[#fef1e1] px-[20rpx] shadow-[0_8rpx_24rpx_#fe89731a]">
+      <view class="mt-[16rpx] h-[80rpx] flex flex-row items-center border-[1px] border-[#f5dcc0] rounded-[20rpx] border-solid bg-[#fef1e1] px-[20rpx] shadow-[0_8rpx_24rpx_#fe89731a]">
         <image :src="mergeOssPath('safe.png')" mode="aspectFit" class="h-[42rpx] w-[42rpx] flex-shrink-0" />
         <text class="ml-[16rpx] flex-1 text-[26rpx] text-[#6a3b29] leading-[36rpx] font-[600]">
           每一次善意的表达，都可能温暖一个人 💛
@@ -162,7 +162,7 @@ const storyList = [
       >
         <swiper-item v-for="(item, index) in bannerList" :key="item.title" class="banner-swiper-item">
           <view
-            class="banner-slide relative box-border h-[260rpx] w-full overflow-hidden border-[6rpx] border-[#ffffff] rounded-[24rpx] border-solid bg-white"
+            class="banner-slide relative box-border h-[260rpx] w-full overflow-hidden border-[3px] border-[#ffffff] rounded-[24rpx] border-solid bg-white"
             :style="getBannerSlideStyle(index)"
           >
             <image :src="item.image" mode="scaleToFill" class="absolute h-full rounded-[24rpx]" />
@@ -338,7 +338,7 @@ const storyList = [
           <view
             v-for="item in storyList"
             :key="item.name"
-            class="inline-block w-[256rpx] border-[1px] border-[1px] border-[#fcebe6] rounded-[20rpx] border-solid bg-[#fffdfb] p-[20rpx] shadow-[0_8rpx_24rpx_#78463012]"
+            class="inline-block w-[256rpx] border-[1px] border-[#fcebe6] rounded-[20rpx] border-solid bg-[#fffdfb] p-[20rpx] shadow-[0_8rpx_24rpx_#78463012]"
           >
             <view class="flex flex-row items-start">
               <view

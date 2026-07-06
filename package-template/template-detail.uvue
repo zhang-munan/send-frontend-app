@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { collectTemplate, getTemplateDetail, getTemplateList, type TemplateInfo } from '@/api/template'
-import { useUserStore } from '@/stores/user'
+import { useStore } from '@/.cool'
 import { mergeOssPath } from '@/utils/oss'
+
+const { user } = useStore()
 
 // ─── System bar height ────────────────────────────────────────────────────────
 const statusBarHeight = ref(0)
@@ -91,8 +93,7 @@ function copyContent() {
 // ─── Toggle collect ────────────────────────────────────────────────────────────
 async function toggleCollect() {
   if (!detail.value) return
-  const userStore = useUserStore()
-  if (!userStore.isLogin) {
+  if (!user.token) {
     uni.navigateTo({ url: '/package-user/login' })
     return
   }

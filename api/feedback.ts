@@ -1,5 +1,5 @@
-import { request } from '@/utils/request'
-import { getBaseUrl, getToken } from '@/utils/request'
+import { request, useStore } from '@/.cool'
+import { config } from '@/config'
 
 const PREFIX = '/app/feedback/info'
 
@@ -61,10 +61,10 @@ export function getMyFeedbackList() {
  */
 export function uploadImage(filePath: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    const baseUrl = getBaseUrl()
-    const token = getToken()
+    const { user } = useStore()
+    const token = user.token || ''
     uni.uploadFile({
-      url: `${baseUrl}/app/base/comm/upload`,
+      url: `${config.baseUrl}/app/base/comm/upload`,
       filePath,
       name: 'file',
       header: token ? { Authorization: token } : {},

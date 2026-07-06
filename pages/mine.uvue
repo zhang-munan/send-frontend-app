@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { getBalance } from '@/api/order'
-import { useUserStore } from '@/stores/user'
+import { useStore } from '@/.cool'
 
 const statusBarHeight = ref(0)
 // #ifndef H5
 statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight || 0
 // #endif
 
-const userStore = useUserStore()
+const { user } = useStore()
 
-const isLogin = computed(() => userStore.isLogin)
-const userInfo = computed(() => userStore.userInfo)
+const isLogin = computed(() => user.info.value != null)
+const userInfo = computed(() => user.info.value)
 
 // 头像：未设置时使用默认占位
 const avatarUrl = computed(() => userInfo.value?.avatarUrl || 'https://picsum.photos/seed/warm-avatar-girl/180/180')
@@ -31,8 +31,8 @@ const userBalance = ref('0.00')
 
 // 进入页面时若已登录则刷新用户信息和余额
 onShow(() => {
-  if (userStore.isLogin) {
-    userStore.fetchUserInfo().catch(() => {})
+  if (user.token) {
+    user.get().catch(() => {})
     getBalance().then((b) => {
       userQuota.value = b.messageQuota
       userBalance.value = Number(b.balance).toFixed(2)
@@ -52,7 +52,9 @@ function handleLogout() {
     content: '确定要退出登录吗？',
     success: (res) => {
       if (res.confirm) {
-        userStore.logout()
+        user.clear()
+        userQuota.value = 0
+        userBalance.value = '0.00'
         uni.showToast({ title: '已退出登录', icon: 'none' })
       }
     },
@@ -172,7 +174,7 @@ function handleItemClick(item: ServiceItem) {
   if (!url) return
 
   // 需要登录才能访问的页面，未登录时跳转登录页
-  if (AUTH_PAGES.has(url) && !userStore.isLogin) {
+  if (AUTH_PAGES.has(url) && !user.token) {
     uni.navigateTo({ url: '/package-user/login' })
     return
   }
