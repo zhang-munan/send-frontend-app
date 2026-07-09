@@ -2,20 +2,18 @@
 import { computed, onMounted, ref } from "vue";
 import { createOrder, getBalance } from '@/api/order'
 import { sendMessage } from '@/api/message'
-
-const statusBarHeight = ref(0)
-// #ifndef H5
-statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight || 0
-// #endif
+import { mergeOssPath } from '@/utils/oss'
 
 const phone = ref('')
 const message = ref('对不起，之前是我太冲动了。其实我一直很在意你的感受，也真心希望我们还能好好说话。如果你愿意，我想认真向你道歉。')
 const isAnonymous = ref(true)
 const sendMode = ref<'immediate' | 'scheduled'>('immediate')
-const showTemplatePanel = ref(true)
+const showTemplatePanel = ref(false)
 const showConfirmModal = ref(false)
 const activeCategory = ref('全部')
 const isCreatingOrder = ref(false)
+const scheduledDate = ref('')
+const scheduledTime = ref('')
 
 /** 用户剩余配额 */
 const userQuota = ref(0)
@@ -32,6 +30,33 @@ const estimatedFee = computed(() => (smsCount.value * 0.05).toFixed(2))
 
 /** 是否有足够配额直接发送 */
 const hasEnoughQuota = computed(() => userQuota.value >= smsCount.value)
+
+const minScheduledAt = computed(() => {
+  const date = new Date()
+  date.setMinutes(date.getMinutes() + 30)
+  return date
+})
+
+const scheduledAt = computed(() => {
+  if (!scheduledDate.value || !scheduledTime.value)
+    return ''
+
+  return `${scheduledDate.value} ${scheduledTime.value}:00`
+})
+
+const scheduledLabel = computed(() => {
+  if (!scheduledAt.value)
+    return '请选择发送时间'
+
+  return scheduledAt.value.slice(0, 16)
+})
+
+const scheduledTooEarly = computed(() => {
+  if (sendMode.value !== 'scheduled' || !scheduledAt.value)
+    return false
+
+  return new Date(scheduledAt.value.replace(/-/g, '/')).getTime() < minScheduledAt.value.getTime()
+})
 
 onLoad((options) => {
   if (options?.content) {
@@ -50,6 +75,26 @@ onMounted(async () => {
     balanceLoaded.value = true
   }
 })
+
+function pad(n: number) {
+  return n < 10 ? `0${n}` : `${n}`
+}
+
+function formatPickerDate(date: Date) {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+function formatPickerTime(date: Date) {
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+function initScheduledTime() {
+  const min = minScheduledAt.value
+  if (!scheduledDate.value)
+    scheduledDate.value = formatPickerDate(min)
+  if (!scheduledTime.value)
+    scheduledTime.value = formatPickerTime(min)
+}
 
 const categories = ['全部', '道歉和解', '感恩感谢', '表白爱意', '祝福鼓励', '致谢感恩', '温暖关心']
 
@@ -99,8 +144,24 @@ const confirmItems = [
   '我已了解平台使用规范',
 ]
 
-function goBack() {
-  uni.navigateBack()
+function goRecords() {
+  uni.navigateTo({ url: '/package-send/send-records' })
+}
+
+function selectSendMode(mode: 'immediate' | 'scheduled') {
+  sendMode.value = mode
+  if (mode === 'scheduled')
+    initScheduledTime()
+}
+
+function handleDateChange(e: any) {
+  scheduledDate.value = e.detail.value
+  initScheduledTime()
+}
+
+function handleTimeChange(e: any) {
+  scheduledTime.value = e.detail.value
+  initScheduledTime()
 }
 
 function handleSelectTemplate(tpl: typeof templates[0]) {
@@ -119,19 +180,35 @@ async function handleConfirmSend() {
     uni.showToast({ title: '请输入消息内容', icon: 'none' })
     return
   }
+  if (sendMode.value === 'scheduled') {
+    initScheduledTime()
+
+    if (!scheduledAt.value) {
+      uni.showToast({ title: '请选择定时发送时间', icon: 'none' })
+      return
+    }
+
+    if (scheduledTooEarly.value) {
+      uni.showToast({ title: '定时发送时间需晚于当前时间30分钟', icon: 'none' })
+      return
+    }
+  }
 
   isCreatingOrder.value = true
   showConfirmModal.value = false
 
   try {
+    const messagePayload = {
+      receiverPhone: rawPhone,
+      content: message.value,
+      isAnonymous: isAnonymous.value ? 1 : 0,
+      sendType: sendMode.value === 'scheduled' ? 2 : 1,
+      ...(sendMode.value === 'scheduled' ? { scheduledAt: scheduledAt.value } : {}),
+    }
+
     if (hasEnoughQuota.value) {
       // ── 场景 A：配额充足，直接调用发送接口 ──
-      await sendMessage({
-        receiverPhone: rawPhone,
-        content: message.value,
-        isAnonymous: isAnonymous.value ? 1 : 0,
-        sendType: sendMode.value === 'scheduled' ? 2 : 1,
-      })
+      await sendMessage(messagePayload)
       // 本地更新配额显示
       userQuota.value = Math.max(0, userQuota.value - smsCount.value)
       uni.showToast({ title: '发送成功，等待审核', icon: 'success' })
@@ -139,12 +216,7 @@ async function handleConfirmSend() {
     }
     else {
       // ── 场景 B：无配额，创建订单后跳支付页 ──
-      const order = await createOrder({
-        receiverPhone: rawPhone,
-        content: message.value,
-        isAnonymous: isAnonymous.value ? 1 : 0,
-        sendType: sendMode.value === 'scheduled' ? 2 : 1,
-      })
+      const order = await createOrder(messagePayload)
       uni.navigateTo({ url: `/package-order/pay?orderId=${order.id}` })
     }
   }
@@ -160,55 +232,54 @@ async function handleConfirmSend() {
 
 <template>
   <view class="min-h-[100vh] bg-[#fef7f5] text-[#4a2b24]">
-    <!-- Status bar -->
-    <!-- #ifndef H5 -->
-    <view :style="{ height: `${statusBarHeight}px` }" />
-    <!-- #endif -->
-    <!-- #ifdef H5 -->
-    <view class="h-[22rpx]" />
-    <!-- #endif -->
-
-    <!-- Nav bar -->
-    <view class="relative h-[88rpx] flex flex-row items-center px-[20rpx]">
-      <view class="h-[72rpx] w-[72rpx] flex flex-row items-center" @click="goBack">
-        <cl-icon name="arrow-left-s-line" :size="20" :pt="{ className: 'text-[#4a2b24]' }" />
-      </view>
-      <text class="pointer-events-none absolute left-0 right-0 text-center text-[34rpx] leading-[88rpx] font-[800] text-[#4a2b24]">
-        表达心意
-      </text>
-      <view class="ml-auto flex flex-row items-center gap-[6rpx]">
-        <cl-icon name="history-line" :size="13" :pt="{ className: 'text-[#7a5147]' }" />
-        <text class="text-[26rpx] text-[#7a5147]">发送记录</text>
-      </view>
-    </view>
+    <cl-topbar
+      title="表达心意"
+      safeAreaTop
+      backgroundColor="transparent"
+      color="#4a2b24"
+      height="88rpx"
+      :pt="{ title: { className: 'text-[34rpx] font-[800]' } }"
+    >
+      <template #append>
+		<!-- #ifdef WEB -->
+        <view class="mr-[24rpx] flex flex-row items-center gap-[6rpx]" @click="goRecords">
+          <cl-icon name="history-line" :size="13" :pt="{ className: 'text-[#7a5147]' }" />
+          <text class="text-[26rpx] text-[#7a5147]">发送记录</text>
+        </view>
+		<!-- #endif -->
+      </template>
+    </cl-topbar>
 
     <!-- Scrollable content -->
     <view class="px-[24rpx] pb-[200rpx]">
 
       <!-- Warning banner -->
       <view class="h-[72rpx] flex flex-row items-center border border-solid border-[#f5dcc0] rounded-[18rpx] bg-[#fef1e1] px-[18rpx]">
-        <cl-icon name="shield-check-line" :size="16" :pt="{ className: 'flex-shrink-0 text-[#fe8973]' }" />
-        <text class="ml-[12rpx] flex-1 text-[23rpx] text-[#6a3b29] leading-[32rpx] font-[600]">
+        <image :src="mergeOssPath('safe.png')" mode="aspectFit" class="h-[42rpx] w-[42rpx] flex-shrink-0" />
+        <text class="ml-[12rpx] flex-1 text-[20rpx] text-[#6a3b29] leading-[32rpx]">
           善意是沟通的起点 💛 请确保你的消息真诚、得体，尊重对方的感受
         </text>
       </view>
 
       <!-- 收件人 section -->
       <view class="mt-[20rpx] rounded-[20rpx] bg-white px-[24rpx] pb-[20rpx] pt-[24rpx]" style="box-shadow: 0 4rpx 16rpx #fe89730f;">
-        <view class="flex flex-row items-center gap-[16rpx]">
+        <text class="mb-[14rpx] block text-[28rpx] text-[#4a2b24]">收件人</text>
+        <view class="flex flex-row items-center gap-[16rpx] rounded-[16rpx] border border-solid border-[#f0e0d8] bg-[#fdf9f7] px-[20rpx] py-[14rpx]">
           <input
             v-model="phone"
             type="number"
-            class="min-w-0 flex-1 h-[56rpx] text-[36rpx] font-[700] leading-[56rpx] text-[#4a2b24]"
+            class="min-w-0 flex-1 h-[56rpx] bg-transparent text-[36rpx] font-[700] leading-[56rpx] text-[#4a2b24]"
             placeholder="138 0000 0000"
             placeholder-style="color: #d4c4be; font-size: 32rpx; font-weight: 400;"
           />
+          <!--
           <view
             class="flex flex-row flex-shrink-0 items-center gap-[8rpx] rounded-[14rpx] bg-[#fff0ed] px-[18rpx] py-[14rpx]"
           >
             <cl-icon name="user-fill" :size="13" :pt="{ className: 'text-[#fe8973]' }" />
             <text class="text-[23rpx] text-[#fe8973] font-[600]">从通讯录导入</text>
           </view>
+          -->
         </view>
         <text class="mt-[10rpx] block text-[23rpx] text-[#c4b3ae]">
           请输入收件人手机号，我们将帮你把心意送达
@@ -218,30 +289,24 @@ async function handleConfirmSend() {
       <!-- 消息内容 section -->
       <view class="mt-[16rpx] rounded-[20rpx] bg-white px-[24rpx] pb-[20rpx] pt-[20rpx]" style="box-shadow: 0 4rpx 16rpx #fe89730f;">
         <view class="mb-[14rpx] flex flex-row items-center justify-between">
-          <text class="text-[28rpx] font-[700] text-[#4a2b24]">消息内容</text>
+          <text class="text-[28rpx] text-[#4a2b24]">消息内容</text>
           <text class="text-[22rpx] text-[#c4b3ae]">已输入 {{ message.length }}/{{ MESSAGE_LIMIT }} 字</text>
         </view>
         <textarea
           v-model="message"
           :maxlength="MESSAGE_LIMIT"
-          class="h-[200rpx] w-full text-[28rpx] text-[#4a2b24] leading-[44rpx]"
+          class="box-border h-[220rpx] w-full rounded-[16rpx] border border-solid border-[#f0e0d8] bg-[#fdf9f7] px-[20rpx] py-[18rpx] text-[28rpx] text-[#4a2b24] leading-[44rpx]"
           placeholder="请输入你想传达的话..."
           placeholder-style="color: #c4b3ae;"
         />
         <view class="mt-[16rpx] flex flex-row items-center justify-between">
-          <!-- AI 帮我写 -->
+          <!-- AI 帮我写
           <view class="flex flex-row items-center gap-[8rpx] rounded-[50rpx] border border-solid border-[#dfd0f8] bg-[#faf7ff] px-[22rpx] py-[12rpx]">
             <cl-icon name="sparkling-fill" :size="12" :pt="{ className: 'text-[#9b6ee0]' }" />
             <text class="text-[24rpx] font-[600] text-[#9b6ee0]">AI 帮我写</text>
           </view>
-          <!-- 选择模板 -->
-          <view
-            class="flex flex-row items-center gap-[8rpx] rounded-[50rpx] border border-solid border-[#f0e8e4] bg-[#fffaf8] px-[22rpx] py-[12rpx]"
-            @click="showTemplatePanel = !showTemplatePanel"
-          >
-            <cl-icon name="draft-line" :size="12" :pt="{ className: 'text-[#a08a84]' }" />
-            <text class="text-[24rpx] text-[#7a5147]">选择模板</text>
-          </view>
+          -->
+          <view />
         </view>
       </view>
 
@@ -300,39 +365,37 @@ async function handleConfirmSend() {
 
       <!-- 发送方式 section -->
       <view class="mt-[16rpx] rounded-[20rpx] bg-white px-[24rpx] py-[24rpx]" style="box-shadow: 0 4rpx 16rpx #fe89730f;">
-        <view class="flex flex-row items-center justify-between">
-          <view class="flex flex-row min-w-0 flex-1 items-center gap-[16rpx]">
+        <text class="mb-[16rpx] block text-[28rpx] text-[#4a2b24]">发送方式</text>
+        <view class="">
+          <view class="flex flex-row items-center justify-between">
             <view class="h-[64rpx] w-[64rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-[18rpx] bg-[#fff0ed]">
               <text class="text-[34rpx]">🎭</text>
             </view>
-            <view class="min-w-0 flex-1">
-              <text class="block text-[28rpx] font-[700] text-[#4a2b24]">匿名发送</text>
-              <text class="mt-[4rpx] block text-[22rpx] text-[#c4b3ae] leading-[32rpx]">
-                收件人将收到一条来自「帮你说出口」的匿名消息，不会暴露你的身份
-              </text>
-            </view>
+            <text class="ml-[16rpx] min-w-0 flex-1 text-[28rpx] text-[#4a2b24]">匿名发送</text>
+            <cl-switch
+				class="ml-[16rpx] flex-shrink-0"
+				v-model="isAnonymous"
+            ></cl-switch>
           </view>
-          <switch
-            class="ml-[16rpx] flex-shrink-0"
-            :checked="isAnonymous"
-            color="#fe8973"
-            @change="(e: any) => isAnonymous = e.detail.value"
-          />
+          <text class="rounded-[18rpx] px-[20rpx] py-[18rpx] border border-solid border-[#f5dcc0] bg-[#fef1e1] mt-[12rpx] block text-[20rpx] text-[#a08a84] leading-[32rpx]">
+            收件人将收到一条来自「帮你说出口」的匿名消息，不会暴露你的身份
+          </text>
         </view>
-      </view>
-
-      <!-- Send timing section -->
-      <view class="mt-[16rpx] rounded-[20rpx] bg-white px-[24rpx] py-[24rpx]" style="box-shadow: 0 4rpx 16rpx #fe89730f;">
-        <view class="flex flex-row gap-[16rpx]">
+        <view class="mt-[18rpx] flex flex-row gap-[16rpx]">
           <view
             class="h-[80rpx] flex flex-row flex-1 items-center justify-center gap-[10rpx] rounded-[16rpx]"
-            :class="sendMode === 'immediate' ? 'bg-[#fe8973]' : 'border border-solid border-[#f0e8e4] bg-[#fffaf8]'"
-            @click="sendMode = 'immediate'"
+            :class="sendMode === 'immediate' ? 'border border-solid border-[#fd8269] bg-[#feebe4]' : 'border border-solid border-[#f0e8e4] bg-[#fffaf8]'"
+            @click="selectSendMode('immediate')"
           >
-            <cl-icon name="sparkling-line" :size="14" :color="sendMode === 'immediate' ? '#ffffff' : '#7a5147'" />
             <text
-              class="text-[28rpx] font-[700]"
-              :class="sendMode === 'immediate' ? 'text-white' : 'text-[#7a5147]'"
+              class="text-[28rpx]"
+              :class="sendMode === 'immediate' ? 'text-[#fd8269]' : 'text-[#7a5147]'"
+            >
+              ⚡
+            </text>
+            <text
+              class="text-[28rpx]"
+              :class="sendMode === 'immediate' ? 'text-[#fd8269]' : 'text-[#7a5147]'"
             >
               立即发送
             </text>
@@ -340,15 +403,44 @@ async function handleConfirmSend() {
           <view
             class="h-[80rpx] flex flex-row flex-1 items-center justify-center gap-[10rpx] rounded-[16rpx]"
             :class="sendMode === 'scheduled' ? 'bg-[#fe8973]' : 'border border-solid border-[#f0e8e4] bg-[#fffaf8]'"
-            @click="sendMode = 'scheduled'"
+            @click="selectSendMode('scheduled')"
           >
             <cl-icon name="time-line" :size="14" :color="sendMode === 'scheduled' ? '#ffffff' : '#7a5147'" />
             <text
-              class="text-[28rpx] font-[700]"
+              class="text-[28rpx]"
               :class="sendMode === 'scheduled' ? 'text-white' : 'text-[#7a5147]'"
             >
               定时发送
             </text>
+          </view>
+        </view>
+        <view v-if="sendMode === 'scheduled'" class="mt-[18rpx] rounded-[16rpx] bg-[#fffaf8] px-[20rpx] py-[18rpx]">
+          <view class="flex flex-row items-center gap-[16rpx]">
+            <picker
+              mode="date"
+              :value="scheduledDate"
+              :start="formatPickerDate(minScheduledAt)"
+              class="flex-1"
+              @change="handleDateChange"
+            >
+              <view class="h-[72rpx] flex flex-row items-center justify-center rounded-[14rpx] border border-solid border-[#f0e8e4] bg-white">
+                <text class="text-[26rpx] font-[600] text-[#4a2b24]">{{ scheduledDate || '选择日期' }}</text>
+              </view>
+            </picker>
+            <picker
+              mode="time"
+              :value="scheduledTime"
+              class="flex-1"
+              @change="handleTimeChange"
+            >
+              <view class="h-[72rpx] flex flex-row items-center justify-center rounded-[14rpx] border border-solid border-[#f0e8e4] bg-white">
+                <text class="text-[26rpx] font-[600] text-[#4a2b24]">{{ scheduledTime || '选择时间' }}</text>
+              </view>
+            </picker>
+          </view>
+          <view class="mt-[12rpx] flex flex-row items-center justify-between">
+            <text class="text-[22rpx] text-[#a08a84]">将于 {{ scheduledLabel }} 发送</text>
+            <text v-if="scheduledTooEarly" class="text-[22rpx] text-[#fe8973]">需晚于当前时间30分钟</text>
           </view>
         </view>
         <text class="mt-[12rpx] block text-[22rpx] text-[#c4b3ae]">
@@ -359,7 +451,7 @@ async function handleConfirmSend() {
 
     <!-- Fixed bottom action bar -->
     <view class="fixed bottom-0 left-0 right-0 border-t border-t-solid border-t-[#f0e8e4] bg-white px-[24rpx] pb-[48rpx] pt-[20rpx]">
-      <view class="flex flex-row items-center gap-[20rpx]">
+      <view class="flex flex-row items-center justify-between gap-[20rpx]">
         <view class="flex flex-col flex-shrink-0">
           <text v-if="hasEnoughQuota" class="text-[22rpx] text-[#7a5147]">
             扣减 {{ smsCount }} 条配额（剩余 {{ userQuota }} 条）
@@ -372,11 +464,10 @@ async function handleConfirmSend() {
             <text v-else class="text-[38rpx] font-[800] leading-[46rpx] text-[#fe8973]">
               ¥{{ estimatedFee }}
             </text>
-            <cl-icon name="question-line" :size="12" :pt="{ className: 'text-[#c4b3ae]' }" />
           </view>
         </view>
         <view
-          class="h-[88rpx] flex flex-row flex-1 items-center justify-center rounded-[22rpx] bg-[#fe8973]"
+          class="h-[88rpx] w-[340rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-[22rpx] bg-[#fe8973]"
           style="box-shadow: 0 8rpx 24rpx #fe89735c;"
           @click="showConfirmModal = true"
         >
@@ -425,6 +516,10 @@ async function handleConfirmSend() {
           <view class="flex flex-row items-center justify-between border-b border-b-solid border-b-[#f0e8e4] py-[14rpx]">
             <text class="text-[24rpx] text-[#7a5147]">发送方式</text>
             <text class="text-[24rpx] text-[#4a2b24]">{{ isAnonymous ? '匿名发送' : '实名发送' }}</text>
+          </view>
+          <view v-if="sendMode === 'scheduled'" class="flex flex-row items-center justify-between border-b border-b-solid border-b-[#f0e8e4] py-[14rpx]">
+            <text class="text-[24rpx] text-[#7a5147]">发送时间</text>
+            <text class="text-[24rpx] text-[#4a2b24]">{{ scheduledLabel }}</text>
           </view>
           <view class="flex flex-row items-center justify-between py-[14rpx]">
             <text class="text-[24rpx] text-[#7a5147]">费用</text>
