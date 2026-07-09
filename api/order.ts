@@ -75,6 +75,10 @@ export interface WxPayParams {
   orderId: number
   orderNo: string
   payAmount: number
+  tradeType?: 'JSAPI' | 'APP' | 'H5'
+  orderInfo?: any
+  h5Url?: string
+  mwebUrl?: string
   timeStamp: string
   nonceStr: string
   package: string
@@ -124,11 +128,15 @@ export function createOrder(data: CreateOrderByProduct | CreateOrderBySend) {
  * @param orderId 订单ID
  * @param payMethod 1微信 2支付宝 3余额
  */
-export function payOrder(orderId: number, payMethod: number) {
+export function payOrder(
+  orderId: number,
+  payMethod: number,
+  params?: { tradeType?: 'JSAPI' | 'APP' | 'H5', code?: string }
+) {
   return request({
     url: `${ORDER_PREFIX}/pay`,
     method: 'POST',
-    data: { orderId, payMethod },
+    data: { orderId, payMethod, ...params },
   })
 }
 

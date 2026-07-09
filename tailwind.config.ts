@@ -435,7 +435,6 @@ function getSurface(name: surfaceColor): Record<string, string> {
 	Object.entries(color.palette).forEach(([key, value]) => {
 		result[key == "0" ? "surface" : `surface-${key}`] = value;
 	});
-	console.log("result",result)
 	return result;
 }
 

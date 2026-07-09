@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { getBalance } from '@/api/order'
 import { useStore } from '@/.cool'
+import { mergeOssPath } from '@/utils/oss'
 
 const statusBarHeight = ref(0)
 // #ifndef H5
@@ -191,25 +192,30 @@ function handleItemClick(item: ServiceItem) {
 </script>
 
 <template>
-  <view class="relative min-h-[100vh] overflow-hidden bg-[linear-gradient(180deg,#fef7f5,#ffffff)] text-[#4a2b24]">
+  <view
+	class="relative min-h-[100vh] overflow-hidden text-[#4a2b24]"
+	style="background-image: linear-gradient(180deg, #fee5d1, #ffffff 70%)"
+  >
+    <image :src="mergeOssPath('mine/mine-bg.png')" mode="aspectFill" class="absolute left-[0rpx] top-[0rpx] h-[600rpx] w-full" />
+
     <!-- #ifndef H5 -->
-    <view :style="{ height: `${statusBarHeight}px` }" />
+    <view class="relative" :style="{ height: `${statusBarHeight}px` }" />
     <!-- #endif -->
     <!-- #ifdef H5 -->
-    <view class="h-[22rpx]" />
+    <view class="relative h-[22rpx]" />
     <!-- #endif -->
 
-    <view class="px-[20rpx] pb-[150rpx]">
+    <view class="relative px-[20rpx] pb-[150rpx]">
       <!-- 用户信息卡片 -->
-      <view class="relative overflow-hidden rounded-[28rpx] bg-[linear-gradient(125deg,#ffd1a4,#ff9b98,#ffe0b5)] px-[32rpx] pb-[174rpx] pt-[36rpx] shadow-[0_16rpx_42rpx_#fe897338]">
+      <view class="relative overflow-hidden rounded-[28rpx] bg-[linear-gradient(125deg,#ffd1a4,#ff9b98,#ffe0b5)] px-[32rpx] pb-[214rpx] pt-[56rpx] shadow-[0_16rpx_42rpx_#fe897338]">
         <!-- 已登录 -->
         <view v-if="isLogin" class="relative flex flex-row items-center">
           <!-- 头像 -->
           <view class="relative h-[184rpx] w-[184rpx] flex-shrink-0 shadow-[0_8rpx_20rpx_#723f2c26]">
-            <view class="box-border h-full w-full overflow-hidden border-[4rpx] border-[#ffffff] rounded-[184rpx] border-solid">
+            <view class="box-border h-full w-full overflow-hidden border-[4px] border-[#ffffff] rounded-[184rpx] border-solid">
               <image :src="avatarUrl" mode="aspectFill" class="h-full w-full rounded-[184rpx]" />
             </view>
-            <view class="absolute bottom-[4rpx] right-[4rpx] z-[1] box-border h-[48rpx] w-[48rpx] flex flex-row items-center justify-center border-[3rpx] border-[#ffffff] rounded-[48rpx] border-solid bg-[#fe8973]">
+            <view class="absolute bottom-[4rpx] right-[4rpx] z-[1] box-border h-[48rpx] w-[48rpx] flex flex-row items-center justify-center border-[3px] border-[#ffffff] rounded-[48rpx] border-solid bg-[#fe8973]">
               <cl-icon name="edit-line" :size="12" :pt="{ className: 'text-white' }" />
             </view>
           </view>
@@ -223,7 +229,7 @@ function handleItemClick(item: ServiceItem) {
               <text class="text-[30rpx] leading-[36rpx]">
                 🌸
               </text>
-              <text class="border-[2rpx] border-[#ffffff] rounded-[22rpx] bg-[#ff6072d1] px-[16rpx] py-[5rpx] text-[20rpx] text-[#ffffff] leading-[24rpx]">
+              <text class="border-[2px] border-[#ffffff] rounded-[22rpx] border-solid bg-[#ff6072d1] px-[16rpx] py-[5rpx] text-[20rpx] text-[#ffffff] leading-[24rpx]">
                 普通用户
               </text>
             </view>
@@ -241,19 +247,16 @@ function handleItemClick(item: ServiceItem) {
             </view>
           </view>
 
-          <!-- 个人主页按钮 -->
-          <view class="absolute right-[0rpx] top-[20rpx] h-[42rpx] flex flex-row items-center gap-[4rpx] rounded-[24rpx] bg-[#ffffff8f] px-[18rpx] shadow-[0_4rpx_14rpx_#6f462d1a]">
-            <text class="text-[22rpx] text-[#694c42] leading-[28rpx]">
-              个人主页
-            </text>
-            <cl-icon name="arrow-right-s-line" :size="9" :pt="{ className: 'text-[#694c42]' }" />
+          <!-- 个人主页入口 -->
+          <view class="absolute right-[0rpx] top-[68rpx] h-[48rpx] w-[48rpx] flex flex-row items-center justify-center">
+            <cl-icon name="arrow-right-s-line" :size="18" :pt="{ className: 'text-[#694c42]' }" />
           </view>
         </view>
 
         <!-- 未登录 -->
         <view v-else class="relative flex flex-row items-center" @click="goLogin">
           <view class="relative h-[184rpx] w-[184rpx] flex-shrink-0 shadow-[0_8rpx_20rpx_#723f2c26]">
-            <view class="box-border h-full w-full flex flex-row items-center justify-center overflow-hidden border-[4rpx] border-[#ffffff] rounded-[184rpx] border-solid bg-[#ffffff73]">
+            <view class="box-border h-full w-full flex flex-row items-center justify-center overflow-hidden border-[4px] border-[#ffffff] rounded-[184rpx] border-solid bg-[#ffffff73]">
               <cl-icon name="user-fill" :size="55" :pt="{ className: 'text-white' }" />
             </view>
           </view>
@@ -265,7 +268,7 @@ function handleItemClick(item: ServiceItem) {
             <text class="mt-[14rpx] block text-[26rpx] text-[#2c2523] leading-[34rpx]">
               登录后体验完整的暖心服务
             </text>
-            <view class="mt-[18rpx] inline-flex flex-row items-center gap-[6rpx] rounded-[28rpx] bg-[#ffffff9e] px-[24rpx] py-[10rpx] shadow-[0_4rpx_14rpx_#6f462d1a]">
+            <view class="mt-[18rpx] w-fit inline-flex flex-row items-center gap-[6rpx] rounded-[28rpx] bg-[#ffffff9e] px-[24rpx] py-[10rpx] shadow-[0_4rpx_14rpx_#6f462d1a]">
               <text class="text-[24rpx] text-[#a23a2f] leading-[30rpx] font-[700]">
                 立即登录
               </text>
@@ -304,7 +307,7 @@ function handleItemClick(item: ServiceItem) {
       </view>
 
       <!-- 服务分组列表 -->
-      <view v-for="group in serviceGroups" :key="group.title" class="mt-[16rpx] rounded-[24rpx] bg-[#ffffff] px-[28rpx] py-[24rpx] shadow-[0_12rpx_34rpx_#59392d1a]">
+      <view v-for="group in serviceGroups" :key="group.title" class="mt-[24rpx] rounded-[24rpx] bg-[#ffffff] px-[28rpx] py-[24rpx] shadow-[0_12rpx_34rpx_#59392d1a]">
         <!-- 分组标题 -->
         <view class="mb-[8rpx] flex flex-row items-center">
           <cl-icon :name="group.icon" :size="13" :color="group.iconColor" />
@@ -321,11 +324,10 @@ function handleItemClick(item: ServiceItem) {
           @click="handleItemClick(item)"
         >
           <view class="h-[40rpx] w-[40rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-[10rpx]" :style="{ backgroundColor: item.bg }">
-            <cl-icon :name="item.icon" :size="11" color="#ffffff" />
+            <cl-icon :name="item.icon" :size="12" color="#ffffff" />
           </view>
           <view
-            class="ml-[24rpx] h-[84rpx] min-w-[0rpx] flex flex-row flex-1 items-center border-[#f0e8e4]"
-            :class="index === group.items.length - 1 ? '' : 'border-b-[1rpx] border-b-solid'"
+            class="ml-[24rpx] h-[84rpx] min-w-[0rpx] flex flex-row flex-1 items-center border-[#f0e8e4] border-solid border-t-0 border-l-0 border-r-0 border-b-[1px]"
           >
             <text class="text-[28rpx] text-[#1f1715] leading-[36rpx]">
               {{ item.title }}
@@ -344,16 +346,20 @@ function handleItemClick(item: ServiceItem) {
       </view>
 
       <!-- 退出登录 -->
-      <view
+      <cl-button
         v-if="isLogin"
-        class="mt-[16rpx] h-[88rpx] flex flex-row items-center justify-center rounded-[24rpx] bg-[#ffffff] shadow-[0_12rpx_34rpx_#59392d1a]"
+        type="light"
+        icon="logout-circle-line"
+        color="#ff5b67"
+        :pt="{
+          className: 'mt-[16rpx] !h-[88rpx] w-full !rounded-[24rpx] !border-transparent !bg-[#ffffff] shadow-[0_12rpx_34rpx_#59392d1a]',
+          icon: { className: 'mr-[10rpx] text-[#ff5b67]' },
+          label: { className: 'text-[28rpx] text-[#ff5b67] leading-[36rpx] font-[700]' },
+        }"
         @click="handleLogout"
       >
-        <cl-icon name="logout-circle-line" :size="14" :pt="{ className: 'mr-[10rpx] text-[#ff5b67]' }" />
-        <text class="text-[28rpx] text-[#ff5b67] leading-[36rpx] font-[700]">
-          退出登录
-        </text>
-      </view>
+        退出登录
+      </cl-button>
     </view>
 
     <!-- 使用须知弹窗 -->
@@ -381,7 +387,7 @@ function handleItemClick(item: ServiceItem) {
           </view>
         </scroll-view>
         <button
-          class="mt-[28rpx] h-[72rpx] w-full border-[0rpx] rounded-[18rpx] bg-[#fe8973] p-[0rpx] text-[30rpx] text-[#ffffff] leading-[72rpx]"
+          class="mt-[28rpx] h-[72rpx] w-full border-[0px] rounded-[18rpx] border-solid bg-[#fe8973] p-[0rpx] text-[30rpx] text-[#ffffff] leading-[72rpx]"
           @click="showNotice = false"
         >
           我已阅读并同意

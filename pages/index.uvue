@@ -64,11 +64,11 @@ function getBannerSlideStyle(index: number) {
 
 const quickCardsLeft = [
   { title: '表达心意', desc: '帮你传达真心话', image: mergeOssPath('home/function-heart.png'), cardBg: 'linear-gradient(90deg, #fff0f0 0%, #fff9f6 100%)', arrowBg: '#febcb5', route: '/package-send/send' },
-  { title: 'AI 帮写', desc: '智能生成暖心文案', image: mergeOssPath('home/function-ai.png'), cardBg: 'linear-gradient(90deg, #f1efff 0%, #fffaff 100%)', arrowBg: '#dbd4f9', route: '' },
+  // { title: 'AI 帮写', desc: '智能生成暖心文案', image: mergeOssPath('home/function-ai.png'), cardBg: 'linear-gradient(90deg, #f1efff 0%, #fffaff 100%)', arrowBg: '#dbd4f9', route: '' },
 ]
 
 const quickCardsRight = [
-  { title: '消息模板', desc: '海量模板一键使用', image: mergeOssPath('home/function-msg.png'), cardBg: 'linear-gradient(90deg, #fff5ed 0%, #fffdf8 100%)', arrowBg: '#fdd6a9', route: '/pages/template' },
+  // { title: '消息模板', desc: '海量模板一键使用', image: mergeOssPath('home/function-msg.png'), cardBg: 'linear-gradient(90deg, #fff5ed 0%, #fffdf8 100%)', arrowBg: '#fdd6a9', route: '/pages/template' },
   { title: '我的对话', desc: '查看历史对话记录', image: mergeOssPath('home/function-chat.png'), cardBg: 'linear-gradient(90deg, #effbf1 0%, #fbfff9 100%)', arrowBg: '#c8e1c9', route: '' },
 ]
 
@@ -180,7 +180,7 @@ const storyList = [
                   <text class="text-[24rpx] text-[#ffffff] leading-[30rpx] font-[600]">
                     查看详情
                   </text>
-                  <cl-icon name="arrow-right-s-fill" :size="11" :pt="{ className: 'text-white' }" />
+                  <cl-icon name="arrow-right-s-line" :size="14" :pt="{ className: 'text-white' }" />
                 </view>
               </view>
             </view>
@@ -222,7 +222,7 @@ const storyList = [
             class="ml-[8rpx] h-[40rpx] w-[40rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-[40rpx]"
             :style="{ backgroundColor: item.arrowBg }"
           >
-            <cl-icon name="arrow-right-s-fill" :size="11" :pt="{ className: 'text-white' }" />
+            <cl-icon name="arrow-right-s-line" :size="14" :pt="{ className: 'text-white' }" />
           </view>
         </view>
       </view>
@@ -247,7 +247,7 @@ const storyList = [
             class="ml-[8rpx] h-[40rpx] w-[40rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-[40rpx]"
             :style="{ backgroundColor: item.arrowBg }"
           >
-            <cl-icon name="arrow-right-s-fill" :size="11" :pt="{ className: 'text-white' }" />
+            <cl-icon name="arrow-right-s-line" :size="14" :pt="{ className: 'text-white' }" />
           </view>
         </view>
       </view>
@@ -265,7 +265,7 @@ const storyList = [
           <text class="text-[24rpx] text-[#8c756e] leading-[32rpx]">
             更多场景
           </text>
-          <cl-icon name="arrow-right-s-fill" :size="10" :pt="{ className: 'text-[#8c756e]' }" />
+          <cl-icon name="arrow-right-s-line" :size="12" :pt="{ className: 'text-[#8c756e]' }" />
         </view>
       </view>
     </view>
@@ -300,7 +300,7 @@ const storyList = [
           <text class="text-[24rpx] text-[#8c756e] leading-[32rpx]">
             查看更多
           </text>
-          <cl-icon name="arrow-right-s-fill" :size="10" :pt="{ className: 'text-[#8c756e]' }" />
+          <cl-icon name="arrow-right-s-line" :size="12" :pt="{ className: 'text-[#8c756e]' }" />
         </view>
       </view>
     </view>
@@ -365,7 +365,7 @@ const storyList = [
 
 <style scoped>
 .home-page {
-  background: linear-gradient(180deg, #fef7f5 0%, #ffffff 100%);
+  background: linear-gradient(180deg, #fff3f0 0%, #ffffff 70%);
 }
 
 .banner-swiper-wrap {
