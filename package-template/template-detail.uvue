@@ -6,12 +6,6 @@ import { mergeOssPath } from '@/utils/oss'
 
 const { user } = useStore()
 
-// ─── System bar height ────────────────────────────────────────────────────────
-const statusBarHeight = ref(0)
-// #ifndef H5
-statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight || 0
-// #endif
-
 // ─── Route param ─────────────────────────────────────────────────────────────
 const templateId = ref(0)
 
@@ -141,11 +135,6 @@ function goTemplate() {
   uni.switchTab({ url: '/pages/template' })
 }
 
-// ─── Back ─────────────────────────────────────────────────────────────────────
-function goBack() {
-  uni.navigateBack()
-}
-
 // ─── Init ─────────────────────────────────────────────────────────────────────
 onLoad((options) => {
   templateId.value = Number(options?.id || 0)
@@ -155,26 +144,16 @@ onLoad((options) => {
 
 <template>
   <view class="min-h-[100vh] bg-[#fdf7f5]">
-    <!-- ── Status bar ── -->
-    <!-- #ifndef H5 -->
-    <view :style="{ height: `${statusBarHeight}px` }" class="bg-[#fdf7f5]" />
-    <!-- #endif -->
-    <!-- #ifdef H5 -->
-    <view class="h-[22rpx] bg-[#fdf7f5]" />
-    <!-- #endif -->
-
-    <!-- ── Custom nav bar ── -->
-    <view class="flex flex-row h-[88rpx] items-center justify-between px-[20rpx]">
-      <view
-        class="h-[64rpx] w-[64rpx] flex flex-row items-center justify-center rounded-[64rpx] bg-[#ffffffd9]"
-        @click="goBack"
-      >
-        <cl-icon name="arrow-left-s-line" :size="16" :pt="{ className: 'text-[#4a2b24]' }" />
-      </view>
-      <text class="text-[32rpx] text-[#2c1810] leading-[44rpx] font-[700]">
-        模板详情
-      </text>
-      <view class="flex flex-row items-center gap-[16rpx]">
+    <cl-topbar
+      title="模板详情"
+      safeAreaTop
+      backgroundColor="transparent"
+      color="#4a2b24"
+      height="88rpx"
+      :pt="{ title: { className: 'text-[34rpx] font-[800]' }, back: { size: 20 } }"
+    >
+      <template #append>
+        <view class="mr-[24rpx] flex flex-row items-center gap-[16rpx]">
         <view
           class="h-[64rpx] w-[64rpx] flex flex-row items-center justify-center rounded-[64rpx] bg-[#ffffffd9]"
           @click="toggleCollect"
@@ -192,7 +171,8 @@ onLoad((options) => {
           <cl-icon name="share-line" :size="14" :pt="{ className: 'text-[#7a5147]' }" />
         </view>
       </view>
-    </view>
+      </template>
+    </cl-topbar>
 
     <view class="px-[24rpx] pb-[180rpx]">
       <!-- ── 模板内容预览卡片 ── -->

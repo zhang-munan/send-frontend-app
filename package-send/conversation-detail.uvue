@@ -2,11 +2,6 @@
 import { computed, ref } from "vue";
 import { getConversationMessages, markConversationRead, type ConversationMessage } from '@/api/conversation'
 
-const statusBarHeight = ref(0)
-// #ifndef H5
-statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight || 0
-// #endif
-
 // ─── 路由参数 ────────────────────────────────────────
 const convId = ref(0)
 const phoneLabel = ref('')
@@ -96,29 +91,24 @@ function goSend() {
   uni.navigateTo({ url: '/package-send/send' })
 }
 
-function goBack() { uni.navigateBack() }
 </script>
 
 <template>
   <view class="flex min-h-[100vh] flex-col bg-[#f2f2f7]">
-    <!-- status bar -->
-    <!-- #ifndef H5 -->
-    <view :style="{ height: `${statusBarHeight}px` }" class="bg-white" />
-    <!-- #endif -->
-    <!-- #ifdef H5 -->
-    <view class="h-[22rpx] bg-white" />
-    <!-- #endif -->
-
-    <!-- nav bar -->
-    <view class="flex flex-row h-[88rpx] flex-shrink-0 items-center justify-between bg-white px-[20rpx]" style="border-bottom:1rpx solid #f5f5f5">
-      <view class="h-[72rpx] w-[72rpx] flex flex-row items-center" @click="goBack">
-        <cl-icon name="arrow-left-s-line" :size="20" :pt="{ className: 'text-[#4a2b24]' }" />
-      </view>
-      <text class="text-[32rpx] font-[800] text-[#1a1a1a]">{{ phoneLabel }}</text>
-      <view class="h-[72rpx] w-[72rpx] flex flex-row items-center justify-center" @click="showMenu">
-        <cl-icon name="more-2-fill" :size="18" :pt="{ className: 'text-[#a08a84]' }" />
-      </view>
-    </view>
+    <cl-topbar
+      :title="phoneLabel"
+      safeAreaTop
+      backgroundColor="#ffffff"
+      color="#1a1a1a"
+      height="88rpx"
+      :pt="{ className: 'border-b border-b-solid border-b-[#f5f5f5]', title: { className: 'text-[32rpx] font-[800]' }, back: { size: 20 } }"
+    >
+      <template #append>
+        <view class="mr-[24rpx] h-[72rpx] w-[72rpx] flex flex-row items-center justify-center" @click="showMenu">
+          <cl-icon name="more-2-fill" :size="18" :pt="{ className: 'text-[#a08a84]' }" />
+        </view>
+      </template>
+    </cl-topbar>
 
     <!-- 安全提示横幅 -->
     <view

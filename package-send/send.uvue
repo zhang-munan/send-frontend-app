@@ -268,9 +268,9 @@ async function handleConfirmSend() {
           <input
             v-model="phone"
             type="number"
-            class="min-w-0 flex-1 h-[56rpx] bg-transparent text-[36rpx] font-[700] leading-[56rpx] text-[#4a2b24]"
+            class="min-w-0 flex-1 h-[56rpx] bg-transparent leading-[56rpx] text-[#4a2b24]"
             placeholder="请输入收件人手机号"
-            placeholder-style="color: #d4c4be; font-size: 32rpx; font-weight: 400;"
+            placeholder-style="color: #d4c4be; font-weight: 400;"
           />
           <!--
           <view

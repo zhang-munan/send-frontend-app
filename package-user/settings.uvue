@@ -5,11 +5,6 @@ import { getDoc, getUserSetting, updateUserSetting } from '@/api/setting'
 import { logoff } from '@/api/user'
 import { useStore } from '@/.cool'
 
-const statusBarHeight = ref(0)
-// #ifndef H5
-statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight || 0
-// #endif
-
 const { user } = useStore()
 const isLogin = computed(() => !!user.token || user.info.value != null)
 
@@ -168,11 +163,6 @@ function goRealAuth() {
   uni.showToast({ title: '实名认证功能即将上线', icon: 'none' })
 }
 
-// ---------- 导航栏返回 ----------
-function goBack() {
-  uni.navigateBack()
-}
-
 // ---------- 版本号 ----------
 const appVersion = ref('1.0.0')
 // #ifndef H5
@@ -186,22 +176,14 @@ catch {}
 
 <template>
   <view class="min-h-[100vh] bg-[#f7f3f2]">
-    <!-- #ifndef H5 -->
-    <view :style="{ height: `${statusBarHeight}px` }" class="bg-[#fffaf9]" />
-    <!-- #endif -->
-    <!-- #ifdef H5 -->
-    <view class="h-[22rpx] bg-[#fffaf9]" />
-    <!-- #endif -->
-
-    <!-- 导航栏 -->
-    <view class="sticky top-0 z-10 flex flex-row h-[88rpx] items-center bg-[#fffaf9] px-[28rpx] shadow-[0_2rpx_12rpx_#59392d0f]">
-      <view class="h-[64rpx] w-[64rpx] flex flex-row items-center justify-center rounded-[64rpx]" @click="goBack">
-        <cl-icon name="arrow-left-s-line" :size="18" :pt="{ className: 'text-[#4a2b24]' }" />
-      </view>
-      <text class="ml-[12rpx] text-[32rpx] text-[#1a0e0b] font-[700]">
-        设置
-      </text>
-    </view>
+    <cl-topbar
+      title="设置"
+      safeAreaTop
+      backgroundColor="#fffaf9"
+      color="#4a2b24"
+      height="88rpx"
+      :pt="{ className: 'shadow-[0_2rpx_12rpx_#59392d0f]', title: { className: 'text-[34rpx] font-[800]' }, back: { size: 20 } }"
+    />
 
     <scroll-view scroll-y class="px-[24rpx] pb-[40rpx]">
       <!-- 通知设置 -->

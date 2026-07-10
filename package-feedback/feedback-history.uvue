@@ -3,11 +3,6 @@ import { onMounted, ref } from "vue";
 import type { FeedbackInfo } from '@/api/feedback'
 import { FEEDBACK_STATUS, FEEDBACK_TYPES, getMyFeedbackList } from '@/api/feedback'
 
-const statusBarHeight = ref(0)
-// #ifndef H5
-statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight || 0
-// #endif
-
 const list = ref<FeedbackInfo[]>([])
 const loading = ref(true)
 const previewItem = ref<FeedbackInfo | null>(null)
@@ -52,28 +47,18 @@ function previewImages(images: string[], idx: number) {
   })
 }
 
-function goBack() {
-  uni.navigateBack()
-}
-
 </script>
 
 <template>
   <view class="min-h-[100vh] bg-[#fff8f6]">
-    <!-- #ifndef H5 -->
-    <view :style="{ height: `${statusBarHeight}px` }" />
-    <!-- #endif -->
-
-    <!-- 顶部导航 -->
-    <view class="flex flex-row items-center px-[32rpx] py-[24rpx]">
-      <view class="flex flex-row h-[64rpx] w-[64rpx] items-center justify-center rounded-full bg-white/70" @tap="goBack">
-        <cl-icon name="arrow-left-s-line" :size="18" :pt="{ className: 'text-[#4a2b24]' }" />
-      </view>
-      <view class="flex-1 text-center text-[34rpx] font-semibold text-[#4a2b24]">
-        我的反馈
-      </view>
-      <view class="w-[64rpx]" />
-    </view>
+    <cl-topbar
+      title="我的反馈"
+      safeAreaTop
+      backgroundColor="transparent"
+      color="#4a2b24"
+      height="88rpx"
+      :pt="{ title: { className: 'text-[34rpx] font-[800]' }, back: { size: 20 } }"
+    />
 
     <!-- 加载中 -->
     <view v-if="loading" class="flex flex-col items-center justify-center pt-[200rpx]">

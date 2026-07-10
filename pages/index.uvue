@@ -2,11 +2,6 @@
 import { ref } from 'vue'
 import { mergeOssPath } from '@/utils/oss'
 
-const statusBarHeight = ref(0)
-// #ifndef H5
-statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight || 0
-// #endif
-
 const currentBanner = ref(0)
 
 function onBannerChange(e: any) {
@@ -121,16 +116,14 @@ const storyList = [
 
 <template>
   <view class="home-page min-h-[100vh] overflow-hidden text-[#4a2b24]">
-    <!-- #ifndef H5 -->
-    <view :style="{ height: `${statusBarHeight}px` }" />
-    <!-- #endif -->
-    <!-- #ifdef H5 -->
-    <view class="h-[22rpx]" />
-    <!-- #endif -->
-
-    <!-- 顶部导航栏 -->
-    <view class="px-[20rpx] pb-[20rpx]">
-      <view class="h-[92rpx] flex flex-row items-center justify-center">
+    <cl-topbar
+      :showBack="false"
+      safeAreaTop
+      backgroundColor="transparent"
+      color="#7a5147"
+      height="88rpx"
+    >
+      <view class="flex flex-row items-center justify-center">
         <view class="flex flex-row items-center gap-[16rpx]">
           <image :src="mergeOssPath('logo-heart.png')" mode="aspectFit" class="h-[80rpx] w-[80rpx]" />
           <text class="text-[36rpx] text-[#7a5147] font-bold leading-[40rpx]">
@@ -138,7 +131,10 @@ const storyList = [
           </text>
         </view>
       </view>
+    </cl-topbar>
 
+    <!-- 顶部提示 -->
+    <view class="px-[20rpx] pb-[20rpx]">
       <!-- 提示横幅 -->
       <view class="mt-[16rpx] h-[80rpx] flex flex-row items-center border-[1px] border-[#f5dcc0] rounded-[20rpx] border-solid bg-[#fef1e1] px-[20rpx] shadow-[0_8rpx_24rpx_#fe89731a]">
         <image :src="mergeOssPath('safe.png')" mode="aspectFit" class="h-[42rpx] w-[42rpx] flex-shrink-0" />

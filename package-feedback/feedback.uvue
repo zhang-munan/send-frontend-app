@@ -2,11 +2,6 @@
 import { computed, ref } from "vue";
 import { FEEDBACK_TYPES, submitFeedback, uploadImage } from '@/api/feedback'
 
-const statusBarHeight = ref(0)
-// #ifndef H5
-statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight || 0
-// #endif
-
 const MAX_CONTENT = 500
 const MAX_IMAGES = 4
 
@@ -22,10 +17,6 @@ const typeRequired = ref(false)
 function selectType(val: number) {
   selectedType.value = val
   typeRequired.value = false
-}
-
-function goBack() {
-  uni.navigateBack()
 }
 
 function goHistory() {
@@ -99,22 +90,20 @@ async function handleSubmit() {
 
 <template>
   <view class="min-h-[100vh] bg-[#fff8f6] text-[#4a2b24]">
-    <!-- #ifndef H5 -->
-    <view :style="{ height: `${statusBarHeight}px` }" />
-    <!-- #endif -->
-
-    <!-- 顶部导航 -->
-    <view class="flex flex-row items-center px-[32rpx] py-[24rpx]">
-      <view class="flex flex-row h-[64rpx] w-[64rpx] items-center justify-center rounded-full bg-white/70" @tap="goBack">
-        <cl-icon name="arrow-left-s-line" :size="18" :pt="{ className: 'text-[#4a2b24]' }" />
-      </view>
-      <view class="flex-1 text-center text-[34rpx] font-semibold">
-        意见反馈
-      </view>
-      <view class="text-[26rpx] text-[#ff6b54]" @tap="goHistory">
-        历史记录
-      </view>
-    </view>
+    <cl-topbar
+      title="意见反馈"
+      safeAreaTop
+      backgroundColor="transparent"
+      color="#4a2b24"
+      height="88rpx"
+      :pt="{ title: { className: 'text-[34rpx] font-[800]' }, back: { size: 20 } }"
+    >
+      <template #append>
+        <view class="mr-[24rpx]" @tap="goHistory">
+          <text class="text-[26rpx] text-[#ff6b54]">历史记录</text>
+        </view>
+      </template>
+    </cl-topbar>
 
     <!-- Banner -->
     <view class="mx-[28rpx] mb-[28rpx] flex flex-row items-center gap-[24rpx] rounded-[20rpx] bg-[linear-gradient(120deg,#fff3e0,#ffe8d6)] px-[28rpx] py-[24rpx] shadow-sm">
