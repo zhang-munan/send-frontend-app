@@ -137,7 +137,8 @@ function avatarColor(phone: string) {
       title="消息"
       :showBack="false"
       safeAreaTop
-      backgroundColor="transparent"
+      fixed
+      backgroundColor="#fafafa"
       color="#1a1a1a"
       height="88rpx"
       :pt="{ title: { className: 'text-[34rpx] font-[800]' } }"

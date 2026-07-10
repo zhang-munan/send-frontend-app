@@ -98,7 +98,8 @@ function goSend() {
     <cl-topbar
       :title="phoneLabel"
       safeAreaTop
-      backgroundColor="#ffffff"
+      fixed
+      backgroundColor="#f2f2f7"
       color="#1a1a1a"
       height="88rpx"
       :pt="{ className: 'border-b border-b-solid border-b-[#f5f5f5]', title: { className: 'text-[32rpx] font-[800]' }, back: { size: 20 } }"

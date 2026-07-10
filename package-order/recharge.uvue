@@ -109,7 +109,8 @@ function goOrders() { uni.navigateTo({ url: '/package-order/orders' }) }
     <cl-topbar
       title="充值中心"
       safeAreaTop
-      backgroundColor="transparent"
+      fixed
+      backgroundColor="#fef7f5"
       color="#4a2b24"
       height="88rpx"
       :pt="{ title: { className: 'text-[34rpx] font-[800]' }, back: { size: 20 } }"

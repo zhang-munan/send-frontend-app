@@ -93,7 +93,8 @@ async function handleSubmit() {
     <cl-topbar
       title="意见反馈"
       safeAreaTop
-      backgroundColor="transparent"
+      fixed
+      backgroundColor="#fff8f6"
       color="#4a2b24"
       height="88rpx"
       :pt="{ title: { className: 'text-[34rpx] font-[800]' }, back: { size: 20 } }"

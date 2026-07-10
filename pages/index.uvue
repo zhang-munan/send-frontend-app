@@ -64,12 +64,17 @@ const quickCardsLeft = [
 
 const quickCardsRight = [
   // { title: '消息模板', desc: '海量模板一键使用', image: mergeOssPath('home/function-msg.png'), cardBg: 'linear-gradient(90deg, #fff5ed 0%, #fffdf8 100%)', arrowBg: '#fdd6a9', route: '/pages/template' },
-  { title: '我的对话', desc: '查看历史对话记录', image: mergeOssPath('home/function-chat.png'), cardBg: 'linear-gradient(90deg, #effbf1 0%, #fbfff9 100%)', arrowBg: '#c8e1c9', route: '' },
+  { title: '我的对话', desc: '查看历史对话记录', image: mergeOssPath('home/function-chat.png'), cardBg: 'linear-gradient(90deg, #effbf1 0%, #fbfff9 100%)', arrowBg: '#c8e1c9', route: '/pages/message', routeType: 'switch' },
 ]
 
-function handleQuickCardClick(route: string) {
-  if (route)
-    uni.navigateTo({ url: route })
+function handleQuickCardClick(item) {
+	if (!item.route) return
+	
+	if (item.routeType === 'switch') {
+		uni.switchTab({ url: item.route })
+		return
+	}
+	uni.navigateTo({ url: item.route })
 }
 
 const sceneList = [
@@ -119,9 +124,9 @@ const storyList = [
     <cl-topbar
       :showBack="false"
       safeAreaTop
-      backgroundColor="transparent"
+      backgroundColor="#fff3f0"
       color="#7a5147"
-      height="88rpx"
+      height="100rpx"
     >
       <view class="flex flex-row items-center justify-center">
         <view class="flex flex-row items-center gap-[16rpx]">
@@ -203,7 +208,7 @@ const storyList = [
           :key="item.title"
           class="relative box-border h-[138rpx] min-w-0 w-full flex flex-row items-center overflow-hidden rounded-[20rpx] px-[16rpx]"
           :style="{ background: item.cardBg }"
-          @click="handleQuickCardClick(item.route)"
+          @click="handleQuickCardClick(item)"
         >
           <image :src="item.image" mode="aspectFit" class="h-[76rpx] w-[76rpx] flex-shrink-0 rounded-[18rpx]" />
           <view class="ml-[12rpx] min-w-0 flex-1 overflow-hidden">
@@ -228,7 +233,7 @@ const storyList = [
           :key="item.title"
           class="relative box-border h-[138rpx] min-w-0 w-full flex flex-row items-center overflow-hidden rounded-[20rpx] px-[16rpx]"
           :style="{ background: item.cardBg }"
-          @click="handleQuickCardClick(item.route)"
+          @click="handleQuickCardClick(item)"
         >
           <image :src="item.image" mode="aspectFit" class="h-[76rpx] w-[76rpx] flex-shrink-0 rounded-[18rpx]" />
           <view class="ml-[12rpx] min-w-0 flex-1 overflow-hidden">

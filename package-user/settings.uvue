@@ -179,7 +179,8 @@ catch {}
     <cl-topbar
       title="设置"
       safeAreaTop
-      backgroundColor="#fffaf9"
+      fixed
+      backgroundColor="#f7f3f2"
       color="#4a2b24"
       height="88rpx"
       :pt="{ className: 'shadow-[0_2rpx_12rpx_#59392d0f]', title: { className: 'text-[34rpx] font-[800]' }, back: { size: 20 } }"

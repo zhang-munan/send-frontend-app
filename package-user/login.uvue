@@ -242,7 +242,7 @@ onUnmounted(() => {
 
 <template>
   <view class="relative min-h-[100vh] overflow-hidden bg-[#fffaf7] text-[#3a2420]">
-    <cl-topbar :fixed="true" safeAreaTop title="登录"></cl-topbar>
+    <cl-topbar :fixed="true" safeAreaTop title="登录" backgroundColor="#fffaf7"></cl-topbar>
 
     <scroll-view scroll-y class="h-[calc(100vh-112rpx)]" :show-scrollbar="false">
       <view class="relative overflow-hidden bg-[linear-gradient(180deg,#ffd2c4,#fff4ee,#fffaf7)] pb-[156rpx]">
