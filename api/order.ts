@@ -70,20 +70,22 @@ export interface CreateOrderBySend {
   payMethod?: number
 }
 
-/** 微信支付参数（用于 uni.requestPayment） */
+type WxTradeType = 'JSAPI' | 'APP' | 'H5'
+
+/** 微信支付参数（按当前运行端使用对应字段） */
 export interface WxPayParams {
   orderId: number
   orderNo: string
   payAmount: number
-  tradeType?: 'JSAPI' | 'APP' | 'H5'
+  tradeType?: WxTradeType
   orderInfo?: any
   h5Url?: string
   mwebUrl?: string
-  timeStamp: string
-  nonceStr: string
-  package: string
-  signType: 'RSA' | 'MD5'
-  paySign: string
+  timeStamp?: string
+  nonceStr?: string
+  package?: string
+  signType?: 'RSA' | 'MD5'
+  paySign?: string
 }
 
 /** 余额支付结果 */
@@ -131,7 +133,7 @@ export function createOrder(data: CreateOrderByProduct | CreateOrderBySend) {
 export function payOrder(
   orderId: number,
   payMethod: number,
-  params?: { tradeType?: 'JSAPI' | 'APP' | 'H5', code?: string }
+  params?: { tradeType?: WxTradeType, code?: string }
 ) {
   return request({
     url: `${ORDER_PREFIX}/pay`,
@@ -175,10 +177,79 @@ export async function wxPayFlow(orderData: CreateOrderByProduct | CreateOrderByS
   const order = await createOrder(orderData)
 
   // 2. 发起微信支付，获取支付参数
-  const payParams = await payOrder(order.id, 1) as WxPayParams
+  const payParams = await payOrder(order.id, 1, await getWxPayRequestParams()) as WxPayParams
 
   // 3. 调起微信支付
-  await new Promise<void>((resolve, reject) => {
+  await invokeWxPayment(payParams)
+
+  // 4. 轮询订单状态（最多等 30s）
+  return pollOrderStatus(order.id)
+}
+
+async function getWxPayRequestParams(): Promise<{ tradeType: WxTradeType, code?: string }> {
+  // #ifdef MP-WEIXIN
+  const code = await new Promise<string>((resolve, reject) => {
+    uni.login({
+      provider: 'weixin',
+      success: res => resolve(res.code),
+      fail: reject,
+    })
+  })
+  return { tradeType: 'JSAPI', code }
+  // #endif
+
+  // #ifdef APP-PLUS
+  return { tradeType: 'APP' }
+  // #endif
+
+  // #ifdef H5
+  return { tradeType: 'H5' }
+  // #endif
+
+  throw new Error('当前平台暂不支持微信支付')
+}
+
+function invokeWxPayment(payParams: WxPayParams): Promise<void> {
+  return new Promise((resolve, reject) => {
+    // #ifdef H5
+    const h5Url = payParams.h5Url || payParams.mwebUrl
+    if (h5Url) {
+      window.location.href = h5Url
+      resolve()
+      return
+    }
+    reject(new Error('未获取到微信H5支付链接'))
+    return
+    // #endif
+
+    const handlePayFail = (err: any) => {
+      if (err?.errMsg?.includes('cancel')) {
+        reject(new Error('已取消支付'))
+      }
+      else {
+        reject(new Error(err?.errMsg || '支付失败'))
+      }
+    }
+
+    // #ifdef APP-PLUS
+    if (!payParams.orderInfo) {
+      reject(new Error('微信APP支付参数不完整'))
+      return
+    }
+    uni.requestPayment({
+      provider: 'wxpay',
+      orderInfo: payParams.orderInfo,
+      success: () => resolve(),
+      fail: handlePayFail,
+    })
+    return
+    // #endif
+
+    // #ifdef MP-WEIXIN
+    if (!payParams.timeStamp || !payParams.nonceStr || !payParams.package || !payParams.signType || !payParams.paySign) {
+      reject(new Error('微信小程序支付参数不完整'))
+      return
+    }
     uni.requestPayment({
       provider: 'wxpay',
       timeStamp: payParams.timeStamp,
@@ -187,12 +258,13 @@ export async function wxPayFlow(orderData: CreateOrderByProduct | CreateOrderByS
       signType: payParams.signType,
       paySign: payParams.paySign,
       success: () => resolve(),
-      fail: (err) => reject(new Error(err?.errMsg || '支付失败')),
+      fail: handlePayFail,
     })
-  })
+    return
+    // #endif
 
-  // 4. 轮询订单状态（最多等 30s）
-  return pollOrderStatus(order.id)
+    reject(new Error('当前平台暂不支持微信支付'))
+  })
 }
 
 /**

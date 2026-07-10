@@ -135,7 +135,7 @@ async function getPayParams() {
   return { tradeType: 'H5' as const }
   // #endif
 
-  return undefined
+  throw new Error('当前平台暂不支持微信支付')
 }
 
 /** 调起微信支付 */
@@ -148,36 +148,52 @@ function invokeWxPay(params: WxPayParams): Promise<void> {
       resolve()
       return
     }
+    reject(new Error('未获取到微信H5支付链接'))
+    return
     // #endif
 
-    const payOptions: any = {
+    const handlePayFail = (err: any) => {
+      if (err?.errMsg?.includes('cancel')) {
+        reject(new Error('已取消支付'))
+      }
+      else {
+        reject(new Error(err?.errMsg || '微信支付失败'))
+      }
+    }
+
+    // #ifdef APP-PLUS
+    if (!params.orderInfo) {
+      reject(new Error('微信APP支付参数不完整'))
+      return
+    }
+    uni.requestPayment({
+      provider: 'wxpay',
+      orderInfo: params.orderInfo,
+      success: () => resolve(),
+      fail: handlePayFail,
+    })
+    return
+    // #endif
+
+    // #ifdef MP-WEIXIN
+    if (!params.timeStamp || !params.nonceStr || !params.package || !params.signType || !params.paySign) {
+      reject(new Error('微信小程序支付参数不完整'))
+      return
+    }
+    uni.requestPayment({
       provider: 'wxpay',
       timeStamp: params.timeStamp,
       nonceStr: params.nonceStr,
       package: params.package,
       signType: params.signType,
       paySign: params.paySign,
-    }
-
-    // #ifdef APP-PLUS
-    if (params.orderInfo) {
-      payOptions.orderInfo = params.orderInfo
-    }
+      success: () => resolve(),
+      fail: handlePayFail,
+    })
+    return
     // #endif
 
-    uni.requestPayment({
-      ...payOptions,
-      success: () => resolve(),
-      fail: (err) => {
-        // 用户主动取消不算错误
-        if (err?.errMsg?.includes('cancel')) {
-          reject(new Error('已取消支付'))
-        }
-        else {
-          reject(new Error(err?.errMsg || '微信支付失败'))
-        }
-      },
-    })
+    reject(new Error('当前平台暂不支持微信支付'))
   })
 }
 
