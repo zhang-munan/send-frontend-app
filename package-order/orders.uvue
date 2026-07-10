@@ -128,7 +128,11 @@ function setActiveType(type: BillType) {
   activeType.value = type
 }
 
-function isRechargeOrder(order: OrderInfo) {
+function isBalanceRechargeOrder(order: OrderInfo) {
+  return !order.productId && Boolean(order.productName?.includes('余额充值'))
+}
+
+function isPackageOrder(order: OrderInfo) {
   return Boolean(order.productId)
 }
 
@@ -137,12 +141,14 @@ function toBillItem(order: OrderInfo): BillItem {
   const isRefund = order.status === 2
   const billType: BillItem['billType'] = isRefund
     ? 'refund'
-    : isRechargeOrder(order) ? 'recharge' : 'consume'
+    : isBalanceRechargeOrder(order) ? 'recharge' : 'consume'
   const signedAmount = billType === 'consume' ? -amount : amount
   const displayName = billType === 'recharge'
-    ? `充值中心 - ${order.productName || '消息包'}`
+    ? `余额充值 - ${order.productName || '账户余额'}`
     : billType === 'refund'
       ? `退款 - ${order.productName || '发送失败返还'}`
+      : isPackageOrder(order)
+        ? `套餐购买 - ${order.productName || '消息包'}`
       : `${order.productName || '发送消息'} x${order.quantity || 1}`
 
   return {
@@ -206,7 +212,8 @@ function formatItemTime(time: string) {
     <cl-topbar
       title="账单明细"
       safeAreaTop
-      backgroundColor="transparent"
+	  fixed
+      backgroundColor="#fff8f6"
       color="#4a2b24"
       height="88rpx"
       :pt="{ title: { className: 'text-[34rpx] font-[800]' }, back: { size: 20 } }"
