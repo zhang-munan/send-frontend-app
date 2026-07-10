@@ -134,7 +134,7 @@ const filteredTemplates = computed(() => {
 const maskedPhone = computed(() => {
   const p = phone.value.replace(/\s/g, '')
   if (!p || p.length < 7)
-    return '138****8000'
+    return ''
   return p.replace(/^(\d{3})\d{4}(\d{4})$/, '$1****$2')
 })
 
@@ -269,7 +269,7 @@ async function handleConfirmSend() {
             v-model="phone"
             type="number"
             class="min-w-0 flex-1 h-[56rpx] bg-transparent text-[36rpx] font-[700] leading-[56rpx] text-[#4a2b24]"
-            placeholder="138 0000 0000"
+            placeholder="请输入收件人手机号"
             placeholder-style="color: #d4c4be; font-size: 32rpx; font-weight: 400;"
           />
           <!--
