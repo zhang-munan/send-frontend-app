@@ -48,6 +48,17 @@ function formatTime(t?: string | null) {
   return t.replace('T', ' ').substring(0, 16)
 }
 
+function formatSendCost(record: MessageRecord) {
+  if (record.payType === 1) {
+    return `套餐抵扣 ${record.smsCount} 条`
+  }
+  return `¥${Number(record.feeAmount).toFixed(2)}`
+}
+
+function sendCostClass(record: MessageRecord) {
+  return record.payType === 1 ? 'text-[#58a05c]' : 'text-[#fe8973]'
+}
+
 // ─── 操作 ────────────────────────────────────────────
 const operating = ref(false)
 
@@ -231,8 +242,8 @@ function goConversation() {
           </template>
           <view class="h-[1rpx] bg-[#f5ece9]" />
           <view class="flex flex-row items-center justify-between">
-            <text class="text-[26rpx] text-[#a08a84]">发送费用</text>
-            <text class="text-[26rpx] font-[700] text-[#fe8973]">¥{{ Number(detail.feeAmount).toFixed(2) }}</text>
+            <text class="text-[26rpx] text-[#a08a84]">{{ detail.payType === 1 ? '套餐消耗' : '发送费用' }}</text>
+            <text class="text-[26rpx] font-[700]" :class="sendCostClass(detail)">{{ formatSendCost(detail) }}</text>
           </view>
         </view>
       </view>

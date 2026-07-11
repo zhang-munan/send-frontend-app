@@ -44,6 +44,8 @@ export interface MessageRecord {
   sendType: number
   scheduledAt: string | null
   feeAmount: number
+  /** 1套餐配额 2余额 3在线支付 4模拟支付 */
+  payType: number | null
   /** 0待审核 1审核通过 2审核拒绝 3待发送 4发送中 5已送达 6发送失败 7已取消 */
   status: number
   deliveredAt: string | null

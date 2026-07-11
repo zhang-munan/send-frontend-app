@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { getConversationMessages, markConversationRead, type ConversationMessage } from '@/api/conversation'
+import { mergeOssPath } from '@/utils/oss'
 
 // ─── 路由参数 ────────────────────────────────────────
 const convId = ref(0)
@@ -86,6 +87,20 @@ function shouldShowTime(idx: number): boolean {
   return cur - prev > 5 * 60 * 1000
 }
 
+function formatSendCost(msg: ConversationMessage) {
+  if (msg.payType === 1) {
+    return msg.smsCount ? `套餐抵扣 ${msg.smsCount} 条` : '套餐抵扣'
+  }
+  if (msg.feeAmount) {
+    return `¥${Number(msg.feeAmount).toFixed(2)}`
+  }
+  return ''
+}
+
+function sendCostClass(msg: ConversationMessage) {
+  return msg.payType === 1 ? 'text-[#58a05c]' : 'text-[#a08a84]'
+}
+
 // ─── 跳转发送 ────────────────────────────────────────
 function goSend() {
   uni.navigateTo({ url: '/package-send/send' })
@@ -117,7 +132,7 @@ function goSend() {
       class="flex flex-row flex-shrink-0 items-center gap-[12rpx] px-[24rpx] py-[16rpx]"
       style="background:#fffbef; border-bottom:1rpx solid #f5e9c0;"
     >
-      <cl-icon name="shield-check-line" :size="15" :pt="{ className: 'flex-shrink-0 text-[#e6a817]' }" />
+      <image :src="mergeOssPath('safe.png')" mode="aspectFit" class="h-[32rpx] w-[32rpx] flex-shrink-0" />
       <text class="flex-1 text-[24rpx] leading-[38rpx] text-[#7a6010]">
         保持真诚和尊重，好的沟通是双向的 💛
       </text>
@@ -162,7 +177,7 @@ function goSend() {
               <text class="text-[30rpx] leading-[50rpx] text-white">{{ msg.contentPreview }}</text>
             </view>
             <view class="mt-[8rpx] flex flex-row items-center justify-end gap-[12rpx]">
-              <text v-if="msg.feeAmount" class="text-[20rpx] text-[#a08a84]">¥{{ Number(msg.feeAmount).toFixed(2) }}</text>
+              <text v-if="formatSendCost(msg)" class="text-[20rpx]" :class="sendCostClass(msg)">{{ formatSendCost(msg) }}</text>
               <cl-icon name="checkbox-circle-line" :size="11" :pt="{ className: 'text-[#a0a0a0]' }" />
             </view>
           </view>

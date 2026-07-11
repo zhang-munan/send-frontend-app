@@ -30,6 +30,9 @@ export interface ConversationMessage {
   direction: number
   contentPreview: string
   feeAmount: number | null
+  smsCount: number | null
+  /** 1套餐配额 2余额 3在线支付 4模拟支付 */
+  payType: number | null
   status: number
   createTime: string
 }
