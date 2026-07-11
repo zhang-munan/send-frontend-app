@@ -25,8 +25,8 @@ const MESSAGE_LIMIT = 500
 /** 本次发送计费条数 */
 const smsCount = computed(() => Math.ceil((message.value.length || 1) / 70))
 
-/** 预估费用：按 70 字/条，每条 0.05 元 */
-const estimatedFee = computed(() => (smsCount.value * 0.05).toFixed(2))
+/** 预估费用：按 70 字/条，每条 5 分。 */
+const estimatedFee = computed(() => (smsCount.value * 5 / 100).toFixed(2))
 
 /** 是否有足够配额直接发送 */
 const hasEnoughQuota = computed(() => userQuota.value >= smsCount.value)

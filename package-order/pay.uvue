@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from "vue";
 import type { OrderInfo, WxPayParams } from "@/api/order";
 import { getBalance, getOrderDetail, payOrder, queryOrderStatus } from "@/api/order";
 import { isDev } from "@/config";
+import { formatYuan } from '@/utils/money'
 
 // ─── 路由参数 ────────────────────────────────────────────────
 const pages = getCurrentPages();
@@ -49,7 +50,7 @@ const paymentMethods = computed(() => {
 		},
 		{
 			id: "balance",
-			name: `余额支付（¥${userBalance.value.toFixed(2)}）`,
+			name: `余额支付（¥${formatYuan(userBalance.value)}）`,
 			tag: "",
 			disabled:
 				userBalance.value <
@@ -309,7 +310,7 @@ async function onPaySuccess() {
 				<view class="flex flex-row items-center justify-between py-[8rpx]">
 					<text class="text-[28rpx] text-[#4a2b24]">商品金额：</text>
 					<text class="text-[28rpx] text-[#4a2b24]"
-						>¥{{ Number(orderInfo.originalPrice).toFixed(2) }}</text
+						>¥{{ formatYuan(orderInfo.originalPrice) }}</text
 					>
 				</view>
 				<view
@@ -320,19 +321,19 @@ async function onPaySuccess() {
 						<text class="text-[28rpx] text-[#4a2b24]">优惠折扣：</text>
 						<view class="rounded-[8rpx] bg-[#fff0ea] px-[12rpx] py-[4rpx]">
 							<text class="text-[20rpx] font-[600] text-[#fe8973]"
-								>-¥{{ Number(orderInfo.discountAmount).toFixed(2) }}</text
+								>-¥{{ formatYuan(orderInfo.discountAmount) }}</text
 							>
 						</view>
 					</view>
 					<text class="text-[28rpx] font-[600] text-[#fe8973]"
-						>-¥{{ Number(orderInfo.discountAmount).toFixed(2) }}</text
+						>-¥{{ formatYuan(orderInfo.discountAmount) }}</text
 					>
 				</view>
 				<view class="my-[16rpx] h-[1rpx] bg-[#f5ece9]" />
 				<view class="flex flex-row items-center justify-between py-[4rpx]">
 					<text class="text-[28rpx] font-[700] text-[#4a2b24]">应付金额：</text>
 					<text class="text-[48rpx] font-[800] leading-[60rpx] text-[#fe8973]"
-						>¥{{ Number(orderInfo.payAmount).toFixed(2) }}</text
+						>¥{{ formatYuan(orderInfo.payAmount) }}</text
 					>
 				</view>
 			</view>
@@ -459,7 +460,7 @@ async function onPaySuccess() {
 				<view class="flex flex-col flex-shrink-0">
 					<text class="text-[22rpx] text-[#7a5147]">应付金额</text>
 					<text class="text-[40rpx] font-[800] leading-[48rpx] text-[#fe8973]">
-						¥{{ Number(orderInfo.payAmount).toFixed(2) }}
+						¥{{ formatYuan(orderInfo.payAmount) }}
 					</text>
 				</view>
 				<view

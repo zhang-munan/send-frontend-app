@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { getMessageDetail, resendMessage, cancelMessage, type MessageRecord } from '@/api/message'
+import { formatYuan } from '@/utils/money'
 
 // ─── 路由参数 ────────────────────────────────────────
 const id = ref(0)
@@ -52,7 +53,7 @@ function formatSendCost(record: MessageRecord) {
   if (record.payType === 1) {
     return `套餐抵扣 ${record.smsCount} 条`
   }
-  return `¥${Number(record.feeAmount).toFixed(2)}`
+  return `¥${formatYuan(record.feeAmount)}`
 }
 
 function sendCostClass(record: MessageRecord) {

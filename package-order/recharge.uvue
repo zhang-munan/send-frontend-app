@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { getProductList, getBalance, createOrder, type ProductInfo, type UserBalance } from '@/api/order'
+import { formatYuan, toYuan } from '@/utils/money'
 
 // ─── 数据 ─────────────────────────────────────────────
 const products = ref<ProductInfo[]>([])
@@ -29,12 +30,12 @@ const finalTotal = computed(() =>
 
 const pricePerSms = (p: ProductInfo) => {
   if (!p.messageQuota) return null
-  return (Number(p.sellPrice) / p.messageQuota).toFixed(2)
+  return (toYuan(p.sellPrice) / p.messageQuota).toFixed(2)
 }
 
 const savedAmount = (p: ProductInfo) => {
   const saved = Number(p.originalPrice) - Number(p.sellPrice)
-  return saved > 0 ? saved.toFixed(2) : null
+  return saved > 0 ? formatYuan(saved) : null
 }
 
 // ─── 初始化 ────────────────────────────────────────────
@@ -62,9 +63,9 @@ function applyCoupon() {
     uni.showToast({ title: '请输入优惠码', icon: 'none' })
     return
   }
-  // 模拟优惠码逻辑：SAVE10 立减 1 元
+  // 模拟优惠码逻辑：SAVE10 立减 1 元（100 分）
   if (couponCode.value.trim().toUpperCase() === 'SAVE10') {
-    couponDiscount.value = 1
+    couponDiscount.value = 100
     couponApplied.value = true
     couponAppliedCode.value = couponCode.value.trim().toUpperCase()
     uni.showToast({ title: '优惠码已使用', icon: 'success' })
@@ -141,7 +142,7 @@ function goOrders() { uni.navigateTo({ url: '/package-order/orders' }) }
         <view class="mt-[20rpx] flex flex-row items-end gap-[6rpx]">
           <text class="text-[36rpx] font-[700] text-white leading-[56rpx]">¥</text>
           <text class="text-[80rpx] font-[900] text-white leading-[88rpx]">
-            {{ userBalance ? Number(userBalance.balance).toFixed(2) : '0.00' }}
+            {{ userBalance ? formatYuan(userBalance.balance) : '0.00' }}
           </text>
         </view>
 
@@ -230,7 +231,7 @@ function goOrders() { uni.navigateTo({ url: '/package-order/orders' }) }
               <!-- 价格区域 -->
               <view class="flex-shrink-0 text-right w-[140rpx]">
                 <text class="block text-[34rpx] font-[800] text-[#4a2b24]">
-                  ¥{{ Number(p.sellPrice).toFixed(2) }}
+                  ¥{{ formatYuan(p.sellPrice) }}
                 </text>
                 <text v-if="pricePerSms(p)" class="block text-[20rpx] text-[#a08a84]">
                   ¥{{ pricePerSms(p) }}/条
@@ -239,7 +240,7 @@ function goOrders() { uni.navigateTo({ url: '/package-order/orders' }) }
                   省¥{{ savedAmount(p) }}
                 </text>
                 <text v-if="Number(p.originalPrice) > Number(p.sellPrice)" class="block text-[20rpx] text-[#c4b3ae] line-through">
-                  ¥{{ Number(p.originalPrice).toFixed(2) }}
+                  ¥{{ formatYuan(p.originalPrice) }}
                 </text>
               </view>
 
@@ -295,7 +296,7 @@ function goOrders() { uni.navigateTo({ url: '/package-order/orders' }) }
         >
           <cl-icon name="checkbox-circle-fill" :size="15" :pt="{ className: 'flex-shrink-0 text-[#4caf50]' }" />
           <text class="min-w-0 flex-1 text-[24rpx] text-[#2e7d32]">
-            已使用优惠码 {{ couponAppliedCode }}，立减 ¥{{ couponDiscount.toFixed(2) }}
+            已使用优惠码 {{ couponAppliedCode }}，立减 ¥{{ formatYuan(couponDiscount) }}
           </text>
           <cl-icon @click="removeCoupon" name="close-line" :size="13" :pt="{ className: 'flex-shrink-0 text-[#a0a0a0]' }" />
         </view>
@@ -314,12 +315,12 @@ function goOrders() { uni.navigateTo({ url: '/package-order/orders' }) }
             <text class="text-[26rpx] text-[#7a5147]">合计：</text>
             <text class="text-[26rpx] font-[700] text-[#fe8973]">¥</text>
             <text class="text-[48rpx] font-[900] leading-[52rpx] text-[#fe8973]">
-              {{ finalTotal.toFixed(2) }}
+              {{ formatYuan(finalTotal) }}
             </text>
           </view>
           <view v-if="couponApplied" class="mt-[4rpx] flex flex-row items-center gap-[6rpx]">
             <text class="text-[22rpx] text-[#a08a84]">已优惠</text>
-            <text class="text-[22rpx] font-[600] text-[#fe8973]">¥{{ couponDiscount.toFixed(2) }}</text>
+            <text class="text-[22rpx] font-[600] text-[#fe8973]">¥{{ formatYuan(couponDiscount) }}</text>
             <text class="text-[22rpx] text-[#c4b3ae]">，明细</text>
             <cl-icon name="arrow-down-s-line" :size="10" :pt="{ className: 'text-[#a08a84]' }" />
           </view>

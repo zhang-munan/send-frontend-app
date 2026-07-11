@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { getConversationMessages, markConversationRead, type ConversationMessage } from '@/api/conversation'
 import { mergeOssPath } from '@/utils/oss'
+import { formatYuan } from '@/utils/money'
 
 // ─── 路由参数 ────────────────────────────────────────
 const convId = ref(0)
@@ -92,7 +93,7 @@ function formatSendCost(msg: ConversationMessage) {
     return msg.smsCount ? `套餐抵扣 ${msg.smsCount} 条` : '套餐抵扣'
   }
   if (msg.feeAmount) {
-    return `¥${Number(msg.feeAmount).toFixed(2)}`
+    return `¥${formatYuan(msg.feeAmount)}`
   }
   return ''
 }

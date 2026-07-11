@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 import { getBalance } from '@/api/order'
 import { useStore } from '@/.cool'
 import { mergeOssPath } from '@/utils/oss'
+import { formatYuan } from '@/utils/money'
 
 const statusBarHeight = ref(0)
 // #ifndef H5
@@ -36,7 +37,7 @@ onShow(() => {
     user.get().catch(() => {})
     getBalance().then((b) => {
       userQuota.value = b.messageQuota
-      userBalance.value = Number(b.balance).toFixed(2)
+      userBalance.value = formatYuan(b.balance)
     }).catch(() => {})
   }
 })

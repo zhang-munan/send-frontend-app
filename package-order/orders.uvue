@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { getBalance, getOrderList, type OrderInfo, type UserBalance } from '@/api/order'
+import { formatYuan } from '@/utils/money'
 
 type BillType = 'all' | 'recharge' | 'consume' | 'refund'
 
@@ -69,7 +70,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
       key,
       title: formatMonthTitle(key),
       total: totalAmount,
-      totalText: `${totalAmount >= 0 ? '+' : '-'}¥${Math.abs(totalAmount).toFixed(2)}`,
+      totalText: `${totalAmount >= 0 ? '+' : '-'}¥${formatYuan(Math.abs(totalAmount))}`,
       totalColor: totalAmount >= 0 ? '#13bf56' : '#ff3d46',
       items,
     }
@@ -156,7 +157,7 @@ function toBillItem(order: OrderInfo): BillItem {
     billType,
     displayName,
     displayTime: formatItemTime(order.createTime),
-    amountText: `${signedAmount >= 0 ? '+' : '-'}¥${Math.abs(signedAmount).toFixed(2)}`,
+    amountText: `${signedAmount >= 0 ? '+' : '-'}¥${formatYuan(Math.abs(signedAmount))}`,
     amountColor: billType === 'recharge' ? '#13bf56' : billType === 'refund' ? '#288bf2' : '#ff3d46',
     iconBg: billType === 'recharge'
       ? 'background: linear-gradient(135deg, #dcffe6, #c8f5d3);'
@@ -245,7 +246,7 @@ function formatItemTime(time: string) {
               账户余额
             </text>
             <text class="mt-[20rpx] block text-[46rpx] text-[#ff5a63] leading-[54rpx] font-[900]">
-              ¥ {{ balance ? Number(balance.balance).toFixed(2) : '0.00' }}
+              ¥ {{ balance ? formatYuan(balance.balance) : '0.00' }}
             </text>
             <view class="mt-[16rpx] inline-flex flex-row border border-[#ff8d8f] rounded-[32rpx] border-solid px-[24rpx] py-[7rpx]" @click="goRecharge">
               <text class="text-[24rpx] text-[#ff515c]">
@@ -261,7 +262,7 @@ function formatItemTime(time: string) {
               本月消费
             </text>
             <text class="mt-[20rpx] block text-[46rpx] text-[#ff5a63] leading-[54rpx] font-[900]">
-              ¥ {{ monthConsume.toFixed(2) }}
+              ¥ {{ formatYuan(monthConsume) }}
             </text>
             <view class="mt-[15rpx] inline-flex flex-row items-center gap-[6rpx]">
               <text class="text-[24rpx] text-[#5c352c]">
@@ -278,7 +279,7 @@ function formatItemTime(time: string) {
               本月充值
             </text>
             <text class="mt-[20rpx] block text-[46rpx] text-[#ff5a63] leading-[54rpx] font-[900]">
-              ¥ {{ monthRecharge.toFixed(2) }}
+              ¥ {{ formatYuan(monthRecharge) }}
             </text>
             <view class="mt-[15rpx] inline-flex flex-row items-center gap-[6rpx]">
               <text class="text-[24rpx] text-[#5c352c]">
