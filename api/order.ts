@@ -11,6 +11,8 @@ export interface ProductInfo {
 	id: number;
 	name: string;
 	subtitle?: string;
+	tagContent?: string;
+	tagBackgroundColor?: string;
 	description?: string;
 	originalPrice: number;
 	sellPrice: number;

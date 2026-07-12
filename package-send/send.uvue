@@ -9,7 +9,6 @@ const message = ref('对不起，之前是我太冲动了。其实我一直很�
 const isAnonymous = ref(true)
 const sendMode = ref<'immediate' | 'scheduled'>('immediate')
 const showTemplatePanel = ref(false)
-const showConfirmModal = ref(false)
 const activeCategory = ref('全部')
 const isCreatingOrder = ref(false)
 const scheduledDate = ref('')
@@ -131,19 +130,6 @@ const filteredTemplates = computed(() => {
   return templates.filter(t => t.tag === activeCategory.value)
 })
 
-const maskedPhone = computed(() => {
-  const p = phone.value.replace(/\s/g, '')
-  if (!p || p.length < 7)
-    return ''
-  return p.replace(/^(\d{3})\d{4}(\d{4})$/, '$1****$2')
-})
-
-const confirmItems = [
-  '消息内容善意、得体',
-  '不会给对方造成困扰',
-  '我已了解平台使用规范',
-]
-
 function goRecords() {
   uni.navigateTo({ url: '/package-send/send-records' })
 }
@@ -195,7 +181,6 @@ async function handleConfirmSend() {
   }
 
   isCreatingOrder.value = true
-  showConfirmModal.value = false
 
   try {
     const messagePayload = {
@@ -222,7 +207,6 @@ async function handleConfirmSend() {
   }
   catch (err: any) {
     uni.showToast({ title: err?.message || '操作失败，请重试', icon: 'none' })
-    showConfirmModal.value = true
   }
   finally {
     isCreatingOrder.value = false
@@ -470,85 +454,9 @@ async function handleConfirmSend() {
         <view
           class="h-[88rpx] w-[340rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-[22rpx] bg-[#fe8973]"
           style="box-shadow: 0 8rpx 24rpx #fe89735c;"
-          @click="showConfirmModal = true"
+          @click="!isCreatingOrder && handleConfirmSend()"
         >
-          <text class="text-[32rpx] font-[800] text-white">确认发送</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- Confirmation modal overlay -->
-    <view
-      v-if="showConfirmModal"
-      class="fixed inset-0 z-[20] flex flex-row items-center justify-center bg-[#2c1e196b] px-[40rpx]"
-      @click="showConfirmModal = false"
-    >
-      <view
-        class="relative w-full rounded-[28rpx] bg-white px-[36rpx] pb-[36rpx] pt-[36rpx]"
-        @click.stop
-      >
-        <!-- Heart decoration -->
-        <text class="absolute right-[28rpx] top-[-20rpx] text-[44rpx]">💕</text>
-        <!-- Title -->
-        <text class="block text-center text-[34rpx] font-[800] text-[#4a2b24]">发送确认</text>
-        <!-- Subtitle -->
-        <text class="mt-[16rpx] block text-[26rpx] text-[#7a5147]">在发送之前，请确认：</text>
-        <!-- Check items -->
-        <view class="mt-[14rpx] flex flex-col gap-[14rpx]">
-          <view v-for="item in confirmItems" :key="item" class="flex flex-row items-center gap-[14rpx]">
-            <view class="h-[36rpx] w-[36rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-full bg-[#fe8973]">
-              <cl-icon name="check-line" :size="10" :pt="{ className: 'text-white' }" />
-            </view>
-            <text class="text-[26rpx] text-[#4a2b24]">{{ item }}</text>
-          </view>
-        </view>
-        <!-- Info card -->
-        <view class="mt-[20rpx] rounded-[16rpx] bg-[#fdf8f6] px-[20rpx] py-[4rpx]">
-          <view class="flex flex-row items-center justify-between border-b border-b-solid border-b-[#f0e8e4] py-[14rpx]">
-            <text class="text-[24rpx] text-[#7a5147]">收件人</text>
-            <text class="text-[24rpx] font-[600] text-[#4a2b24]">{{ maskedPhone }}</text>
-          </view>
-          <view class="border-b border-b-solid border-b-[#f0e8e4] py-[14rpx]">
-            <text class="text-[24rpx] text-[#7a5147]">消息预览</text>
-            <text class="mt-[6rpx] block text-[24rpx] text-[#4a2b24] leading-[36rpx]" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
-              {{ message }}
-            </text>
-          </view>
-          <view class="flex flex-row items-center justify-between border-b border-b-solid border-b-[#f0e8e4] py-[14rpx]">
-            <text class="text-[24rpx] text-[#7a5147]">发送方式</text>
-            <text class="text-[24rpx] text-[#4a2b24]">{{ isAnonymous ? '匿名发送' : '实名发送' }}</text>
-          </view>
-          <view v-if="sendMode === 'scheduled'" class="flex flex-row items-center justify-between border-b border-b-solid border-b-[#f0e8e4] py-[14rpx]">
-            <text class="text-[24rpx] text-[#7a5147]">发送时间</text>
-            <text class="text-[24rpx] text-[#4a2b24]">{{ scheduledLabel }}</text>
-          </view>
-          <view class="flex flex-row items-center justify-between py-[14rpx]">
-            <text class="text-[24rpx] text-[#7a5147]">费用</text>
-            <view class="flex flex-col items-end">
-              <text v-if="hasEnoughQuota" class="text-[24rpx] font-[700] text-[#4caf50]">
-                免支付（扣 {{ smsCount }} 条配额）
-              </text>
-              <text v-else class="text-[24rpx] font-[700] text-[#fe8973]">¥{{ estimatedFee }}</text>
-            </view>
-          </view>
-        </view>
-        <!-- Action buttons -->
-        <view class="mt-[24rpx] flex flex-row gap-[16rpx]">
-          <view
-            class="h-[80rpx] flex flex-row flex-1 items-center justify-center rounded-[16rpx] border border-solid border-[#f0e8e4]"
-            @click="showConfirmModal = false"
-          >
-            <text class="text-[28rpx] text-[#7a5147]">返回修改</text>
-          </view>
-          <view
-            class="h-[80rpx] flex flex-row flex-1 items-center justify-center rounded-[16rpx]"
-            :class="isCreatingOrder ? 'bg-[#fbb9ad]' : 'bg-[#fe8973]'"
-            @click="!isCreatingOrder && handleConfirmSend()"
-          >
-            <text class="text-[28rpx] font-[700] text-white">
-              {{ isCreatingOrder ? '处理中...' : hasEnoughQuota ? '确认发送' : '去支付' }}
-            </text>
-          </view>
+          <text class="text-[32rpx] font-[800] text-white">{{ isCreatingOrder ? '处理中...' : hasEnoughQuota ? '确认发送' : '去支付' }}</text>
         </view>
       </view>
     </view>

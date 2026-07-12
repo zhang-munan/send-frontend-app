@@ -1,0 +1,119 @@
+<script setup lang="ts">
+import { ref } from "vue";
+import { getReplyInfo, sendReply } from "@/api/message";
+
+const token = ref("");
+const originalContent = ref("");
+const replyContent = ref("");
+const loading = ref(false);
+const invalid = ref(false);
+
+onLoad(async (options) => {
+	token.value = options?.token ? decodeURIComponent(options.token) : "";
+	if (!token.value) {
+		invalid.value = true;
+		return;
+	}
+	try {
+		const info = await getReplyInfo(token.value);
+		originalContent.value = info.content;
+	} catch (error: any) {
+		invalid.value = true;
+		uni.showToast({ title: error?.message || "链接已过期或无效", icon: "none" });
+	}
+});
+
+async function submitReply() {
+	const content = replyContent.value.trim();
+	if (!content || loading.value) return;
+	loading.value = true;
+	try {
+		await sendReply({ token: token.value, content });
+		uni.showToast({ title: "回复成功", icon: "success" });
+		setTimeout(() => uni.navigateBack(), 1500);
+	} catch (error: any) {
+		uni.showToast({ title: error?.message || "回复发送失败，请稍后再试", icon: "none" });
+	} finally {
+		loading.value = false;
+	}
+}
+</script>
+
+<template>
+	<view class="reply-page">
+		<view v-if="invalid" class="invalid">链接已过期或无效，请联系发送方。</view>
+		<view v-else>
+			<view class="original-message">
+				<text class="label">原始消息</text>
+				<text class="content">{{ originalContent }}</text>
+			</view>
+			<view class="reply-form">
+				<textarea
+					v-model="replyContent"
+					class="textarea"
+					placeholder="输入你的回复..."
+					maxlength="500"
+				/>
+				<button
+					class="send-button"
+					:disabled="!replyContent.trim() || loading"
+					@click="submitReply"
+				>
+					{{ loading ? "发送中..." : "发送回复" }}
+				</button>
+			</view>
+		</view>
+	</view>
+</template>
+
+<style scoped>
+.reply-page {
+	min-height: 100vh;
+	padding: 32rpx;
+	background: #f7f8fa;
+	box-sizing: border-box;
+}
+.original-message,
+.reply-form {
+	padding: 28rpx;
+	border-radius: 16rpx;
+	background: #fff;
+}
+.label {
+	display: block;
+	margin-bottom: 16rpx;
+	color: #8a8f99;
+	font-size: 26rpx;
+}
+.content {
+	color: #282c34;
+	font-size: 30rpx;
+	line-height: 1.65;
+	white-space: pre-wrap;
+}
+.reply-form {
+	margin-top: 24rpx;
+}
+.textarea {
+	width: 100%;
+	min-height: 240rpx;
+	color: #282c34;
+	font-size: 30rpx;
+	box-sizing: border-box;
+}
+.send-button {
+	margin-top: 24rpx;
+	color: #fff;
+	background: #e85b72;
+	border-radius: 12rpx;
+}
+.send-button[disabled] {
+	opacity: 0.55;
+}
+.invalid {
+	padding-top: 160rpx;
+	color: #8a8f99;
+	text-align: center;
+	font-size: 28rpx;
+}
+</style>

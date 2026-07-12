@@ -4,6 +4,7 @@ import type { OrderInfo, WxPayParams } from "@/api/order";
 import { getBalance, getOrderDetail, payOrder, queryOrderStatus } from "@/api/order";
 import { isDev } from "@/config";
 import { formatYuan } from '@/utils/money'
+import { mergeOssPath } from '@/utils/oss'
 
 // ─── 路由参数 ────────────────────────────────────────────────
 const pages = getCurrentPages();
@@ -20,6 +21,7 @@ interface PaymentMethod {
 	disabledTip?: string;
 	iconBg: string;
 	iconText: string;
+	iconImage?: string;
 }
 
 const selectedPayment = ref<PaymentType>("wechat");
@@ -38,7 +40,8 @@ const paymentMethods = computed(() => {
 			tag: "",
 			disabled: false,
 			iconBg: "#07c160",
-			iconText: "微"
+			iconText: "微",
+			iconImage: "/static/images/order/payment-wechat.png"
 		},
 		{
 			id: "alipay",
@@ -46,11 +49,12 @@ const paymentMethods = computed(() => {
 			tag: "H5端支持",
 			disabled: false,
 			iconBg: "#1677ff",
-			iconText: "支"
+			iconText: "支",
+			iconImage: "/static/images/order/payment-alipay.png"
 		},
 		{
 			id: "balance",
-			name: `余额支付（¥${formatYuan(userBalance.value)}）`,
+			name: "余额支付",
 			tag: "",
 			disabled:
 				userBalance.value <
@@ -60,7 +64,8 @@ const paymentMethods = computed(() => {
 				userBalance.value >= (orderInfo.value ? Number(orderInfo.value.payAmount) : 0)
 					? "#a28fdb"
 					: "#d0d0d0",
-			iconText: "余"
+			iconText: "余",
+			iconImage: "/static/images/order/payment-balance.png"
 		}
 	];
 
@@ -248,12 +253,12 @@ async function onPaySuccess() {
 </script>
 
 <template>
-	<view class="min-h-[100vh] bg-[#fef7f5] text-[#4a2b24]">
+	<view class="min-h-[100vh] bg-[#fef9f7] text-[#4a2b24]">
 		<cl-topbar
 			title="确认支付"
 			safeAreaTop
 			fixed
-			backgroundColor="#fef7f5"
+			backgroundColor="#fef9f7"
 			color="#4a2b24"
 			height="88rpx"
 			:pt="{ title: { className: 'text-[34rpx] font-[800]' }, back: { size: 20 } }"
@@ -270,125 +275,83 @@ async function onPaySuccess() {
 		</view>
 
 		<!-- 订单内容 -->
-		<view v-else-if="orderInfo" class="px-[24rpx] pb-[200rpx]">
-			<!-- Product info card -->
-			<view
-				class="rounded-[22rpx] bg-white px-[24rpx] py-[24rpx]"
-				style="box-shadow: 0 4rpx 20rpx #fe897314"
-			>
-				<view class="flex flex-row items-center gap-[20rpx]">
-					<view
-						class="h-[120rpx] w-[120rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-[20rpx]"
-						style="background: linear-gradient(135deg, #ffd8c8, #ffb8a8)"
-					>
-						<text class="text-[60rpx]">🎁</text>
+		<view v-else-if="orderInfo" class="px-[24rpx] pb-[220rpx]">
+			<!-- Order and amount card -->
+			<view class="rounded-[28rpx] bg-white px-[34rpx] pb-[30rpx] pt-[36rpx]" style="box-shadow: 0 8rpx 30rpx #d78b6d12">
+				<view class="flex flex-row items-center gap-[26rpx]">
+					<view class="h-[172rpx] w-[172rpx] flex flex-shrink-0 items-center justify-center overflow-hidden rounded-[28rpx] bg-[#fff4ef]">
+						<image src="/static/images/order/payment-gift.png" mode="aspectFit" class="h-[168rpx] w-[168rpx]" />
 					</view>
 					<view class="min-w-0 flex-1">
-						<view class="flex flex-row items-baseline gap-[10rpx]">
-							<text class="text-[30rpx] font-[800] text-[#4a2b24]">{{
-								orderInfo.productName
-							}}</text>
-						</view>
-						<text class="mt-[10rpx] block text-[24rpx] text-[#a08a84]"
-							>数量：{{ orderInfo.quantity }}</text
-						>
-						<text class="mt-[6rpx] block text-[22rpx] text-[#a08a84]"
-							>订单编号：{{ orderInfo.orderNo }}</text
-						>
-						<text class="mt-[6rpx] block text-[22rpx] text-[#a08a84]"
-							>创建时间：{{ orderInfo.createTime }}</text
-						>
+						<text class="block text-[34rpx] font-[700] text-[#301712]">{{ orderInfo.productName }}</text>
+						<text class="mt-[16rpx] block text-[25rpx] text-[#856d67]">数量：{{ orderInfo.quantity }}</text>
+						<text class="mt-[10rpx] block text-[25rpx] text-[#856d67]">订单编号：{{ orderInfo.orderNo }}</text>
+						<text class="mt-[10rpx] block text-[25rpx] text-[#856d67]">创建时间：{{ orderInfo.createTime }}</text>
 					</view>
 				</view>
-			</view>
-
-			<!-- Price breakdown card -->
-			<view
-				class="mt-[16rpx] rounded-[22rpx] bg-white px-[28rpx] py-[24rpx]"
-				style="box-shadow: 0 4rpx 20rpx #fe897314"
-			>
-				<view class="flex flex-row items-center justify-between py-[8rpx]">
-					<text class="text-[28rpx] text-[#4a2b24]">商品金额：</text>
-					<text class="text-[28rpx] text-[#4a2b24]"
-						>¥{{ formatYuan(orderInfo.originalPrice) }}</text
-					>
+				<view class="my-[30rpx] border-t border-dashed border-[#f1d9d1]" />
+				<view class="flex flex-row items-center justify-between py-[10rpx]">
+					<text class="text-[28rpx] text-[#705953]">商品金额：</text>
+					<text class="text-[30rpx] font-[600] text-[#27110c]">¥{{ formatYuan(orderInfo.originalPrice) }}</text>
 				</view>
-				<view
-					v-if="Number(orderInfo.discountAmount) > 0"
-					class="flex flex-row items-center justify-between py-[8rpx]"
-				>
+				<view v-if="Number(orderInfo.discountAmount) > 0" class="flex flex-row items-center justify-between py-[14rpx]">
 					<view class="flex flex-row items-center gap-[12rpx]">
-						<text class="text-[28rpx] text-[#4a2b24]">优惠折扣：</text>
-						<view class="rounded-[8rpx] bg-[#fff0ea] px-[12rpx] py-[4rpx]">
-							<text class="text-[20rpx] font-[600] text-[#fe8973]"
-								>-¥{{ formatYuan(orderInfo.discountAmount) }}</text
-							>
+						<text class="text-[28rpx] text-[#705953]">优惠折扣：</text>
+						<view class="rounded-[14rpx] bg-[#fff0eb] px-[14rpx] py-[7rpx]">
+							<text class="text-[22rpx] text-[#ff6255]">优惠券 - ¥{{ formatYuan(orderInfo.discountAmount) }}</text>
 						</view>
 					</view>
-					<text class="text-[28rpx] font-[600] text-[#fe8973]"
-						>-¥{{ formatYuan(orderInfo.discountAmount) }}</text
-					>
+					<text class="text-[30rpx] font-[600] text-[#ff6255]">- ¥{{ formatYuan(orderInfo.discountAmount) }}</text>
 				</view>
-				<view class="my-[16rpx] h-[1rpx] bg-[#f5ece9]" />
-				<view class="flex flex-row items-center justify-between py-[4rpx]">
-					<text class="text-[28rpx] font-[700] text-[#4a2b24]">应付金额：</text>
-					<text class="text-[48rpx] font-[800] leading-[60rpx] text-[#fe8973]"
-						>¥{{ formatYuan(orderInfo.payAmount) }}</text
-					>
+				<view class="my-[16rpx] h-[1rpx] bg-[#f5e6e1]" />
+				<view class="flex flex-row items-center justify-between pt-[12rpx]">
+					<text class="text-[32rpx] font-[700] text-[#301712]">应付金额：</text>
+					<text class="text-[58rpx] font-[800] leading-[72rpx] text-[#ff6255]">¥{{ formatYuan(orderInfo.payAmount) }}</text>
 				</view>
 			</view>
 
 			<!-- Payment method section -->
-			<view
-				class="mt-[16rpx] rounded-[22rpx] bg-white px-[28rpx] pt-[20rpx] pb-[8rpx]"
-				style="box-shadow: 0 4rpx 20rpx #fe897314"
-			>
-				<text class="mb-[16rpx] block text-[28rpx] font-[700] text-[#4a2b24]"
-					>支付方式</text
-				>
+			<view class="mt-[24rpx] rounded-[28rpx] bg-white px-[26rpx] pb-[22rpx] pt-[32rpx]" style="box-shadow: 0 8rpx 30rpx #d78b6d12">
+				<text class="mb-[24rpx] block text-[36rpx] font-[700] text-[#301712]">支付方式</text>
 
 				<view
 					v-for="method in paymentMethods"
 					:key="method.id"
-					class="mb-[12rpx] flex flex-row items-center gap-[16rpx] rounded-[16rpx] px-[16rpx] py-[18rpx]"
+					class="mb-[16rpx] flex flex-row items-center gap-[20rpx] rounded-[20rpx] border px-[18rpx] py-[20rpx]"
 					:class="[
 						method.disabled
-							? 'bg-[#f8f8f8]'
+							? 'border-[#f1e9e6] bg-[#faf9f8] opacity-50'
 							: selectedPayment === method.id
-								? 'border border-solid border-[#febaaa] bg-[#fff5f4]'
-								: 'border border-solid border-transparent bg-[#fafafa]'
+								? 'border-[#ff6b5d] bg-[#fffdfc]'
+								: 'border-[#f1e5e0] bg-white'
 					]"
 					@click="!method.disabled && (selectedPayment = method.id)"
 				>
-					<view
-						class="h-[56rpx] w-[56rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-[14rpx]"
-						:style="{ backgroundColor: method.iconBg }"
-					>
-						<text class="text-[28rpx] font-[800] text-white">{{
-							method.iconText
-						}}</text>
+					<view class="h-[62rpx] w-[62rpx] flex flex-row flex-shrink-0 items-center justify-center overflow-hidden rounded-[15rpx]" :style="{ backgroundColor: method.iconBg }">
+						<image v-if="method.iconImage" :src="method.iconImage" mode="aspectFit" class="h-full w-full" />
+						<text v-else class="text-[32rpx] font-[800] text-white">{{ method.iconText }}</text>
 					</view>
 
 					<view class="min-w-0 flex-1">
 						<view class="flex flex-row items-center gap-[12rpx]">
 							<text
-								class="text-[28rpx] font-[600]"
+								class="text-[31rpx] font-[600]"
 								:class="method.disabled ? 'text-[#b0b0b0]' : 'text-[#4a2b24]'"
 							>
 								{{ method.name }}
 							</text>
 							<view
 								v-if="method.tag"
-								class="rounded-[8rpx] bg-[#dbeafe] px-[10rpx] py-[3rpx]"
+								class="rounded-[14rpx] bg-[#fff0eb] px-[12rpx] py-[5rpx]"
 							>
-								<text class="text-[18rpx] font-[600] text-[#3b82f6]">{{
+								<text class="text-[21rpx] text-[#ff806e]">{{
 									method.tag
 								}}</text>
 							</view>
 						</view>
 						<text
 							v-if="method.disabled && 'disabledTip' in method"
-							class="mt-[4rpx] block text-[22rpx] text-[#b0b0b0]"
+							class="mt-[4rpx] block text-[23rpx] text-[#9f9997]"
 						>
 							{{ (method as any).disabledTip }}
 						</text>
@@ -397,7 +360,7 @@ async function onPaySuccess() {
 					<view class="flex-shrink-0">
 						<view
 							v-if="!method.disabled && selectedPayment === method.id"
-							class="h-[40rpx] w-[40rpx] flex flex-row items-center justify-center rounded-full bg-[#fe8973]"
+							class="h-[40rpx] w-[40rpx] flex flex-row items-center justify-center rounded-full bg-[#ff6255]"
 						>
 							<cl-icon
 								name="check-line"
@@ -407,34 +370,25 @@ async function onPaySuccess() {
 						</view>
 						<view
 							v-else-if="!method.disabled"
-							class="h-[40rpx] w-[40rpx] rounded-full border-[2rpx] border-solid border-[#d8c8c4]"
+							class="h-[40rpx] w-[40rpx] rounded-full border-[2rpx] border-solid border-[#c9bbb6]"
 						/>
 						<view
 							v-else
-							class="h-[40rpx] w-[40rpx] flex flex-row items-center justify-center rounded-full bg-[#f0f0f0]"
+							class="h-[40rpx] w-[40rpx] flex flex-row items-center justify-center rounded-full border-[2rpx] border-solid border-[#c9c3c1] bg-transparent"
 						>
-							<view class="h-[3rpx] w-[22rpx] bg-[#c8c8c8]" />
+							<view class="h-[3rpx] w-[26rpx] rotate-45 bg-[#c8c8c8]" />
 						</view>
 					</view>
 				</view>
 			</view>
 
 			<!-- Warm tip card -->
-			<view
-				class="relative mt-[16rpx] overflow-hidden rounded-[22rpx] px-[24rpx] py-[20rpx]"
-				style="background: linear-gradient(135deg, #fff8f5, #fff3ee)"
-			>
-				<view class="absolute right-[0rpx] top-[0rpx] opacity-20">
-					<text class="text-[80rpx]">💕</text>
-				</view>
-				<view class="flex flex-row items-start gap-[14rpx]">
-					<cl-icon
-						name="shield-check-line"
-						:size="17"
-						:pt="{ className: 'mt-[2rpx] flex-shrink-0 text-[#fe8973]' }"
-					/>
-					<text class="flex-1 text-[24rpx] text-[#6a3b29] leading-[38rpx]">
-						温馨提示：支付成功后，消息将进入审核队列，审核通过后自动送达。
+			<view class="relative mt-[24rpx] overflow-hidden rounded-[24rpx] border border-solid border-[#ffe1b6] px-[28rpx] py-[22rpx]">
+				<image src="/static/images/order/payment-tip-bg.png" mode="aspectFill" class="absolute inset-0 h-full w-full" />
+				<view class="relative z-[1] flex flex-row items-start gap-[14rpx]">
+					<image :src="mergeOssPath('safe.png')" mode="aspectFit" class="mt-[2rpx] h-[46rpx] w-[46rpx] flex-shrink-0" />
+					<text class="flex-1 text-[26rpx] text-[#8a4a26] leading-[42rpx]">
+						温馨提示：支付成功后，消息条数将自动到账，可立即前往表达心意。
 					</text>
 				</view>
 			</view>
@@ -456,7 +410,7 @@ async function onPaySuccess() {
 			v-if="orderInfo"
 			class="fixed bottom-0 left-0 right-0 border-t border-t-solid border-t-[#f0e8e4] bg-white px-[24rpx] pb-[48rpx] pt-[20rpx]"
 		>
-			<view class="flex flex-row items-center gap-[24rpx]">
+			<view class="flex flex-row items-center justify-between gap-[20rpx]">
 				<view class="flex flex-col flex-shrink-0">
 					<text class="text-[22rpx] text-[#7a5147]">应付金额</text>
 					<text class="text-[40rpx] font-[800] leading-[48rpx] text-[#fe8973]">
@@ -464,10 +418,10 @@ async function onPaySuccess() {
 					</text>
 				</view>
 				<view
-					class="h-[88rpx] flex flex-row flex-1 items-center justify-center rounded-[22rpx]"
+					class="h-[88rpx] w-[340rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-[22rpx]"
 					:class="paying ? 'bg-[#fbb9ad]' : 'bg-[#fe8973]'"
 					style="box-shadow: 0 8rpx 24rpx #fe89735c"
-					@click="handlePay"
+					@click="!paying && handlePay()"
 				>
 					<text class="text-[32rpx] font-[800] text-white">
 						{{ paying ? "支付处理中..." : "确认支付" }}

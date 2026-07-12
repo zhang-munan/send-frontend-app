@@ -123,10 +123,15 @@ function goOrders() { uni.navigateTo({ url: '/package-order/orders' }) }
       <!-- ── 账户余额卡 ── -->
       <view
         class="relative overflow-hidden rounded-[28rpx] px-[32rpx] pt-[36rpx] pb-[40rpx]"
-        style="background: linear-gradient(135deg, #ffd2ae, #ff9e8b, #ffcba0); box-shadow: 0 12rpx 36rpx #ff8c6447;"
+        style="background: #ffaf9b; box-shadow: 0 12rpx 36rpx #ff8c6447;"
       >
+        <image
+          src="/static/images/order/recharge-banner.png"
+          mode="aspectFill"
+          class="absolute inset-0 h-full w-full pointer-events-none z-0"
+        />
         <!-- 顶部行 -->
-        <view class="flex flex-row items-center justify-between">
+        <view class="relative z-[1] flex flex-row items-center justify-between">
           <view class="flex flex-row items-center gap-[10rpx]">
             <cl-icon name="shield-check-line" :size="15" :pt="{ className: 'text-white opacity-90' }" />
             <text class="text-[26rpx] text-white opacity-90">账户余额</text>
@@ -139,7 +144,7 @@ function goOrders() { uni.navigateTo({ url: '/package-order/orders' }) }
         </view>
 
         <!-- 余额金额 -->
-        <view class="mt-[20rpx] flex flex-row items-end gap-[6rpx]">
+        <view class="relative z-[1] mt-[20rpx] flex flex-row items-end gap-[6rpx]">
           <text class="text-[36rpx] font-[700] text-white leading-[56rpx]">¥</text>
           <text class="text-[80rpx] font-[900] text-white leading-[88rpx]">
             {{ userBalance ? formatYuan(userBalance.balance) : '0.00' }}
@@ -147,15 +152,13 @@ function goOrders() { uni.navigateTo({ url: '/package-order/orders' }) }
         </view>
 
         <!-- 剩余条数徽章 -->
-        <view class="mt-[16rpx] inline-flex flex-row items-center gap-[8rpx] rounded-[28rpx] bg-[#ffffff4d] px-[20rpx] py-[8rpx]">
+        <view
+          class="relative z-[1] mt-[16rpx] flex flex-row items-center self-start rounded-[28rpx] bg-[#ffffff4d] px-[20rpx] py-[8rpx]"
+          style="align-self: flex-start;"
+        >
           <text class="text-[26rpx] font-[700] text-white">
             剩余 {{ userBalance?.messageQuota ?? 0 }} 条
           </text>
-        </view>
-
-        <!-- 右侧装饰插画 -->
-        <view class="absolute right-[24rpx] top-[24rpx] opacity-30 pointer-events-none select-none">
-          <text class="text-[120rpx] leading-none">💌</text>
         </view>
       </view>
 
@@ -188,29 +191,35 @@ function goOrders() { uni.navigateTo({ url: '/package-order/orders' }) }
           >
             <!-- 角标 -->
             <view
-              v-if="p.subtitle && (p.subtitle.includes('最受欢迎') || p.subtitle.includes('最划算'))"
+              v-if="p.tagContent"
               class="absolute left-[0rpx] top-[0rpx] rounded-br-[12rpx] px-[14rpx] py-[6rpx]"
-              :style="p.subtitle.includes('最划算') ? 'background:#ff8c00;' : 'background:#fe8973;'"
+              :style="`background:${p.tagBackgroundColor || '#fe8973'};`"
             >
               <text class="text-[20rpx] font-[700] text-white">
-                {{ p.subtitle.includes('最划算') ? '最划算' : '最受欢迎' }}
+                {{ p.tagContent }}
               </text>
             </view>
 
             <view class="flex flex-row items-center gap-[20rpx]">
-              <!-- 图标 -->
+              <!-- 套餐头像：使用商品数据返回的封面头像 -->
               <view
                 class="h-[88rpx] w-[88rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-[20rpx]"
                 style="background: linear-gradient(135deg, #ffd8c8, #ffb8a8);"
               >
-                <text class="text-[46rpx]">🎁</text>
+                <image
+                  v-if="p.coverImage"
+                  :src="p.coverImage"
+                  mode="aspectFill"
+                  class="h-full w-full rounded-[20rpx]"
+                />
+                <text v-else class="text-[46rpx]">🎁</text>
               </view>
 
               <!-- 名称区域 -->
               <view class="min-w-0 flex-1">
                 <text class="block text-[30rpx] font-[800] text-[#4a2b24]">{{ p.name }}</text>
                 <text
-                  v-if="p.subtitle && !p.subtitle.includes('最受欢迎') && !p.subtitle.includes('最划算')"
+                  v-if="p.subtitle"
                   class="mt-[4rpx] block text-[22rpx] text-[#a08a84]"
                 >
                   {{ p.subtitle }}
@@ -229,19 +238,18 @@ function goOrders() { uni.navigateTo({ url: '/package-order/orders' }) }
               </view>
 
               <!-- 价格区域 -->
-              <view class="flex-shrink-0 text-right w-[140rpx]">
+              <view class="flex-shrink-0 text-right w-[180rpx]">
                 <text class="block text-[34rpx] font-[800] text-[#4a2b24]">
                   ¥{{ formatYuan(p.sellPrice) }}
                 </text>
-                <text v-if="pricePerSms(p)" class="block text-[20rpx] text-[#a08a84]">
-                  ¥{{ pricePerSms(p) }}/条
-                </text>
-                <text v-if="savedAmount(p)" class="block text-[20rpx] font-[600] text-[#fe8973]">
-                  省¥{{ savedAmount(p) }}
-                </text>
-                <text v-if="Number(p.originalPrice) > Number(p.sellPrice)" class="block text-[20rpx] text-[#c4b3ae] line-through">
-                  ¥{{ formatYuan(p.originalPrice) }}
-                </text>
+                <view class="mt-[2rpx] flex flex-row items-center justify-end gap-[12rpx]">
+                  <text v-if="pricePerSms(p)" class="text-[20rpx] text-[#a08a84]">
+                    ¥{{ pricePerSms(p) }}/条
+                  </text>
+                  <text v-if="savedAmount(p)" class="text-[20rpx] font-[600] text-[#fe8973]">
+                    省¥{{ savedAmount(p) }}
+                  </text>
+                </view>
               </view>
 
               <!-- 单选圈 -->

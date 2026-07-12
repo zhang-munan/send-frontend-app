@@ -25,6 +25,12 @@
 				"navigationStyle": "custom",
 				"navigationBarTextStyle": "black"
 			}
+		},
+		{
+			"path": "pages/reply/index",
+			"style": {
+				"navigationBarTitleText": "回复消息"
+			}
 		}
 	],
 	"subPackages": [
