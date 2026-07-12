@@ -179,20 +179,20 @@ function goOrders() { uni.navigateTo({ url: '/package-order/orders' }) }
         </view>
 
         <!-- 套餐列表 -->
-        <view v-else class="flex flex-col gap-[16rpx]">
+        <view v-else class="flex flex-col gap-[10rpx]">
           <view
             v-for="p in products"
             :key="p.id"
             class="relative overflow-hidden rounded-[20rpx] bg-white px-[24rpx] py-[24rpx]"
             :style="selectedId === p.id
-              ? 'border: 2rpx solid #fe8973; box-shadow: 0 4rpx 20rpx #fe89732e;'
+              ? 'border: 2rpx solid #fe8973; box-shadow: 0 4rpx 20rpx #fe89732e; background: #fff5f3;'
               : 'border: 2rpx solid transparent; box-shadow: 0 2rpx 12rpx #59392d0f;'"
             @click="selectedId = p.id"
           >
             <!-- 角标 -->
             <view
               v-if="p.tagContent"
-              class="absolute left-[0rpx] top-[0rpx] rounded-br-[12rpx] px-[14rpx] py-[6rpx]"
+              class="absolute left-[0rpx] top-[0rpx] rounded-br-[20rpx] px-[16rpx] py-[4rpx] z-[1]"
               :style="`background:${p.tagBackgroundColor || '#fe8973'};`"
             >
               <text class="text-[20rpx] font-[700] text-white">
@@ -227,7 +227,7 @@ function goOrders() { uni.navigateTo({ url: '/package-order/orders' }) }
               </view>
 
               <!-- 条数 -->
-              <view class="flex-shrink-0 text-center w-[100rpx]">
+              <view class="flex-shrink-0 text-center flex-row items-baseline justify-center gap-[4rpx]">
                 <text
                   class="text-[42rpx] font-[900]"
                   :class="selectedId === p.id ? 'text-[#fe8973]' : 'text-[#4a2b24]'"
@@ -253,7 +253,7 @@ function goOrders() { uni.navigateTo({ url: '/package-order/orders' }) }
               </view>
 
               <!-- 单选圈 -->
-              <view class="ml-[4rpx] flex-shrink-0">
+              <!-- <view class="ml-[4rpx] flex-shrink-0">
                 <view
                   v-if="selectedId === p.id"
                   class="h-[44rpx] w-[44rpx] flex flex-row items-center justify-center rounded-full bg-[#fe8973]"
@@ -262,16 +262,16 @@ function goOrders() { uni.navigateTo({ url: '/package-order/orders' }) }
                 </view>
                 <view
                   v-else
-                  class="h-[44rpx] w-[44rpx] rounded-full border-[2rpx] border-solid border-[#d8c8c4]"
+                  class="h-[44rpx] w-[44rpx] rounded-full border-[1px] border-solid border-[#d8c8c4]"
                 />
-              </view>
+              </view> -->
             </view>
           </view>
         </view>
       </view>
 
       <!-- ── 优惠码 ── -->
-      <view class="mt-[28rpx]">
+      <!-- <view class="mt-[28rpx]">
         <view class="mb-[16rpx] flex flex-row items-center gap-[10rpx]">
           <text class="text-[26rpx]">🏷️</text>
           <text class="text-[28rpx] font-[800] text-[#4a2b24]">优惠码</text>
@@ -296,7 +296,6 @@ function goOrders() { uni.navigateTo({ url: '/package-order/orders' }) }
           </view>
         </view>
 
-        <!-- 已使用优惠码提示 -->
         <view
           v-if="couponApplied"
           class="mt-[14rpx] flex flex-row items-center gap-[12rpx] rounded-[14rpx] bg-[#f0fff4] px-[20rpx] py-[14rpx]"
@@ -308,7 +307,7 @@ function goOrders() { uni.navigateTo({ url: '/package-order/orders' }) }
           </text>
           <cl-icon @click="removeCoupon" name="close-line" :size="13" :pt="{ className: 'flex-shrink-0 text-[#a0a0a0]' }" />
         </view>
-      </view>
+      </view> -->
 
     </view>
 
@@ -316,7 +315,7 @@ function goOrders() { uni.navigateTo({ url: '/package-order/orders' }) }
     <view
       class="fixed bottom-0 left-0 right-0 border-t border-t-solid border-t-[#f0e8e4] bg-white px-[24rpx] pb-[48rpx] pt-[20rpx]"
     >
-      <view class="flex flex-row items-center gap-[24rpx]">
+      <view class="flex flex-row items-center justify-between gap-[20rpx]">
         <!-- 左侧：合计 + 优惠信息 -->
         <view class="flex flex-col flex-shrink-0 justify-center">
           <view class="flex flex-row items-baseline gap-[4rpx]">
@@ -336,7 +335,7 @@ function goOrders() { uni.navigateTo({ url: '/package-order/orders' }) }
 
         <!-- 购买按钮 -->
         <view
-          class="h-[88rpx] flex flex-row flex-1 items-center justify-center rounded-[22rpx]"
+          class="h-[88rpx] w-[340rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-[22rpx]"
           :class="paying || !selectedProduct ? 'bg-[#fbb9ad]' : 'bg-[#fe8973]'"
           style="box-shadow: 0 8rpx 24rpx #fe89735c;"
           @click="handleBuy"
