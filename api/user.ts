@@ -1,4 +1,4 @@
-import { request } from "@/.cool";
+import { request, upload } from "@/.cool";
 
 /** 接口路径前缀（cool-admin 自动拼接：模块 user + controller 目录 app） */
 const LOGIN_PREFIX = '/app/user/login'
@@ -127,6 +127,13 @@ export function updatePerson(data: Partial<UserInfo>) {
     method: 'POST',
     data,
   })
+}
+
+/**
+ * 上传个人头像。上传模块会根据服务端模式自动执行本地上传或 OSS 直传。
+ */
+export function uploadUserAvatar(filePath: string): Promise<string> {
+  return upload(filePath)
 }
 
 /** 注销账号 */

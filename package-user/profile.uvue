@@ -1,0 +1,164 @@
+<script setup lang="ts">
+import { computed, reactive, ref } from 'vue'
+import { uploadUserAvatar, updatePerson } from '@/api/user'
+import { useStore } from '@/.cool'
+
+const { user } = useStore()
+const defaultAvatar = `${import.meta.env.VITE_BASE_PATH ?? '/'}static/images/user-default-avatar.png`
+const saving = ref(false)
+const uploading = ref(false)
+const profile = reactive({
+  avatarUrl: user.info.value?.avatarUrl || '',
+  nickName: user.info.value?.nickName || '',
+  description: user.info.value?.description || '',
+})
+
+const avatarUrl = computed(() => profile.avatarUrl || defaultAvatar)
+
+/** 微信 chooseAvatar 仅在用户主动点击 button 后可用。 */
+async function onChooseAvatar(event: any) {
+  const tempPath = event?.detail?.avatarUrl
+  if (!tempPath) return
+  uploading.value = true
+  uni.showLoading({ title: '上传头像中...' })
+  try {
+    profile.avatarUrl = await uploadUserAvatar(tempPath)
+  }
+  catch {
+    uni.showToast({ title: '头像上传失败，请重试', icon: 'none' })
+  }
+  finally {
+    uploading.value = false
+    uni.hideLoading()
+  }
+}
+
+function chooseLocalAvatar() {
+  uni.chooseImage({
+    count: 1,
+    sizeType: ['compressed'],
+    sourceType: ['album', 'camera'],
+    success: async (res) => {
+      const path = res.tempFilePaths[0]
+      if (!path) return
+      uploading.value = true
+      uni.showLoading({ title: '上传头像中...' })
+      try {
+        profile.avatarUrl = await uploadUserAvatar(path)
+      }
+      catch {
+        uni.showToast({ title: '头像上传失败，请重试', icon: 'none' })
+      }
+      finally {
+        uploading.value = false
+        uni.hideLoading()
+      }
+    },
+  })
+}
+
+async function saveProfile() {
+  const nickName = profile.nickName.trim()
+  if (!nickName) {
+    uni.showToast({ title: '请填写昵称', icon: 'none' })
+    return
+  }
+  saving.value = true
+  try {
+    await updatePerson({
+      avatarUrl: profile.avatarUrl || undefined,
+      nickName,
+      description: profile.description.trim(),
+    })
+    await user.get()
+    uni.showToast({ title: '保存成功', icon: 'success' })
+    setTimeout(() => uni.navigateBack(), 700)
+  }
+  catch {
+    uni.showToast({ title: '保存失败，请稍后重试', icon: 'none' })
+  }
+  finally {
+    saving.value = false
+  }
+}
+</script>
+
+<template>
+  <view class="min-h-[100vh] bg-[#fff8f5] text-[#4a2b24]">
+    <cl-topbar
+      title="个人信息"
+      safeAreaTop
+      fixed
+      backgroundColor="#fff8f5"
+      color="#4a2b24"
+      height="88rpx"
+      :pt="{ title: { className: 'text-[34rpx] font-[800]' }, back: { size: 20 } }"
+    />
+
+    <scroll-view scroll-y class="px-[24rpx] pb-[60rpx]">
+      <view class="mt-[28rpx] overflow-hidden rounded-[28rpx] bg-[linear-gradient(135deg,#ffe7d6,#ffd4c7)] px-[32rpx] py-[34rpx] shadow-[0_12rpx_30rpx_#9c5e351a]">
+        <text class="block text-center text-[26rpx] text-[#8a584b]">用真实的表达，传递温暖</text>
+        <view class="mt-[24rpx] flex flex-row items-center justify-center">
+          <!-- #ifdef MP-WEIXIN -->
+          <cl-button
+            openType="chooseAvatar"
+            :loading="uploading"
+            :pt="{ className: '!h-[176rpx] !w-[176rpx] !rounded-full !border-0 !bg-transparent !p-0 overflow-visible' }"
+            @chooseavatar="onChooseAvatar"
+          >
+            <template #content>
+              <view class="relative h-[176rpx] w-[176rpx] overflow-visible">
+                <view class="h-full w-full overflow-hidden border-[5rpx] border-solid border-white rounded-full shadow-[0_8rpx_22rpx_#7d44352b]">
+                  <image :src="avatarUrl" mode="aspectFill" class="h-full w-full" />
+                </view>
+                <view class="absolute bottom-[-2rpx] right-[-2rpx] z-[1] h-[50rpx] w-[50rpx] flex flex-row items-center justify-center border-[3rpx] border-solid border-white rounded-full bg-[#fe8973]">
+                  <cl-icon name="camera-fill" :size="14" color="#ffffff" />
+                </view>
+              </view>
+            </template>
+          </cl-button>
+          <!-- #endif -->
+          <!-- #ifndef MP-WEIXIN -->
+          <view class="relative h-[176rpx] w-[176rpx] overflow-visible" @click="chooseLocalAvatar">
+            <view class="h-full w-full overflow-hidden border-[5rpx] border-solid border-white rounded-full shadow-[0_8rpx_22rpx_#7d44352b]">
+              <image :src="avatarUrl" mode="aspectFill" class="h-full w-full" />
+            </view>
+            <view class="absolute bottom-[-2rpx] right-[-2rpx] z-[1] h-[50rpx] w-[50rpx] flex flex-row items-center justify-center border-[3rpx] border-solid border-white rounded-full bg-[#fe8973]">
+              <cl-icon name="camera-fill" :size="14" color="#ffffff" />
+            </view>
+          </view>
+          <!-- #endif -->
+        </view>
+        <text class="mt-[16rpx] block text-center text-[22rpx] text-[#9e7064]">点击更换头像</text>
+      </view>
+
+      <view class="mt-[24rpx] overflow-hidden rounded-[24rpx] bg-white px-[30rpx] shadow-[0_8rpx_24rpx_#59392d12]">
+        <view class="border-b-[1rpx] border-b-solid border-b-[#f2e6e0] py-[26rpx]">
+          <text class="mb-[14rpx] block text-[27rpx] text-[#4a2b24] font-[700]">昵称</text>
+          <!-- #ifdef MP-WEIXIN -->
+          <input v-model="profile.nickName" type="nickname" maxlength="30" placeholder="点击使用微信昵称或自行填写" placeholder-class="text-[#c7afa6] text-[25rpx]" class="h-[64rpx] text-[28rpx] text-[#4a2b24]" />
+          <!-- #endif -->
+          <!-- #ifndef MP-WEIXIN -->
+          <input v-model="profile.nickName" type="text" maxlength="30" placeholder="请输入昵称" placeholder-class="text-[#c7afa6] text-[25rpx]" class="h-[64rpx] text-[28rpx] text-[#4a2b24]" />
+          <!-- #endif -->
+        </view>
+        <view class="py-[26rpx]">
+          <view class="flex flex-row items-center justify-between">
+            <text class="mb-[14rpx] block text-[27rpx] text-[#4a2b24] font-[700]">个性签名</text>
+            <text class="text-[22rpx] text-[#b6968a]">{{ profile.description.length }}/100</text>
+          </view>
+          <textarea v-model="profile.description" maxlength="100" placeholder="写一句温暖的自我介绍吧" placeholder-class="text-[#c7afa6] text-[25rpx]" class="h-[156rpx] w-full text-[27rpx] text-[#4a2b24] leading-[42rpx]" />
+        </view>
+      </view>
+
+      <cl-button
+        :loading="saving"
+        :disabled="uploading"
+        :pt="{ className: 'mt-[36rpx] !h-[92rpx] w-full !rounded-[46rpx] shadow-[0_12rpx_24rpx_#fe897352]', label: { className: 'text-[30rpx] font-[800]' } }"
+        @click="saveProfile"
+      >
+        保存
+      </cl-button>
+    </scroll-view>
+  </view>
+</template>

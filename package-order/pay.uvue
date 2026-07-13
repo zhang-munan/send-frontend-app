@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import type { OrderInfo, WxPayParams } from "@/api/order";
-import { getBalance, getOrderDetail, payOrder, queryOrderStatus } from "@/api/order";
+import type { OrderInfo, ProductInfo, WxPayParams } from "@/api/order";
+import { getBalance, getOrderDetail, getProductDetail, payOrder, queryOrderStatus } from "@/api/order";
 import { isDev } from "@/config";
 import { formatYuan } from '@/utils/money'
 import { mergeOssPath } from '@/utils/oss'
@@ -26,10 +26,13 @@ interface PaymentMethod {
 
 const selectedPayment = ref<PaymentType>("wechat");
 const orderInfo = ref<OrderInfo | null>(null);
+const productInfo = ref<ProductInfo | null>(null);
 const userBalance = ref(0);
 const userQuota = ref(0);
 const loading = ref(true);
 const paying = ref(false);
+
+const productCoverImage = computed(() => productInfo.value?.coverImage || "/static/images/order/payment-gift.png");
 
 // ─── 支付方式列表 ─────────────────────────────────────────────
 const paymentMethods = computed(() => {
@@ -105,6 +108,15 @@ async function loadData() {
 	} finally {
 		loading.value = false;
 	}
+
+	// 封面图加载失败或响应缓慢不能影响支付页正常展示。
+	if (orderInfo.value?.productId) {
+		void loadProductCover(orderInfo.value.productId);
+	}
+}
+
+async function loadProductCover(productId: number) {
+	productInfo.value = await getProductDetail(productId).catch(() => null);
 }
 
 // ─── 支付逻辑 ─────────────────────────────────────────────────
@@ -280,7 +292,7 @@ async function onPaySuccess() {
 			<view class="rounded-[28rpx] bg-white px-[34rpx] pb-[30rpx] pt-[36rpx]" style="box-shadow: 0 8rpx 30rpx #d78b6d12">
 				<view class="flex flex-row items-center gap-[26rpx]">
 					<view class="h-[172rpx] w-[172rpx] flex flex-shrink-0 items-center justify-center overflow-hidden rounded-[28rpx] bg-[#fff4ef]">
-						<image src="/static/images/order/payment-gift.png" mode="aspectFit" class="h-[168rpx] w-[168rpx]" />
+						<image :src="productCoverImage" mode="aspectFill" class="h-full w-full" />
 					</view>
 					<view class="min-w-0 flex-1">
 						<text class="block text-[34rpx] font-[700] text-[#301712]">{{ orderInfo.productName }}</text>

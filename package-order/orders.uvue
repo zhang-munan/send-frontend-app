@@ -209,20 +209,20 @@ function formatItemTime(time: string) {
 </script>
 
 <template>
-  <view class="min-h-[100vh] bg-[#fff8f6] text-[#4a2b24]">
+  <view class="min-h-[100vh] bg-[#fffaf9] text-[#412b22]">
     <cl-topbar
       title="账单明细"
       safeAreaTop
 	  fixed
-      backgroundColor="#fff8f6"
-      color="#4a2b24"
+      backgroundColor="#fffaf9"
+      color="#412b22"
       height="88rpx"
-      :pt="{ title: { className: 'text-[34rpx] font-[800]' }, back: { size: 20 } }"
+      :pt="{ title: { className: 'text-[36rpx] font-[500]' }, back: { size: 22 } }"
     >
       <template #append>
-        <view class="mr-[24rpx] h-[72rpx] flex flex-row items-center gap-[8rpx]" @click="showFilter">
-          <cl-icon name="filter-line" :size="17" :pt="{ className: 'text-[#4a2b24]' }" />
-          <text class="text-[26rpx] text-[#4a2b24]">
+        <view class="mr-[22rpx] h-[72rpx] flex flex-row items-center gap-[8rpx]" @click="showFilter">
+          <cl-icon name="filter-line" :size="19" :pt="{ className: 'text-[#412b22]' }" />
+          <text class="text-[28rpx] text-[#412b22]">
             筛选
           </text>
         </view>
@@ -231,61 +231,62 @@ function formatItemTime(time: string) {
 
     <scroll-view
       scroll-y
-      class="h-[calc(100vh-104rpx)] px-[28rpx] pb-[48rpx]"
+      class="h-[calc(100vh-104rpx)] px-[28rpx] pb-[36rpx]"
       @scrolltolower="loadList(false)"
     >
       <!-- summary card -->
       <view
-        class="relative mt-[6rpx] overflow-hidden rounded-[26rpx] px-[22rpx] py-[34rpx]"
-        style="background: linear-gradient(118deg, #ffe0bd, #fff3e6, #ffddcb); border: 1rpx solid #ffffffd9; box-shadow: 0 12rpx 34rpx #ff9a7f21;"
+        class="relative mt-[10rpx] h-[236rpx] overflow-hidden rounded-[30rpx] px-[22rpx] py-[36rpx]"
+        style="background: linear-gradient(112deg, #ffdcb8 0%, #fff3e8 48%, #ffd9c7 100%); border: 1rpx solid #ffffffd9; box-shadow: 0 12rpx 34rpx #e9ab9d18;"
       >
-        <view class="pointer-events-none absolute right-[18rpx] top-[24rpx] h-[144rpx] w-[144rpx] rounded-full bg-[#ffffff4d]" />
+        <view class="pointer-events-none absolute right-[-35rpx] top-[18rpx] h-[155rpx] w-[155rpx] rounded-full bg-[#fff9f078]" />
+        <view class="pointer-events-none absolute right-[42rpx] top-[12rpx] h-[44rpx] w-[44rpx] rounded-full border-[10rpx] border-solid border-[#ffffff52]" />
         <view class="relative z-1 flex flex-row items-center">
           <view class="flex-1 items-center text-center">
-            <text class="block text-[28rpx] text-[#5c352c]">
+            <text class="block text-[27rpx] text-[#543a2d]">
               账户余额
             </text>
-            <text class="mt-[20rpx] block text-[46rpx] text-[#ff5a63] leading-[54rpx] font-[900]">
+            <text class="mt-[22rpx] block text-[46rpx] text-[#ff5c63] leading-[54rpx] font-[900]">
               ¥ {{ balance ? formatYuan(balance.balance) : '0.00' }}
             </text>
-            <view class="mt-[16rpx] inline-flex flex-row border border-[#ff8d8f] rounded-[32rpx] border-solid px-[24rpx] py-[7rpx]" @click="goRecharge">
-              <text class="text-[24rpx] text-[#ff515c]">
+            <view class="mt-[15rpx] inline-flex flex-row border border-[#ff9b9a] rounded-[32rpx] border-solid px-[24rpx] py-[6rpx]" @click="goRecharge">
+              <text class="text-[25rpx] text-[#ff5960]">
                 去充值
               </text>
             </view>
           </view>
 
-          <view class="mx-[18rpx] h-[76rpx] w-[2rpx] bg-[#ffffffe0]" />
+          <view class="mx-[18rpx] h-[76rpx] w-[2rpx] bg-[#fffffff0]" />
 
           <view class="flex-1 items-center text-center">
-            <text class="block text-[28rpx] text-[#5c352c]">
+            <text class="block text-[27rpx] text-[#543a2d]">
               本月消费
             </text>
-            <text class="mt-[20rpx] block text-[46rpx] text-[#ff5a63] leading-[54rpx] font-[900]">
+            <text class="mt-[22rpx] block text-[46rpx] text-[#ff5c63] leading-[54rpx] font-[900]">
               ¥ {{ formatYuan(monthConsume) }}
             </text>
             <view class="mt-[15rpx] inline-flex flex-row items-center gap-[6rpx]">
-              <text class="text-[24rpx] text-[#5c352c]">
+              <text class="text-[24rpx] text-[#543a2d]">
                 明细
               </text>
-              <cl-icon name="arrow-right-s-line" :size="12" :pt="{ className: 'text-[#5c352c]' }" />
+              <cl-icon name="arrow-right-s-line" :size="13" :pt="{ className: 'text-[#543a2d]' }" />
             </view>
           </view>
 
-          <view class="mx-[18rpx] h-[76rpx] w-[2rpx] bg-[#ffffffe0]" />
+          <view class="mx-[18rpx] h-[76rpx] w-[2rpx] bg-[#fffffff0]" />
 
           <view class="flex-1 items-center text-center">
-            <text class="block text-[28rpx] text-[#5c352c]">
+            <text class="block text-[27rpx] text-[#543a2d]">
               本月充值
             </text>
-            <text class="mt-[20rpx] block text-[46rpx] text-[#ff5a63] leading-[54rpx] font-[900]">
+            <text class="mt-[22rpx] block text-[46rpx] text-[#ff5c63] leading-[54rpx] font-[900]">
               ¥ {{ formatYuan(monthRecharge) }}
             </text>
             <view class="mt-[15rpx] inline-flex flex-row items-center gap-[6rpx]">
-              <text class="text-[24rpx] text-[#5c352c]">
+              <text class="text-[24rpx] text-[#543a2d]">
                 明细
               </text>
-              <cl-icon name="arrow-right-s-line" :size="12" :pt="{ className: 'text-[#5c352c]' }" />
+              <cl-icon name="arrow-right-s-line" :size="13" :pt="{ className: 'text-[#543a2d]' }" />
             </view>
           </view>
         </view>
@@ -293,27 +294,27 @@ function formatItemTime(time: string) {
 
       <!-- filters -->
       <view class="mt-[32rpx] flex flex-row items-center justify-between">
-        <view class="flex flex-row items-center gap-[28rpx]">
+        <view class="flex flex-row items-center gap-[22rpx]">
           <view
             v-for="tab in tabs"
             :key="tab.value"
-            class="h-[58rpx] min-w-[98rpx] flex flex-row items-center justify-center px-[20rpx]"
-            :class="activeType === tab.value ? 'rounded-[32rpx] bg-[#ffd6d8]' : ''"
+            class="h-[60rpx] min-w-[102rpx] flex flex-row items-center justify-center px-[20rpx]"
+            :class="activeType === tab.value ? 'rounded-[32rpx] bg-[#ffd9da]' : ''"
             @click="setActiveType(tab.value)"
           >
             <text
-              class="text-[28rpx]"
-              :class="activeType === tab.value ? 'font-[700] text-[#ff4c54]' : 'text-[#6d6260]'"
+              class="text-[29rpx]"
+              :class="activeType === tab.value ? 'text-[#ff4c54]' : 'text-[#6d6260]'"
             >
               {{ tab.label }}
             </text>
           </view>
         </view>
         <view
-          class="h-[58rpx] flex flex-row items-center gap-[10rpx] border border-[#ddd0cb] rounded-[32rpx] border-solid bg-[#ffffffa3] px-[22rpx]"
+          class="h-[60rpx] flex flex-row items-center gap-[9rpx] border border-[#ddcfca] rounded-[32rpx] border-solid bg-[#ffffffad] px-[20rpx]"
           @click="showFilter"
         >
-          <cl-icon name="calendar-line" :size="14" :pt="{ className: 'text-[#827570]' }" />
+          <cl-icon name="calendar-line" :size="15" :pt="{ className: 'text-[#827570]' }" />
           <text class="text-[26rpx] text-[#827570]">
             {{ periodLabel }}
           </text>
@@ -328,7 +329,7 @@ function formatItemTime(time: string) {
           暂无账单记录
         </text>
         <view class="mt-[34rpx] rounded-[32rpx] bg-[#fe8973] px-[48rpx] py-[16rpx]" @click="goRecharge">
-          <text class="text-[28rpx] text-white font-[700]">
+          <text class="text-[28rpx] text-white font-[500]">
             去充值
           </text>
         </view>
@@ -338,18 +339,18 @@ function formatItemTime(time: string) {
       <view
         v-for="group in monthGroups"
         :key="group.key"
-        class="mt-[28rpx] overflow-hidden rounded-[24rpx] bg-white px-[28rpx] pt-[28rpx]"
-        style="box-shadow: 0 8rpx 28rpx #5e39300f;"
+        class="mt-[28rpx] overflow-hidden rounded-[28rpx] bg-white px-[28rpx] pt-[28rpx]"
+        style="box-shadow: 0 8rpx 28rpx #5e39300d;"
       >
         <view class="mb-[14rpx] flex flex-row items-center justify-between">
-          <text class="text-[34rpx] text-[#4a2b24] tracking-[4rpx] font-[800]">
+          <text class="text-[34rpx] text-[#412b22] font-[500]">
             {{ group.title }}
           </text>
           <view class="flex flex-row items-baseline gap-[10rpx]">
-            <text class="text-[26rpx] text-[#6b4c45]">
+            <text class="text-[26rpx] text-[#63493f]">
               当月合计
             </text>
-            <text class="text-[27rpx] font-[800]" :style="{ color: group.totalColor }">
+            <text class="text-[27rpx] font-[500]" :style="{ color: group.totalColor }">
               {{ group.totalText }}
             </text>
           </view>
@@ -359,10 +360,10 @@ function formatItemTime(time: string) {
           v-for="(item, index) in group.items"
           :key="item.id"
           class="flex flex-row items-center py-[22rpx]"
-          :class="index < group.items.length - 1 ? 'border-b border-b-solid border-b-[#f2e8e5]' : ''"
+          :class="index < group.items.length - 1 ? 'border-b border-b-solid border-b-[#f1ecea]' : ''"
         >
           <view
-            class="h-[78rpx] w-[78rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-full"
+            class="h-[80rpx] w-[80rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-full"
             :style="item.iconBg"
           >
             <cl-icon v-if="item.billType === 'recharge'" name="line-chart-line" :size="21" :pt="{ className: 'text-[#26bd58]' }" />
@@ -370,10 +371,10 @@ function formatItemTime(time: string) {
             <cl-icon v-else name="arrow-right-down-line" :size="21" :pt="{ className: 'text-[#ff4f59]' }" />
           </view>
           <view class="ml-[24rpx] min-w-0 flex-1">
-            <text class="block truncate text-[30rpx] text-[#1f1715] leading-[38rpx] font-[600]">
+            <text class="block truncate text-[30rpx] text-[#211815] leading-[38rpx]">
               {{ item.displayName }}
             </text>
-            <text class="mt-[8rpx] block truncate text-[24rpx] text-[#7e7674] leading-[30rpx]">
+            <text class="mt-[8rpx] block truncate text-[24rpx] text-[#847d7a] leading-[30rpx]">
               {{ item.displayTime }} · 订单号 {{ item.orderNo }}
             </text>
           </view>
@@ -388,7 +389,7 @@ function formatItemTime(time: string) {
         <text v-if="loading" class="text-[24rpx] text-[#c4b3ae]">
           加载中...
         </text>
-        <view v-else-if="noMore && monthGroups.length > 0" class="inline-flex flex-row items-center gap-[18rpx]">
+        <view v-else-if="noMore && monthGroups.length > 0" class="inline-flex flex-row items-center justify-center gap-[18rpx]">
           <view class="h-[1rpx] w-[72rpx] bg-[#d8ccc8]" />
           <text class="text-[24rpx] text-[#938784]">
             上拉加载更多

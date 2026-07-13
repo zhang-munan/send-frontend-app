@@ -15,8 +15,8 @@ const { user } = useStore()
 const isLogin = computed(() => user.info.value != null)
 const userInfo = computed(() => user.info.value)
 
-// 头像：未设置时使用默认占位
-const avatarUrl = computed(() => userInfo.value?.avatarUrl || 'https://picsum.photos/seed/warm-avatar-girl/180/180')
+// 头像：未设置时使用项目内置的暖心默认头像
+const avatarUrl = computed(() => userInfo.value?.avatarUrl || `${import.meta.env.VITE_BASE_PATH ?? '/'}static/images/user-default-avatar.png`)
 // 昵称
 const displayName = computed(() => userInfo.value?.nickName || '未设置昵称')
 // 手机号脱敏展示
@@ -45,6 +45,10 @@ onShow(() => {
 /** 跳转登录页 */
 function goLogin() {
   uni.navigateTo({ url: '/package-user/login' })
+}
+
+function goProfile() {
+  uni.navigateTo({ url: '/package-user/profile' })
 }
 
 /** 退出登录 */
@@ -210,14 +214,11 @@ function handleItemClick(item: ServiceItem) {
       <!-- 用户信息卡片 -->
       <view class="relative overflow-hidden rounded-[28rpx] bg-[linear-gradient(125deg,#ffd1a4,#ff9b98,#ffe0b5)] px-[32rpx] pb-[214rpx] pt-[56rpx] shadow-[0_16rpx_42rpx_#fe897338]">
         <!-- 已登录 -->
-        <view v-if="isLogin" class="relative flex flex-row items-center">
+        <view v-if="isLogin" class="relative flex flex-row items-center" @click="goProfile">
           <!-- 头像 -->
           <view class="relative h-[184rpx] w-[184rpx] flex-shrink-0 shadow-[0_8rpx_20rpx_#723f2c26]">
             <view class="box-border h-full w-full overflow-hidden border-[4px] border-[#ffffff] rounded-[184rpx] border-solid">
               <image :src="avatarUrl" mode="aspectFill" class="h-full w-full rounded-[184rpx]" />
-            </view>
-            <view class="absolute bottom-[4rpx] right-[4rpx] z-[1] box-border h-[48rpx] w-[48rpx] flex flex-row items-center justify-center border-[3px] border-[#ffffff] rounded-[48rpx] border-solid bg-[#fe8973]">
-              <cl-icon name="edit-line" :size="12" :pt="{ className: 'text-white' }" />
             </view>
           </view>
 
@@ -226,9 +227,6 @@ function handleItemClick(item: ServiceItem) {
             <view class="flex flex-row items-center gap-[8rpx]">
               <text class="max-w-[180rpx] truncate text-[36rpx] text-[#1a0e0b] leading-[46rpx] font-[900]">
                 {{ displayName }}
-              </text>
-              <text class="text-[30rpx] leading-[36rpx]">
-                🌸
               </text>
               <text class="border-[2px] border-[#ffffff] rounded-[22rpx] border-solid bg-[#ff6072d1] px-[16rpx] py-[5rpx] text-[20rpx] text-[#ffffff] leading-[24rpx]">
                 普通用户

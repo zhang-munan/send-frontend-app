@@ -132,6 +132,13 @@
 						"navigationStyle": "custom",
 						"navigationBarTextStyle": "black"
 					}
+				},
+				{
+					"path": "profile",
+					"style": {
+						"navigationStyle": "custom",
+						"navigationBarTextStyle": "black"
+					}
 				}
 			]
 		}

@@ -1,5 +1,4 @@
-import { request, useStore } from '@/.cool'
-import { config } from '@/config'
+import { request, upload } from '@/.cool'
 
 const PREFIX = '/app/feedback/info'
 
@@ -56,35 +55,8 @@ export function getMyFeedbackList() {
 }
 
 /**
- * 上传图片到后端（复用 /app/base/comm/upload 接口）
- * uni-app 小程序端只能用 uni.uploadFile，无法复用 request
+ * 上传图片。上传模块会根据服务端模式自动执行本地上传或 OSS 直传。
  */
 export function uploadImage(filePath: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const { user } = useStore()
-    const token = user.token || ''
-    uni.uploadFile({
-      url: `${config.baseUrl}/app/base/comm/upload`,
-      filePath,
-      name: 'file',
-      header: token ? { Authorization: token } : {},
-      success: (res) => {
-        try {
-          const data = JSON.parse(res.data)
-          if (data?.code === 1000 && data?.data?.url) {
-            resolve(data.data.url)
-          }
-          else {
-            reject(new Error(data?.message || '上传失败'))
-          }
-        }
-        catch {
-          reject(new Error('上传响应解析失败'))
-        }
-      },
-      fail: (err) => {
-        reject(err)
-      },
-    })
-  })
+  return upload(filePath)
 }
