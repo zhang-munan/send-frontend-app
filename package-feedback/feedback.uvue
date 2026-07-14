@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { FEEDBACK_TYPES, submitFeedback, uploadImage } from '@/api/feedback'
+import { mergeOssPath } from "@/utils/oss";
 
 const MAX_CONTENT = 500
 const MAX_IMAGES = 4
@@ -17,10 +18,6 @@ const typeRequired = ref(false)
 function selectType(val: number) {
   selectedType.value = val
   typeRequired.value = false
-}
-
-function goHistory() {
-  uni.navigateTo({ url: '/package-feedback/feedback-history' })
 }
 
 async function chooseImage() {
@@ -89,91 +86,87 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <view class="min-h-[100vh] bg-[#fff8f6] text-[#4a2b24]">
+  <view class="min-h-[100vh] bg-[#fff9f7] text-[#302725]">
     <cl-topbar
       title="意见反馈"
       safeAreaTop
       fixed
-      backgroundColor="#fff8f6"
-      color="#4a2b24"
-      height="88rpx"
-      :pt="{ title: { className: 'text-[34rpx] font-[800]' }, back: { size: 20 } }"
-    >
-      <template #append>
-        <view class="mr-[24rpx]" @tap="goHistory">
-          <text class="text-[26rpx] text-[#ff6b54]">历史记录</text>
-        </view>
-      </template>
-    </cl-topbar>
+      backgroundColor="#fff9f7"
+      color="#302725"
+      height="96rpx"
+      :pt="{ title: { className: 'text-[34rpx] font-[700]' }, back: { size: 22 } }"
+    />
 
     <!-- Banner -->
-    <view class="mx-[28rpx] mb-[28rpx] flex flex-row items-center gap-[24rpx] rounded-[20rpx] bg-[linear-gradient(120deg,#fff3e0,#ffe8d6)] px-[28rpx] py-[24rpx] shadow-sm">
-      <view class="flex flex-row h-[88rpx] w-[88rpx] flex-shrink-0 items-center justify-center rounded-[20rpx] bg-[linear-gradient(135deg,#ffd97d,#ff9b58)] shadow-md">
-        <cl-icon name="heart-fill" :size="22" :pt="{ className: 'text-white' }" />
+    <view class="mx-[28rpx] mb-[20rpx] flex flex-row items-center gap-[24rpx] rounded-[28rpx] border border-solid border-[#ffddb0] bg-[#fdedd9] px-[28rpx] py-[24rpx] shadow-[0_8rpx_24rpx_#f4b97b26]">
+      <view class="relative flex h-[100rpx] w-[100rpx] flex-shrink-0 items-center justify-center">
+        <image :src="mergeOssPath('mine', 'feedback-safe.png')" class="h-full w-full" mode="aspectFill" />
       </view>
-      <view>
-        <view class="text-[28rpx] font-semibold text-[#4a2b24]">
+      <view class="flex-1">
+        <view class="text-[27rpx] font-[500] text-[#302725] leading-[40rpx] flex-row">
           你的每一条建议，都在帮助我们变得更好
-          <text class="text-[24rpx]">💛</text>
+          <text class="text-[24rpx] block-inline">💛</text>
         </view>
-        <view class="mt-[8rpx] text-[22rpx] text-[#9b7060]">
+        <view class="mt-[6rpx] text-[22rpx] text-[#8d7770] leading-[32rpx] block-inline flex-row">
           我们会认真对待你的反馈，持续优化产品体验
         </view>
       </view>
     </view>
 
-    <view class="px-[28rpx]">
+    <view class="px-[28rpx] pb-[36rpx]">
       <!-- 反馈类型 -->
-      <view class="mb-[24rpx] rounded-[20rpx] bg-white px-[28rpx] py-[24rpx] shadow-sm">
-        <view class="mb-[20rpx] flex flex-row items-center justify-between">
+      <view class="mb-[20rpx] rounded-[28rpx] bg-white px-[20rpx] py-[24rpx] shadow-[0_10rpx_30rpx_#e9c5bb1c]">
+        <view class="mb-[22rpx] flex flex-row items-center justify-between">
           <view class="flex flex-row items-center gap-[10rpx]">
-            <view class="h-[32rpx] w-[6rpx] rounded-full bg-[#ff6b54]" />
-            <text class="text-[28rpx] font-semibold">反馈类型</text>
+            <view class="h-[30rpx] w-[6rpx] rounded-full bg-[#ff7074]" />
+            <text class="text-[28rpx] font-[600]">反馈类型</text>
           </view>
-          <text class="text-[22rpx]" :class="typeRequired ? 'text-[#ff4444]' : 'text-[#ff6b54]'">
+          <text class="text-[22rpx]" :class="typeRequired ? 'text-[#ff4444]' : 'text-[#ff7774]'">
             反馈类型必选
           </text>
         </view>
-        <view class="flex flex-row flex-wrap gap-[16rpx]">
+        <view class="flex flex-row justify-between">
           <view
             v-for="item in FEEDBACK_TYPES"
             :key="item.value"
-            class="flex flex-row items-center gap-[8rpx] rounded-full px-[28rpx] py-[12rpx] text-[26rpx] transition-all"
+            class="flex h-[62rpx] w-[154rpx] flex-row items-center justify-center gap-[8rpx] rounded-full text-[22rpx] transition-all"
             :class="selectedType === item.value
-              ? 'bg-[#ff6b54] text-white shadow-md'
-              : 'border border-[#e8d5cf] bg-[#fff8f6] text-[#7a5c54]'"
+              ? 'bg-[#fd807b] text-white shadow-[0_8rpx_16rpx_#ff77744d]'
+              : 'border border-solid border-[#f1e3df] bg-[#fffafa] text-[#4f4542]'"
             @tap="selectType(item.value)"
           >
-            <cl-icon v-if="selectedType === item.value" name="check-line" :size="11" />
             <text>{{ item.label }}</text>
+            <view v-if="selectedType === item.value" class="bg-white rounded-full p-[2rpx]">
+              <cl-icon v-if="selectedType === item.value" name="check-line" :size="11" color="#fd807b" />
+            </view>
           </view>
         </view>
       </view>
 
       <!-- 反馈内容 -->
-      <view class="mb-[24rpx] rounded-[20rpx] bg-white px-[28rpx] py-[24rpx] shadow-sm">
+      <view class="mb-[20rpx] rounded-[28rpx] bg-white px-[20rpx] py-[24rpx] shadow-[0_10rpx_30rpx_#e9c5bb1c]">
         <view class="mb-[16rpx] flex flex-row items-center justify-between">
           <view class="flex flex-row items-center gap-[10rpx]">
-            <view class="h-[32rpx] w-[6rpx] rounded-full bg-[#ff6b54]" />
-            <text class="text-[28rpx] font-semibold">反馈内容</text>
+            <view class="h-[30rpx] w-[6rpx] rounded-full bg-[#ff7074]" />
+            <text class="text-[28rpx] font-[600]">反馈内容</text>
           </view>
           <text class="text-[22rpx] text-[#b09090]">{{ contentLen }}/{{ MAX_CONTENT }}</text>
         </view>
         <textarea
           v-model="content"
-          class="h-[200rpx] w-full rounded-[12rpx] bg-[#fff8f6] p-[20rpx] text-[26rpx] text-[#4a2b24]"
+          class="h-[190rpx] w-full rounded-[18rpx] border border-solid border-[#eee2de] bg-[#fffdfc] p-[20rpx] text-[26rpx] text-[#4a2b24] leading-[40rpx]"
           :maxlength="MAX_CONTENT"
           placeholder="请详细描述问题或建议，便于我们更快定位和解决"
           placeholder-style="color:#c0a89a;font-size:26rpx"
-          auto-height
         />
+        <text class="mt-[14rpx] block text-[20rpx] text-[#aaa09c]">请详细描述问题或建议，便于我们更快定位和解决</text>
       </view>
 
       <!-- 图片上传 -->
-      <view class="mb-[24rpx] rounded-[20rpx] bg-white px-[28rpx] py-[24rpx] shadow-sm">
+      <view class="mb-[20rpx] rounded-[28rpx] bg-white px-[20rpx] py-[24rpx] shadow-[0_10rpx_30rpx_#e9c5bb1c]">
         <view class="mb-[8rpx] flex flex-row items-center gap-[10rpx]">
-          <view class="h-[32rpx] w-[6rpx] rounded-full bg-[#ff6b54]" />
-          <text class="text-[28rpx] font-semibold">图片上传</text>
+          <view class="h-[30rpx] w-[6rpx] rounded-full bg-[#ff7074]" />
+          <text class="text-[28rpx] font-[600]">图片上传</text>
         </view>
         <text class="mb-[20rpx] block text-[22rpx] text-[#b09090]">最多上传 {{ MAX_IMAGES }} 张图片</text>
         <view class="flex flex-row flex-wrap gap-[16rpx]">
@@ -181,7 +174,7 @@ async function handleSubmit() {
           <view
             v-for="(img, idx) in images"
             :key="idx"
-            class="relative h-[160rpx] w-[160rpx] overflow-hidden rounded-[12rpx]"
+            class="relative h-[166rpx] w-[166rpx] overflow-hidden rounded-[16rpx]"
           >
             <image :src="img" class="h-full w-full" mode="aspectFill" />
             <view
@@ -194,10 +187,10 @@ async function handleSubmit() {
           <!-- 添加按钮 -->
           <view
             v-if="images.length < MAX_IMAGES"
-            class="flex h-[160rpx] w-[160rpx] flex-col items-center justify-center gap-[8rpx] rounded-[12rpx] border-[2rpx] border-dashed border-[#e0c8c0] bg-[#fff8f6]"
+            class="flex h-[166rpx] w-[166rpx] flex-col items-center justify-center gap-[8rpx] rounded-[16rpx] border-[1px] border-dashed border-[#ffd5cc] bg-[#fffdfc]"
             @tap="chooseImage"
           >
-            <cl-icon name="add-line" :size="24" :pt="{ className: 'text-[#e0a898]' }" />
+            <cl-icon name="add-line" :size="26" :pt="{ className: 'text-[#ff7e78]' }" />
             <text class="text-[22rpx] text-[#c0a89a]">添加图片</text>
           </view>
         </view>
@@ -205,36 +198,43 @@ async function handleSubmit() {
       </view>
 
       <!-- 联系方式 -->
-      <view class="mb-[40rpx] rounded-[20rpx] bg-white px-[28rpx] py-[24rpx] shadow-sm">
+      <view class="mb-[16rpx] rounded-[28rpx] bg-white px-[20rpx] py-[24rpx] shadow-[0_10rpx_30rpx_#e9c5bb1c]">
         <view class="mb-[16rpx] flex flex-row items-center gap-[10rpx]">
-          <view class="h-[32rpx] w-[6rpx] rounded-full bg-[#ff6b54]" />
-          <text class="text-[28rpx] font-semibold">联系方式 <text class="text-[22rpx] font-normal text-[#b09090]">（可选）</text></text>
+          <view class="h-[30rpx] w-[6rpx] rounded-full bg-[#ff7074]" />
+          <text class="text-[28rpx] font-[600]">联系方式 <text class="text-[22rpx] font-normal text-[#8f8581]">（可选）</text></text>
         </view>
-        <view class="flex flex-row items-center gap-[16rpx] rounded-[12rpx] bg-[#fff8f6] px-[20rpx] py-[16rpx]">
-          <cl-icon name="phone-line" :size="16" :pt="{ className: 'text-[#ff6b54]' }" />
+        <view class="flex flex-row items-center gap-[16rpx] rounded-[16rpx] border border-solid border-[#eee2de] bg-[#fef9f7] px-[20rpx] py-[16rpx]">
+          <cl-icon name="phone-fill" :size="16" color="#fe7881" />
           <input
             v-model="contact"
             class="flex-1 text-[26rpx] text-[#4a2b24]"
-            placeholder="留下联系方式，方便我们与你跟进处理"
+            placeholder="请输入手机号"
             placeholder-style="color:#c0a89a;font-size:26rpx"
             maxlength="50"
           />
         </view>
+        <view class="mt-[16rpx] block text-[22rpx] text-[#c0a89a]">留下联系方式，方便我们与你跟进处理</view>
       </view>
 
       <!-- 提交按钮 -->
-      <view
-        class="mb-[40rpx] flex flex-row h-[96rpx] items-center justify-center rounded-full text-[30rpx] font-semibold text-white shadow-lg transition-opacity"
-        :class="submitting ? 'bg-[#ffb09a] opacity-60' : 'bg-[linear-gradient(90deg,#ff8873,#ff5a3c)]'"
-        @tap="!submitting && handleSubmit()"
+      <cl-button
+        size="large"
+        :loading="submitting"
+        :disabled="submitting"
+        :pt="{
+          className: `mb-[12rpx] !h-[88rpx] w-full !rounded-[20rpx] !border-transparent !shadow-[0_10rpx_24rpx_#ff777452] ${submitting ? '!bg-[#ffb2ab]' : '!bg-[linear-gradient(90deg,#ff7774,#ff676d)]'}`,
+          label: { className: 'text-[30rpx] text-white leading-[42rpx] font-[500]' },
+          loading: { className: 'mr-[12rpx]' },
+        }"
+        @click="handleSubmit"
       >
         {{ submitting ? '提交中...' : '提交反馈' }}
-      </view>
+      </cl-button>
 
       <!-- 底部提示 -->
-      <view class="mb-[60rpx] flex flex-row items-center justify-center gap-[8rpx]">
-        <cl-icon name="shield-check-line" :size="11" :pt="{ className: 'text-[#c0a89a]' }" />
-        <text class="text-[22rpx] text-[#c0a89a]">你的反馈将被严格保密，我们会尽快处理</text>
+      <view class="mb-[28rpx] flex flex-row items-center justify-center gap-[8rpx]">
+        <cl-icon name="shield-check-line" :size="12" color="#b9b0ad" />
+        <text class="text-[20rpx] text-[#b9b0ad]">你的反馈将被严格保密，我们会尽快处理</text>
       </view>
     </view>
   </view>

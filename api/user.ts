@@ -112,6 +112,34 @@ export function loginByMini(data: { code: string, encryptedData: string, iv: str
   })
 }
 
+/** 小程序 code 静默登录 */
+export function loginByMiniCode(code: string) {
+  return request({
+    url: `${LOGIN_PREFIX}/miniCode`,
+    method: 'POST',
+    data: { code },
+    header: { Authorization: null },
+  })
+}
+
+/** 为当前静默登录用户绑定短信验证的手机号 */
+export function bindPhone(phone: string, smsCode: string) {
+  return request({
+    url: `${LOGIN_PREFIX}/bindPhone`,
+    method: 'POST',
+    data: { phone, smsCode },
+  })
+}
+
+/** 为当前静默登录用户绑定微信授权手机号 */
+export function bindMiniPhone(data: { code: string, encryptedData: string, iv: string }) {
+  return request({
+    url: `${LOGIN_PREFIX}/bindMiniPhone`,
+    method: 'POST',
+    data,
+  })
+}
+
 /** 获取当前登录用户信息 */
 export function getPerson() {
   return request({

@@ -3,6 +3,9 @@ import { computed, onMounted, ref } from "vue";
 import { createOrder, getBalance } from '@/api/order'
 import { sendMessage } from '@/api/message'
 import { mergeOssPath } from '@/utils/oss'
+import { useStore } from '@/.cool'
+
+const { user } = useStore()
 
 const phone = ref('')
 const message = ref('对不起，之前是我太冲动了。其实我一直很在意你的感受，也真心希望我们还能好好说话。如果你愿意，我想认真向你道歉。')
@@ -64,7 +67,8 @@ onLoad((options) => {
   }
 })
 
-onMounted(async () => {
+async function loadBalance() {
+	if (!user.info.value?.phone) return
   try {
     const bal = await getBalance()
     userQuota.value = bal.messageQuota
@@ -73,7 +77,10 @@ onMounted(async () => {
   finally {
     balanceLoaded.value = true
   }
-})
+}
+
+onMounted(loadBalance)
+onShow(loadBalance)
 
 function pad(n: number) {
   return n < 10 ? `0${n}` : `${n}`
@@ -157,6 +164,12 @@ function handleSelectTemplate(tpl: typeof templates[0]) {
 
 /** 点击「确认发送」：根据配额情况走不同路径 */
 async function handleConfirmSend() {
+	// 登录身份在进入小程序时已静默建立；首次发送才要求绑定手机号。
+	if (!user.info.value?.phone) {
+		uni.navigateTo({ url: '/package-user/login' })
+		return
+	}
+
   const rawPhone = phone.value.replace(/\s/g, '')
   if (!rawPhone || !/^1\d{10}$/.test(rawPhone)) {
     uni.showToast({ title: '请输入正确的11位手机号', icon: 'none' })

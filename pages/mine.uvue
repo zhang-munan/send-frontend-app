@@ -12,7 +12,7 @@ statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight || 0
 
 const { user } = useStore()
 
-const isLogin = computed(() => user.info.value != null)
+const isLogin = computed(() => !!user.info.value?.phone)
 const userInfo = computed(() => user.info.value)
 
 // 头像：未设置时使用项目内置的暖心默认头像
@@ -31,9 +31,9 @@ const showNotice = ref(false)
 const userQuota = ref(0)
 const userBalance = ref('0.00')
 
-// 进入页面时若已登录则刷新用户信息和余额
+// 个人中心展示以是否已绑定手机号为准，而不是 token 是否存在。
 onShow(() => {
-  if (user.token) {
+  if (user.info.value?.phone) {
     user.get().catch(() => {})
     getBalance().then((b) => {
       userQuota.value = b.messageQuota
@@ -49,22 +49,6 @@ function goLogin() {
 
 function goProfile() {
   uni.navigateTo({ url: '/package-user/profile' })
-}
-
-/** 退出登录 */
-function handleLogout() {
-  uni.showModal({
-    title: '提示',
-    content: '确定要退出登录吗？',
-    success: (res) => {
-      if (res.confirm) {
-        user.clear()
-        userQuota.value = 0
-        userBalance.value = '0.00'
-        uni.showToast({ title: '已退出登录', icon: 'none' })
-      }
-    },
-  })
 }
 
 function goRecharge() {
@@ -143,7 +127,7 @@ const serviceGroups: ServiceGroup[] = [
     items: [
       { title: '意见反馈', icon: 'thumb-up-fill', bg: '#428ff2' },
       { title: '使用须知', icon: 'error-warning-fill', bg: '#ffb12f', action: 'notice' },
-      { title: '关于我们', icon: 'information-2-fill', bg: '#8b66ee' },
+      // { title: '关于我们', icon: 'information-2-fill', bg: '#8b66ee' },
       { title: '设置', icon: 'settings-fill', bg: '#8b96a3' },
     ],
   },
@@ -180,7 +164,7 @@ function handleItemClick(item: ServiceItem) {
   if (!url) return
 
   // 需要登录才能访问的页面，未登录时跳转登录页
-  if (AUTH_PAGES.has(url) && !user.token) {
+  if (AUTH_PAGES.has(url) && !user.info.value?.phone) {
     uni.navigateTo({ url: '/package-user/login' })
     return
   }
@@ -228,9 +212,9 @@ function handleItemClick(item: ServiceItem) {
               <text class="max-w-[180rpx] truncate text-[36rpx] text-[#1a0e0b] leading-[46rpx] font-[900]">
                 {{ displayName }}
               </text>
-              <text class="border-[2px] border-[#ffffff] rounded-[22rpx] border-solid bg-[#ff6072d1] px-[16rpx] py-[5rpx] text-[20rpx] text-[#ffffff] leading-[24rpx]">
+              <!-- <text class="border-[2px] border-[#ffffff] rounded-[22rpx] border-solid bg-[#ff6072d1] px-[16rpx] py-[5rpx] text-[20rpx] text-[#ffffff] leading-[24rpx]">
                 普通用户
-              </text>
+              </text> -->
             </view>
 
             <view class="mt-[16rpx] flex flex-row items-center gap-[12rpx]">
@@ -344,21 +328,6 @@ function handleItemClick(item: ServiceItem) {
         </view>
       </view>
 
-      <!-- 退出登录 -->
-      <cl-button
-        v-if="isLogin"
-        type="light"
-        icon="logout-circle-line"
-        color="#ff5b67"
-        :pt="{
-          className: 'mt-[16rpx] !h-[88rpx] w-full !rounded-[24rpx] !border-transparent !bg-[#ffffff] shadow-[0_12rpx_34rpx_#59392d1a]',
-          icon: { className: 'mr-[10rpx] text-[#ff5b67]' },
-          label: { className: 'text-[28rpx] text-[#ff5b67] leading-[36rpx] font-[700]' },
-        }"
-        @click="handleLogout"
-      >
-        退出登录
-      </cl-button>
     </view>
 
     <!-- 使用须知弹窗 -->

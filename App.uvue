@@ -1,9 +1,28 @@
 <script lang="ts">
 import { useStore } from "./.cool";
+import { loginByMiniCode } from '@/api/user'
+
+async function silentLogin() {
+	// #ifdef MP-WEIXIN
+	const { user } = useStore()
+	try {
+		const result: any = await new Promise((resolve, reject) => {
+			uni.login({ provider: 'weixin', success: resolve, fail: reject })
+		})
+		if (!result.code) return
+		const token = await loginByMiniCode(result.code)
+		user.setToken(token)
+		await user.get()
+	} catch (err) {
+		console.warn('小程序静默登录失败', err)
+	}
+	// #endif
+}
 
 export default {
 	onLaunch: function () {
 		console.log("App Launch");
+		silentLogin()
 	},
 	onShow: function () {
 		console.log("App Show");
@@ -11,7 +30,7 @@ export default {
 		// 根据业务情况判断是否要预先调用
 		const { user } = useStore();
 
-		// 获取用户信息，未登录不执行
+		// 已有 token 时同步用户资料；首次启动由静默登录完成后同步。
 		user.get();
 	},
 	onHide: function () {

@@ -87,7 +87,7 @@ function copyContent() {
 // ─── Toggle collect ────────────────────────────────────────────────────────────
 async function toggleCollect() {
   if (!detail.value) return
-  if (!user.token) {
+  if (!user.info.value?.phone) {
     uni.navigateTo({ url: '/package-user/login' })
     return
   }

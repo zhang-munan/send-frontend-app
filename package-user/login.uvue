@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref } from "vue";
-import { getCaptcha, loginByMiniPhone, loginByPhone, sendSmsCode } from '@/api/user'
+import { bindMiniPhone, bindPhone, getCaptcha, sendSmsCode } from '@/api/user'
 import { useStore } from '@/.cool'
 import { mergeOssPath } from '@/utils/oss'
 
@@ -135,7 +135,7 @@ function goAfterLogin() {
     uni.switchTab({ url: '/pages/index' })
 }
 
-/** 手机号验证码登录 */
+/** 手机号验证码绑定。页面文案仍保持“登录”，实际不会切换用户身份。 */
 async function handlePhoneLogin() {
   if (!isValidPhone(phone.value)) {
     uni.showToast({ title: '请输入正确的手机号', icon: 'none' })
@@ -149,7 +149,7 @@ async function handlePhoneLogin() {
     return
   try {
     loading.value = true
-    const token = await loginByPhone(phone.value, smsCode.value)
+    const token = await bindPhone(phone.value, smsCode.value)
     user.setToken(token)
     await user.get()
     uni.showToast({ title: '登录成功', icon: 'success' })
@@ -188,7 +188,7 @@ async function refreshLoginCode() {
   }
 }
 
-/** 微信一键登录（小程序手机号授权） */
+/** 微信一键授权手机号绑定 */
 async function handleWxPhone(e: any) {
   if (!checkAgree())
     return
@@ -200,7 +200,7 @@ async function handleWxPhone(e: any) {
     loading.value = true
     // 优先使用预取的 code，确保与加密数据用同一 session_key 解密
     const code = loginCode.value || (await wxLogin())
-    const token = await loginByMiniPhone({
+    const token = await bindMiniPhone({
       code,
       encryptedData: e.detail.encryptedData,
       iv: e.detail.iv,
