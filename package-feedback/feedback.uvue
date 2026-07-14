@@ -99,13 +99,12 @@ async function handleSubmit() {
 
     <!-- Banner -->
     <view class="mx-[28rpx] mb-[20rpx] flex flex-row items-center gap-[24rpx] rounded-[28rpx] border border-solid border-[#ffddb0] bg-[#fdedd9] px-[28rpx] py-[24rpx] shadow-[0_8rpx_24rpx_#f4b97b26]">
-      <view class="relative flex h-[100rpx] w-[100rpx] flex-shrink-0 items-center justify-center">
+      <view class="relative flex h-[90rpx] w-[90rpx] flex-shrink-0 items-center justify-center">
         <image :src="mergeOssPath('mine', 'feedback-safe.png')" class="h-full w-full" mode="aspectFill" />
       </view>
       <view class="flex-1">
         <view class="text-[27rpx] font-[500] text-[#302725] leading-[40rpx] flex-row">
           你的每一条建议，都在帮助我们变得更好
-          <text class="text-[24rpx] block-inline">💛</text>
         </view>
         <view class="mt-[6rpx] text-[22rpx] text-[#8d7770] leading-[32rpx] block-inline flex-row">
           我们会认真对待你的反馈，持续优化产品体验

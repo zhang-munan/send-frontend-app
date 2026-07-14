@@ -56,7 +56,7 @@ async function openDoc(key: string, fallbackTitle: string) {
 
 // ---------- 修改手机号 ----------
 function goChangePhone() {
-	uni.navigateTo({ url: "/package-user/login" });
+	uni.navigateTo({ url: "/package-user/change-phone" });
 }
 
 // ---------- 版本号 ----------
