@@ -32,7 +32,7 @@ const userQuota = ref(0);
 const loading = ref(true);
 const paying = ref(false);
 
-const productCoverImage = computed(() => productInfo.value?.coverImage || "/static/images/order/payment-gift.png");
+const productCoverImage = computed(() => productInfo.value?.coverImage || mergeOssPath('order', 'payment-gift.png'));
 
 // ─── 支付方式列表 ─────────────────────────────────────────────
 const paymentMethods = computed(() => {
@@ -44,7 +44,7 @@ const paymentMethods = computed(() => {
 			disabled: false,
 			iconBg: "#07c160",
 			iconText: "微",
-			iconImage: "/static/images/order/payment-wechat.png"
+			iconImage: mergeOssPath('order', 'payment-wechat.png')
 		},
 		{
 			id: "alipay",
@@ -53,7 +53,7 @@ const paymentMethods = computed(() => {
 			disabled: false,
 			iconBg: "#1677ff",
 			iconText: "支",
-			iconImage: "/static/images/order/payment-alipay.png"
+			iconImage: mergeOssPath('order', 'payment-alipay.png')
 		},
 		{
 			id: "balance",
@@ -68,7 +68,7 @@ const paymentMethods = computed(() => {
 					? "#a28fdb"
 					: "#d0d0d0",
 			iconText: "余",
-			iconImage: "/static/images/order/payment-balance.png"
+			iconImage: mergeOssPath('order', 'payment-balance.png')
 		}
 	];
 
@@ -396,7 +396,7 @@ async function onPaySuccess() {
 
 			<!-- Warm tip card -->
 			<view class="relative mt-[24rpx] overflow-hidden rounded-[24rpx] border border-solid border-[#ffe1b6] px-[28rpx] py-[22rpx]">
-				<image src="/static/images/order/payment-tip-bg.png" mode="aspectFill" class="absolute inset-0 h-full w-full" />
+				<image :src="mergeOssPath('order', 'payment-tip-bg.png')" mode="aspectFill" class="absolute inset-0 h-full w-full" />
 				<view class="relative z-[1] flex flex-row items-start gap-[14rpx]">
 					<image :src="mergeOssPath('safe.png')" mode="aspectFit" class="mt-[2rpx] h-[46rpx] w-[46rpx] flex-shrink-0" />
 					<text class="flex-1 text-[26rpx] text-[#8a4a26] leading-[42rpx]">

@@ -16,7 +16,7 @@ const isLogin = computed(() => !!user.info.value?.phone)
 const userInfo = computed(() => user.info.value)
 
 // 头像：未设置时使用项目内置的暖心默认头像
-const avatarUrl = computed(() => userInfo.value?.avatarUrl || `${import.meta.env.VITE_BASE_PATH ?? '/'}static/images/user-default-avatar.png`)
+const avatarUrl = computed(() => userInfo.value?.avatarUrl || mergeOssPath('user-default-avatar.png'))
 // 昵称
 const displayName = computed(() => userInfo.value?.nickName || '未设置昵称')
 // 手机号脱敏展示
@@ -238,9 +238,10 @@ function handleItemClick(item: ServiceItem) {
 
         <!-- 未登录 -->
         <view v-else class="relative flex flex-row items-center" @click="goLogin">
+          <!-- 头像 -->
           <view class="relative h-[184rpx] w-[184rpx] flex-shrink-0 shadow-[0_8rpx_20rpx_#723f2c26]">
-            <view class="box-border h-full w-full flex flex-row items-center justify-center overflow-hidden border-[4px] border-[#ffffff] rounded-[184rpx] border-solid bg-[#ffffff73]">
-              <cl-icon name="user-fill" :size="55" :pt="{ className: 'text-white' }" />
+            <view class="box-border h-full w-full overflow-hidden border-[4px] border-[#ffffff] rounded-[184rpx] border-solid">
+              <image :src="avatarUrl" mode="aspectFill" class="h-full w-full rounded-[184rpx]" />
             </view>
           </view>
 

@@ -2,9 +2,10 @@
 import { computed, reactive, ref } from 'vue'
 import { uploadUserAvatar, updatePerson } from '@/api/user'
 import { useStore } from '@/.cool'
+import { mergeOssPath } from '@/utils/oss'
 
 const { user } = useStore()
-const defaultAvatar = `${import.meta.env.VITE_BASE_PATH ?? '/'}static/images/user-default-avatar.png`
+const defaultAvatar = mergeOssPath('user-default-avatar.png')
 const saving = ref(false)
 const uploading = ref(false)
 const profile = reactive({

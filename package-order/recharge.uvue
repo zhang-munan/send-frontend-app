@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from "vue";
 import { getProductList, getBalance, createOrder, type ProductInfo, type UserBalance } from '@/api/order'
 import { formatYuan, toYuan } from '@/utils/money'
+import { mergeOssPath } from '@/utils/oss'
 
 // ─── 数据 ─────────────────────────────────────────────
 const products = ref<ProductInfo[]>([])
@@ -126,7 +127,7 @@ function goOrders() { uni.navigateTo({ url: '/package-order/orders' }) }
         style="background: #ffaf9b; box-shadow: 0 12rpx 36rpx #ff8c6447;"
       >
         <image
-          src="/static/images/order/recharge-banner.png"
+          :src="mergeOssPath('order', 'recharge-banner.png')"
           mode="aspectFill"
           class="absolute inset-0 h-full w-full pointer-events-none z-0"
         />
