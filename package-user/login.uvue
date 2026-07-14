@@ -152,7 +152,7 @@ async function handlePhoneLogin() {
     const token = await bindPhone(phone.value, smsCode.value)
     user.setToken(token)
     await user.get()
-    uni.showToast({ title: '登录成功', icon: 'success' })
+    uni.showToast({ title: '登录成功', icon: 'none' })
     setTimeout(goAfterLogin, 600)
   }
   catch {
@@ -207,7 +207,7 @@ async function handleWxPhone(e: any) {
     })
     user.setToken(token)
     await user.get()
-    uni.showToast({ title: '登录成功', icon: 'success' })
+    uni.showToast({ title: '登录成功', icon: 'none' })
     setTimeout(goAfterLogin, 600)
   }
   catch {

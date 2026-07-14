@@ -117,7 +117,7 @@ const serviceGroups: ServiceGroup[] = [
     items: [
       { title: '充值中心', icon: 'sparkling-fill', bg: '#ff8618', badge: '首充优惠' },
       { title: '账单明细', icon: 'eye-fill', bg: '#35c96d' },
-      { title: '优惠券', icon: 'percent-fill', bg: '#ff5365', extra: '3 张可用' },
+      // { title: '优惠券', icon: 'percent-fill', bg: '#ff5365', extra: '3 张可用' },
     ],
   },
   {

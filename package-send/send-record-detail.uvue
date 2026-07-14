@@ -68,7 +68,7 @@ async function handleResend() {
   operating.value = true
   try {
     await resendMessage(detail.value.id)
-    uni.showToast({ title: '已重新发送', icon: 'success' })
+    uni.showToast({ title: '已重新发送', icon: 'none' })
     await loadDetail()
   }
   catch (err: any) {
@@ -89,7 +89,7 @@ async function handleCancel() {
       operating.value = true
       try {
         await cancelMessage(detail.value!.id)
-        uni.showToast({ title: '已取消', icon: 'success' })
+        uni.showToast({ title: '已取消', icon: 'none' })
         await loadDetail()
       }
       catch (err: any) {

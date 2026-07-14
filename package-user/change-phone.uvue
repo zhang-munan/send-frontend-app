@@ -76,7 +76,7 @@ async function confirmCaptcha() {
 
 async function finishChange() {
 	await user.get();
-	uni.showToast({ title: "手机号已换绑", icon: "success" });
+	uni.showToast({ title: "手机号已换绑", icon: 'none' });
 	setTimeout(() => uni.navigateBack(), 600);
 }
 

@@ -209,7 +209,7 @@ async function handleConfirmSend() {
       await sendMessage(messagePayload)
       // 本地更新配额显示
       userQuota.value = Math.max(0, userQuota.value - smsCount.value)
-      uni.showToast({ title: '发送成功，等待审核', icon: 'success' })
+      uni.showToast({ title: '发送成功，等待审核', icon: 'none' })
       setTimeout(() => uni.navigateBack(), 1500)
     }
     else {
@@ -367,7 +367,7 @@ async function handleConfirmSend() {
         <view class="">
           <view class="flex flex-row items-center justify-between">
             <view class="h-[64rpx] w-[64rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-[18rpx] bg-[#fff0ed]">
-              <text class="text-[34rpx]">🎭</text>
+              <image :src="mergeOssPath('anonymous.png')" mode="aspectFit" class="h-full w-full" />
             </view>
             <text class="ml-[16rpx] min-w-0 flex-1 text-[28rpx] text-[#4a2b24]">匿名发送</text>
             <cl-switch
@@ -400,13 +400,13 @@ async function handleConfirmSend() {
           </view>
           <view
             class="h-[80rpx] flex flex-row flex-1 items-center justify-center gap-[10rpx] rounded-[16rpx]"
-            :class="sendMode === 'scheduled' ? 'bg-[#fe8973]' : 'border border-solid border-[#f0e8e4] bg-[#fffaf8]'"
+            :class="sendMode === 'scheduled' ? 'border border-solid border-[#fd8269] bg-[#feebe4]' : 'border border-solid border-[#f0e8e4] bg-[#fffaf8]'"
             @click="selectSendMode('scheduled')"
           >
-            <cl-icon name="time-line" :size="14" :color="sendMode === 'scheduled' ? '#ffffff' : '#7a5147'" />
+            <cl-icon name="time-line" :size="14" :color="sendMode === 'scheduled' ? '#fd8269' : '#7a5147'" />
             <text
               class="text-[28rpx]"
-              :class="sendMode === 'scheduled' ? 'text-white' : 'text-[#7a5147]'"
+              :class="sendMode === 'scheduled' ? 'text-[#fd8269]' : 'text-[#7a5147]'"
             >
               定时发送
             </text>

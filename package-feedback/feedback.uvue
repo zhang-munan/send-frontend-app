@@ -73,7 +73,7 @@ async function handleSubmit() {
       images: images.value,
       contact: contact.value.trim() || undefined,
     })
-    uni.showToast({ title: '已收到反馈，感谢您的支持', icon: 'success', duration: 2000 })
+    uni.showToast({ title: '已收到反馈，感谢您的支持', icon: 'none', duration: 2000 })
     setTimeout(() => uni.navigateBack(), 2000)
   }
   catch {

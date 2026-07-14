@@ -72,7 +72,7 @@ async function saveProfile() {
       description: profile.description.trim(),
     })
     await user.get()
-    uni.showToast({ title: '保存成功', icon: 'success' })
+    uni.showToast({ title: '保存成功', icon: 'none' })
     setTimeout(() => uni.navigateBack(), 700)
   }
   catch {

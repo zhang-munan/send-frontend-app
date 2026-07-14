@@ -256,7 +256,7 @@ async function waitForPaid(oId: number, maxRetry = 10, interval = 3000) {
 /** 支付成功后跳转 */
 async function onPaySuccess() {
 	uni.hideLoading();
-	uni.showToast({ title: "支付成功！", icon: "success" });
+	uni.showToast({ title: "支付成功！", icon: 'none' });
 	setTimeout(() => {
 		// 回到首页并刷新
 		uni.switchTab({ url: "/pages/index" });

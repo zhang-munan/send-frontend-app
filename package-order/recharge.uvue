@@ -69,7 +69,7 @@ function applyCoupon() {
     couponDiscount.value = 100
     couponApplied.value = true
     couponAppliedCode.value = couponCode.value.trim().toUpperCase()
-    uni.showToast({ title: '优惠码已使用', icon: 'success' })
+    uni.showToast({ title: '优惠码已使用', icon: 'none' })
   }
   else {
     uni.showToast({ title: '优惠码无效', icon: 'none' })

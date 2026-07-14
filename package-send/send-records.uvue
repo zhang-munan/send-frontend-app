@@ -108,7 +108,7 @@ async function handleResend(item: MessageRecord) {
   resendingId.value = item.id
   try {
     await resendMessage(item.id)
-    uni.showToast({ title: '已重新发送', icon: 'success' })
+    uni.showToast({ title: '已重新发送', icon: 'none' })
     await loadList(true)
   }
   catch (err: any) {
