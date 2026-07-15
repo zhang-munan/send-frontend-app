@@ -108,6 +108,18 @@ export function getPublicMessageList(page = 1, size = 10) {
 	});
 }
 
+/** 首页当日最近动态汇总 */
+export interface RecentActivity {
+	sentCount: number;
+	replyCount: number;
+	aiUsageCount: number;
+	date: string;
+}
+
+export function getRecentActivity() {
+	return request({ url: `${PREFIX}/recentActivity`, method: 'GET' });
+}
+
 /** 消息详情 */
 export function getMessageDetail(id: number) {
 	return request({ url: `${PREFIX}/messageDetail`, method: "GET", data: { id } });
