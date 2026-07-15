@@ -105,7 +105,6 @@ const serviceGroups: ServiceGroup[] = [
     icon: 'heart-fill',
     iconColor: '#ff5b67',
     items: [
-      { title: '我的模板', icon: 'bookmark-fill', bg: '#ff5a72' },
       { title: '发送记录', icon: 'time-fill', bg: '#3f97f4' },
       { title: '我的对话', icon: 'phone-fill', bg: '#8c66ee' },
     ],
@@ -155,7 +154,6 @@ function handleItemClick(item: ServiceItem) {
     '充值中心': '/package-order/recharge',
     '账单明细': '/package-order/orders',
     '发送记录': '/package-send/send-records',
-    '我的模板': '/pages/template',
     '我的对话': '/pages/message',
     '设置': '/package-user/settings',
     '意见反馈': '/package-feedback/feedback',
@@ -170,7 +168,7 @@ function handleItemClick(item: ServiceItem) {
   }
 
   // tabBar 页用 switchTab，否则用 navigateTo
-  const tabPages = new Set(['/pages/index', '/pages/message', '/pages/template', '/pages/mine'])
+  const tabPages = new Set(['/pages/index', '/pages/plaza', '/pages/message', '/pages/mine'])
   if (tabPages.has(url)) {
     uni.switchTab({ url })
   }
@@ -196,11 +194,11 @@ function handleItemClick(item: ServiceItem) {
 
     <view class="relative px-[20rpx] pb-[150rpx]">
       <!-- 用户信息卡片 -->
-      <view class="relative overflow-hidden rounded-[28rpx] bg-[linear-gradient(125deg,#ffd1a4,#ff9b98,#ffe0b5)] px-[32rpx] pb-[214rpx] pt-[56rpx] shadow-[0_16rpx_42rpx_#fe897338]">
+      <view class="relative overflow-hidden rounded-[28rpx] bg-[linear-gradient(125deg,#ffd1a4,#ff9b98,#ffe0b5)] px-[32rpx] pb-[214rpx] pt-[56rpx]" style="box-shadow: 0 2rpx 20rpx #59392d0d">
         <!-- 已登录 -->
         <view v-if="isLogin" class="relative flex flex-row items-center" @click="goProfile">
           <!-- 头像 -->
-          <view class="relative h-[184rpx] w-[184rpx] flex-shrink-0 shadow-[0_8rpx_20rpx_#723f2c26]">
+          <view class="relative h-[184rpx] w-[184rpx] flex-shrink-0" style="box-shadow: 0 2rpx 20rpx #59392d0d">
             <view class="box-border h-full w-full overflow-hidden border-[4px] border-[#ffffff] rounded-[184rpx] border-solid">
               <image :src="avatarUrl" mode="aspectFill" class="h-full w-full rounded-[184rpx]" />
             </view>
@@ -239,7 +237,7 @@ function handleItemClick(item: ServiceItem) {
         <!-- 未登录 -->
         <view v-else class="relative flex flex-row items-center" @click="goLogin">
           <!-- 头像 -->
-          <view class="relative h-[184rpx] w-[184rpx] flex-shrink-0 shadow-[0_8rpx_20rpx_#723f2c26]">
+          <view class="relative h-[184rpx] w-[184rpx] flex-shrink-0" style="box-shadow: 0 2rpx 20rpx #59392d0d">
             <view class="box-border h-full w-full overflow-hidden border-[4px] border-[#ffffff] rounded-[184rpx] border-solid">
               <image :src="avatarUrl" mode="aspectFill" class="h-full w-full rounded-[184rpx]" />
             </view>
@@ -252,7 +250,7 @@ function handleItemClick(item: ServiceItem) {
             <text class="mt-[14rpx] block text-[26rpx] text-[#2c2523] leading-[34rpx]">
               登录后体验完整的暖心服务
             </text>
-            <view class="mt-[18rpx] w-fit inline-flex flex-row items-center gap-[6rpx] rounded-[28rpx] bg-[#ffffff9e] px-[24rpx] py-[10rpx] shadow-[0_4rpx_14rpx_#6f462d1a]">
+            <view class="mt-[18rpx] w-fit inline-flex flex-row items-center gap-[2rpx] rounded-[28rpx] bg-[#ffffff9e] px-[24rpx] py-[10rpx]" style="box-shadow: 0 2rpx 20rpx #59392d0d">
               <text class="text-[24rpx] text-[#a23a2f] leading-[30rpx] font-[700]">
                 立即登录
               </text>
@@ -262,7 +260,7 @@ function handleItemClick(item: ServiceItem) {
         </view>
 
         <!-- 数据统计浮层 -->
-        <view class="absolute bottom-[-2rpx] left-[0rpx] right-[0rpx] rounded-t-[28rpx] bg-[#ffffff] px-[20rpx] py-[48rpx] shadow-[0_-6rpx_24rpx_#ffffff80]">
+        <view class="absolute bottom-[-2rpx] left-[0rpx] right-[0rpx] rounded-t-[28rpx] bg-[#ffffff] px-[20rpx] py-[48rpx]" style="box-shadow: 0 2rpx 20rpx #59392d0d">
           <view class="grid grid-cols-3">
             <view
               v-for="(item, index) in stats"
@@ -291,7 +289,7 @@ function handleItemClick(item: ServiceItem) {
       </view>
 
       <!-- 服务分组列表 -->
-      <view v-for="group in serviceGroups" :key="group.title" class="mt-[24rpx] rounded-[24rpx] bg-[#ffffff] px-[28rpx] py-[24rpx] shadow-[0_12rpx_34rpx_#59392d1a]">
+      <view v-for="group in serviceGroups" :key="group.title" class="mt-[24rpx] rounded-[24rpx] bg-[#ffffff] px-[28rpx] py-[24rpx]" style="box-shadow: 0 2rpx 20rpx #59392d0d">
         <!-- 分组标题 -->
         <view class="mb-[8rpx] flex flex-row items-center">
           <cl-icon :name="group.icon" :size="13" :color="group.iconColor" />
@@ -333,7 +331,7 @@ function handleItemClick(item: ServiceItem) {
 
     <!-- 使用须知弹窗 -->
     <view v-if="showNotice" class="fixed inset-[0rpx] z-[20] flex flex-row items-center justify-center bg-[#2c1e1947] px-[60rpx]">
-      <view class="max-h-[660rpx] w-full rounded-[24rpx] bg-[#fffefa] px-[36rpx] py-[36rpx] shadow-[0_18rpx_58rpx_#492a2033]">
+      <view class="max-h-[660rpx] w-full rounded-[24rpx] bg-[#fffefa] px-[36rpx] py-[36rpx]" style="box-shadow: 0 2r'p'z 20rpx #59392d0d">
         <text class="block text-center text-[34rpx] text-[#4a2b24] leading-[44rpx] font-[900]">
           使用须知
         </text>

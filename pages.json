@@ -8,9 +8,9 @@
 			}
 		},
 		{
-			"path": "pages/template",
+			"path": "pages/plaza",
 			"style": {
-				"navigationBarTitleText": "模板"
+				"navigationStyle": "custom"
 			}
 		},
 		{
@@ -59,18 +59,6 @@
 					"path": "send",
 					"style": {
 						"navigationStyle": "custom"
-					}
-				}
-			]
-		},
-		{
-			"root": "package-template",
-			"pages": [
-				{
-					"path": "template-detail",
-					"style": {
-						"navigationStyle": "custom",
-						"navigationBarTextStyle": "black"
 					}
 				}
 			]
@@ -172,8 +160,8 @@
 				"selectedIconPath": "static/images/tabbar/home.png"
 			},
 			{
-				"pagePath": "pages/template",
-				"text": "模板",
+				"pagePath": "pages/plaza",
+				"text": "广场",
 				"iconPath": "static/images/tabbar/temp-line.png",
 				"selectedIconPath": "static/images/tabbar/temp.png"
 			},

@@ -64,6 +64,7 @@ export interface CreateOrderBySend {
 	receiverPhone: string;
 	content: string;
 	isAnonymous?: number;
+	isPublic?: number;
 	sendType?: number;
 	scheduledAt?: string;
 	templateId?: number;

@@ -63,7 +63,6 @@ const quickCardsLeft = [
 ]
 
 const quickCardsRight = [
-  // { title: '消息模板', desc: '海量模板一键使用', image: mergeOssPath('home/function-msg.png'), cardBg: 'linear-gradient(90deg, #fff5ed 0%, #fffdf8 100%)', arrowBg: '#fdd6a9', route: '/pages/template' },
   { title: '我的对话', desc: '查看历史对话记录', image: mergeOssPath('home/function-chat.png'), cardBg: 'linear-gradient(90deg, #effbf1 0%, #fbfff9 100%)', arrowBg: '#c8e1c9', route: '/pages/message', routeType: 'switch' },
 ]
 
@@ -86,14 +85,6 @@ const sceneList = [
   { title: '重要通知', desc: '帮你转达', image: mergeOssPath('home/notification.png') },
 ]
 
-const templateList = [
-  { title: '真诚道歉短信', tag: '道歉和解', image: mergeOssPath('home/temp-reconciliation.png') },
-  { title: '匿名喜欢你', tag: '匿名表白', image: mergeOssPath('home/temp-confession.png') },
-  { title: '母亲节祝福', tag: '节日祝福', image: mergeOssPath('home/temp-blessing.png') },
-  { title: '谢谢你的照顾', tag: '感恩表达', image: mergeOssPath('home/temp-gratitude.png') },
-  { title: '毕业祝福', tag: '毕业告别', image: mergeOssPath('home/temp-farewell.png') },
-]
-
 const storyList = [
   {
     name: '匿名用户A',
@@ -106,7 +97,7 @@ const storyList = [
     name: '小C',
     initials: 'C',
     avatarBg: '#ffa8c8',
-    content: '用了匿名表白模板，TA 猜到是我后也很开心，现在我们在一起啦～',
+    content: '鼓起勇气说出了心里话，TA 的回应让我觉得一切都值得。',
     like: '9.8k',
   },
   {
@@ -285,44 +276,6 @@ const storyList = [
           <text class="mt-[2rpx] block truncate text-[18rpx] text-[#9b7e73] leading-[26rpx]">
             {{ item.desc }}
           </text>
-        </view>
-      </view>
-    </scroll-view>
-
-    <!-- 热门模板推荐 -->
-    <view class="mt-[36rpx] px-[20rpx]">
-      <view class="flex flex-row items-center justify-between">
-        <view class="flex flex-row items-center">
-          <text class="ml-[8rpx] text-[30rpx] text-[#4b2f28] leading-[38rpx] font-[800]">
-            热门模板推荐
-          </text>
-        </view>
-        <view class="flex flex-row items-center gap-[4rpx]">
-          <text class="text-[24rpx] text-[#8c756e] leading-[32rpx]">
-            查看更多
-          </text>
-          <cl-icon name="arrow-right-s-line" :size="12" :pt="{ className: 'text-[#8c756e]' }" />
-        </view>
-      </view>
-    </view>
-
-    <scroll-view scroll-x class="w-full whitespace-nowrap" :show-scrollbar="false">
-      <view class="inline-flex flex-row gap-[16rpx] px-[20rpx] py-[20rpx]">
-        <view
-          v-for="item in templateList"
-          :key="item.title"
-          class="inline-block w-[168rpx] overflow-hidden rounded-[18rpx] bg-[#ffffff]"
-          style="box-shadow: 0 5rpx 15rpx #fe89731a;"
-        >
-          <image :src="item.image" mode="aspectFill" class="h-[108rpx] w-full" />
-          <view class="px-[12rpx] pb-[14rpx] pt-[10rpx] text-center">
-            <text class="block truncate text-[22rpx] text-[#321d18] leading-[30rpx] font-[700]">
-              {{ item.title }}
-            </text>
-            <text class="mt-[8rpx] inline-block rounded-[24rpx] bg-[#fff0ea] px-[14rpx] py-[4rpx] text-[18rpx] text-[#fe8973] leading-[24rpx] font-[600]">
-              {{ item.tag }}
-            </text>
-          </view>
         </view>
       </view>
     </scroll-view>

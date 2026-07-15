@@ -7,6 +7,8 @@ export interface SendMessageParams {
 	receiverPhone: string;
 	content: string;
 	isAnonymous?: number;
+	/** 是否公开展示到广场：0 私密，1 公开 */
+	isPublic?: number;
 	sendType?: number;
 	scheduledAt?: string;
 	templateId?: number;
@@ -39,6 +41,8 @@ export interface MessageRecord {
 	smsCount: number;
 	/** 0实名 1匿名 */
 	isAnonymous: number;
+	/** 是否公开展示到广场：0 私密，1 公开 */
+	isPublic: number;
 	senderSignature: string | null;
 	/** 1立即发送 2定时发送 */
 	sendType: number;
@@ -82,6 +86,25 @@ export function getRecordList(page = 1, size = 10, status?: number) {
 		url: `${PREFIX}/recordList`,
 		method: "GET",
 		data: { page, size, ...(status !== undefined ? { status } : {}) }
+	});
+}
+
+/** 广场公开消息列表（仅返回已审核通过的公开内容） */
+export interface PlazaMessage {
+	id: number;
+	content: string;
+	isAnonymous: number;
+	senderSignature: string | null;
+	createTime: string;
+	replyContent: string | null;
+	replyTime: string | null;
+}
+
+export function getPublicMessageList(page = 1, size = 10) {
+	return request({
+		url: `${PREFIX}/publicList`,
+		method: 'GET',
+		data: { page, size },
 	});
 }
 

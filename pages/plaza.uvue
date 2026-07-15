@@ -1,0 +1,206 @@
+<script setup lang="ts">
+import { computed, onMounted, ref } from "vue";
+import { getPublicMessageList, type PlazaMessage } from "@/api/message";
+import { mergeOssPath } from "@/utils/oss";
+
+const list = ref<PlazaMessage[]>([]);
+const page = ref(1);
+const total = ref(0);
+const loading = ref(false);
+const noMore = ref(false);
+const PAGE_SIZE = 10;
+
+const defaultAvatar = mergeOssPath("user-default-avatar.png");
+
+function formatTime(value: string) {
+	if (!value) return "";
+	const date = new Date(value.replace(/-/g, "/"));
+	const diff = Date.now() - date.getTime();
+	const hour = 60 * 60 * 1000;
+	if (diff >= 0 && diff < hour) return "刚刚";
+	if (diff >= hour && diff < 24 * hour) return `${Math.floor(diff / hour)}小时前`;
+	if (diff >= 24 * hour && diff < 48 * hour) return "昨天";
+	const year = date.getFullYear();
+	const month = `${date.getMonth() + 1}`.padStart(2, "0");
+	const day = `${date.getDate()}`.padStart(2, "0");
+	return year === new Date().getFullYear() ? `${month}/${day}` : `${year}/${month}/${day}`;
+}
+
+function formatReplyTime(value: string | null) {
+	if (!value) return "";
+	const date = new Date(value.replace(/-/g, "/"));
+	const month = `${date.getMonth() + 1}`.padStart(2, "0");
+	const day = `${date.getDate()}`.padStart(2, "0");
+	const hour = `${date.getHours()}`.padStart(2, "0");
+	const minute = `${date.getMinutes()}`.padStart(2, "0");
+	return `${month}/${day} ${hour}:${minute}`;
+}
+
+function senderName(item: PlazaMessage) {
+	if (item.isAnonymous) return "匿名";
+	return item.senderSignature || "暖心用户";
+}
+
+const hasItems = computed(() => list.value.length > 0);
+
+async function loadList(reset = false) {
+	if (loading.value || (!reset && noMore.value)) return;
+	if (reset) {
+		page.value = 1;
+		noMore.value = false;
+		list.value = [];
+	}
+	loading.value = true;
+	try {
+		const result = await getPublicMessageList(page.value, PAGE_SIZE);
+		list.value.push(...result.list);
+		total.value = result.total;
+		noMore.value = list.value.length >= result.total;
+		page.value += 1;
+	} catch (err: any) {
+		uni.showToast({ title: err?.message || "加载失败，请稍后重试", icon: "none" });
+	} finally {
+		loading.value = false;
+	}
+}
+
+async function refresh() {
+	await loadList(true);
+	uni.stopPullDownRefresh();
+}
+
+function goSend() {
+	uni.navigateTo({ url: "/package-send/send" });
+}
+
+function showSearchTip() {
+	uni.showToast({ title: "搜索功能即将开放", icon: "none" });
+}
+
+onMounted(() => loadList(true));
+onShow(() => loadList(true));
+onPullDownRefresh(refresh);
+onReachBottom(() => loadList());
+</script>
+
+<template>
+	<view class="min-h-[100vh] bg-[#fef9f7] pb-[32rpx] text-[#352019]">
+		<cl-topbar
+			title="广场"
+			:showBack="false"
+			safeAreaTop
+			backgroundColor="#fef9f7"
+			color="#3f1c12"
+			height="100rpx"
+			:pt="{ title: { className: 'text-[42rpx] font-[800] tracking-[8rpx]' } }"
+		>
+			<template #append>
+				<view
+					class="mr-[22rpx] h-[72rpx] w-[72rpx] flex flex-row items-center justify-center"
+					@click="showSearchTip"
+				>
+					<cl-icon name="search-line" :size="25" :pt="{ className: 'text-[#17110f]' }" />
+				</view>
+			</template>
+		</cl-topbar>
+
+		<view class="px-[24rpx]">
+			<view
+				class="mt-[16rpx] flex flex-row items-center justify-center rounded-[24rpx] border border-solid border-[#f6dac7] bg-[#fff7ef] px-[22rpx] py-[22rpx]"
+			>
+				<cl-icon
+					name="shield-heart-line"
+					:size="22"
+					:pt="{ className: 'mr-[18rpx] flex-shrink-0 text-[#f5a545]' }"
+				/>
+				<text class="text-[29rpx] text-[#613326] leading-[40rpx] font-[600]"
+					>这里是大家的心意广场，看看那些温暖的故事 💛</text
+				>
+			</view>
+
+			<view v-if="loading && !hasItems" class="flex flex-col items-center py-[160rpx]">
+				<cl-icon name="loader-4-line" :size="28" :pt="{ className: 'text-[#fe8973]' }" />
+				<text class="mt-[18rpx] text-[25rpx] text-[#aa8c82]">正在加载心意...</text>
+			</view>
+
+			<view
+				v-else-if="!hasItems"
+				class="mt-[36rpx] overflow-hidden rounded-[24rpx] border border-solid border-[#f7e1d4] bg-[#fffaf6] px-[30rpx] py-[34rpx]"
+			>
+				<view class="flex flex-row items-center">
+					<image
+						:src="mergeOssPath('logo-heart.png')"
+						mode="aspectFit"
+						class="h-[116rpx] w-[150rpx]"
+					/>
+					<view class="ml-[18rpx] flex-1">
+						<text class="block text-[29rpx] text-[#60372c] leading-[42rpx] font-[700]"
+							>还没有公开消息，</text
+						>
+						<text class="mt-[6rpx] block text-[25rpx] text-[#8b6559] leading-[36rpx]"
+							>成为第一个分享心意的人吧</text
+						>
+					</view>
+				</view>
+				<view
+					class="mt-[22rpx] ml-auto h-[76rpx] w-[180rpx] flex flex-row items-center justify-center rounded-[44rpx] bg-[#fe8973]"
+					@click="goSend"
+				>
+					<text class="text-[28rpx] text-white font-[700]">去发送</text>
+				</view>
+			</view>
+
+			<view v-else class="pt-[24rpx]">
+				<view
+					v-for="item in list"
+					:key="item.id"
+					class="mb-[20rpx] flex flex-row rounded-[24rpx] border border-solid border-[#f7e8df] bg-[#fffdfb] px-[20rpx] py-[22rpx]"
+					style="box-shadow: 0 5rpx 18rpx #7d42300c"
+				>
+					<image
+						:src="defaultAvatar"
+						mode="aspectFill"
+						class="mr-[18rpx] h-[132rpx] w-[132rpx] flex-shrink-0 rounded-[66rpx] border-[4rpx] border-solid border-white"
+					/>
+					<view class="min-w-0 flex-1">
+						<view class="flex flex-row items-center justify-between">
+							<text class="text-[25rpx] text-[#967970]">{{
+								formatTime(item.createTime)
+							}}</text>
+							<text
+								class="rounded-[20rpx] bg-[#fff1ea] px-[13rpx] py-[4rpx] text-[21rpx] text-[#ed725c]"
+								>{{ senderName(item) }}</text
+							>
+						</view>
+						<text
+							class="mt-[12rpx] block whitespace-pre-wrap text-[29rpx] text-[#241714] leading-[46rpx]"
+							>{{ item.content }}</text
+						>
+						<view
+							v-if="item.replyContent"
+							class="mt-[16rpx] rounded-[18rpx] border border-solid border-[#fae4d7] bg-[#fff8f2] px-[16rpx] py-[14rpx]"
+						>
+							<text
+								class="block text-[23rpx] text-[#b65e45] leading-[32rpx] font-[700]"
+								>对方的回复</text
+							>
+							<text
+								class="mt-[4rpx] block whitespace-pre-wrap text-[25rpx] text-[#3d2923] leading-[38rpx]"
+								>{{ item.replyContent }}</text
+							>
+							<text class="mt-[6rpx] block text-right text-[21rpx] text-[#9d7d71]">{{
+								formatReplyTime(item.replyTime)
+							}}</text>
+						</view>
+					</view>
+				</view>
+				<view v-if="loading" class="pb-[20rpx] text-center">
+					<text class="text-[23rpx] text-[#ad8c82]">正在加载...</text>
+				</view>
+				<view v-else-if="noMore" class="pb-[20rpx] text-center">
+					<text class="text-[23rpx] text-[#c2a9a0]">已经到底了</text>
+				</view>
+			</view>
+		</view>
+	</view>
+</template>

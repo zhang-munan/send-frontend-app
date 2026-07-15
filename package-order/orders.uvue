@@ -249,8 +249,8 @@ function formatItemTime(time: string) {
             <text class="mt-[22rpx] block text-[46rpx] text-[#ff5c63] leading-[54rpx] font-[900]">
               ¥ {{ balance ? formatYuan(balance.balance) : '0.00' }}
             </text>
-            <view class="mt-[15rpx] inline-flex flex-row border border-[#ff9b9a] rounded-[32rpx] border-solid px-[24rpx] py-[6rpx]" @click="goRecharge">
-              <text class="text-[25rpx] text-[#ff5960]">
+            <view class="mt-[10rpx] inline-flex flex-row border border-[#ff9b9a] rounded-[32rpx] border-solid px-[22rpx] py-[4rpx]" @click="goRecharge">
+              <text class="text-[24rpx] text-[#ff5960]">
                 去充值
               </text>
             </view>

@@ -10,6 +10,7 @@ const { user } = useStore()
 const phone = ref('')
 const message = ref('对不起，之前是我太冲动了。其实我一直很在意你的感受，也真心希望我们还能好好说话。如果你愿意，我想认真向你道歉。')
 const isAnonymous = ref(true)
+const isPublic = ref(false)
 const sendMode = ref<'immediate' | 'scheduled'>('immediate')
 const showTemplatePanel = ref(false)
 const activeCategory = ref('全部')
@@ -200,6 +201,7 @@ async function handleConfirmSend() {
       receiverPhone: rawPhone,
       content: message.value,
       isAnonymous: isAnonymous.value ? 1 : 0,
+      isPublic: isPublic.value ? 1 : 0,
       sendType: sendMode.value === 'scheduled' ? 2 : 1,
       ...(sendMode.value === 'scheduled' ? { scheduledAt: scheduledAt.value } : {}),
     }
@@ -439,6 +441,15 @@ async function handleConfirmSend() {
           <view class="mt-[12rpx] flex flex-row items-center justify-between">
             <text class="text-[22rpx] text-[#a08a84]">将于 {{ scheduledLabel }} 发送</text>
             <text v-if="scheduledTooEarly" class="text-[22rpx] text-[#fe8973]">需晚于当前时间30分钟</text>
+          </view>
+        </view>
+        <view class="mt-[22rpx] border-t border-t-solid border-t-[#f5ece9] pt-[20rpx]">
+          <view class="flex flex-row items-center justify-between">
+            <view class="min-w-0 flex-1 pr-[20rpx]">
+              <text class="block text-[28rpx] text-[#4a2b24]">公开到广场</text>
+              <text class="mt-[6rpx] block text-[22rpx] text-[#a08a84] leading-[32rpx]">开启后，审核通过的内容将匿名展示在心意广场</text>
+            </view>
+            <cl-switch v-model="isPublic" class="flex-shrink-0" />
           </view>
         </view>
         <text class="mt-[12rpx] block text-[22rpx] text-[#c4b3ae]">

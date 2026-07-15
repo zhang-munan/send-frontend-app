@@ -329,12 +329,12 @@ async function onPaySuccess() {
 				<view
 					v-for="method in paymentMethods"
 					:key="method.id"
-					class="mb-[16rpx] flex flex-row items-center gap-[20rpx] rounded-[20rpx] border px-[18rpx] py-[20rpx]"
+					class="mb-[16rpx] flex flex-row items-center gap-[20rpx] rounded-[20rpx] border border-solid px-[18rpx] py-[20rpx]"
 					:class="[
 						method.disabled
 							? 'border-[#f1e9e6] bg-[#faf9f8] opacity-50'
 							: selectedPayment === method.id
-								? 'border-[#ff6b5d] bg-[#fffdfc]'
+								? 'border-[#ff6b5d] bg-[#fef6f3]'
 								: 'border-[#f1e5e0] bg-white'
 					]"
 					@click="!method.disabled && (selectedPayment = method.id)"
@@ -376,17 +376,17 @@ async function onPaySuccess() {
 						>
 							<cl-icon
 								name="check-line"
-								:size="11"
+								:size="12"
 								:pt="{ className: 'text-white' }"
 							/>
 						</view>
 						<view
 							v-else-if="!method.disabled"
-							class="h-[40rpx] w-[40rpx] rounded-full border-[2rpx] border-solid border-[#c9bbb6]"
+							class="h-[40rpx] w-[40rpx] rounded-full border-[1px] border-solid border-[#c9bbb6]"
 						/>
 						<view
 							v-else
-							class="h-[40rpx] w-[40rpx] flex flex-row items-center justify-center rounded-full border-[2rpx] border-solid border-[#c9c3c1] bg-transparent"
+							class="h-[40rpx] w-[40rpx] flex flex-row items-center justify-center rounded-full border-[1px] border-solid border-[#c9c3c1] bg-transparent"
 						>
 							<view class="h-[3rpx] w-[26rpx] rotate-45 bg-[#c8c8c8]" />
 						</view>
