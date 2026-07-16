@@ -65,7 +65,7 @@ export interface FeeResult {
 	feeAmount: number;
 }
 
-/** 使用配额直接发送消息 */
+/** 使用套餐配额发送消息（服务端会同步生成套餐余额订单） */
 export function sendMessage(data: SendMessageParams) {
 	return request({ url: `${PREFIX}/send`, method: "POST", data });
 }
@@ -112,7 +112,7 @@ export function getPublicMessageList(page = 1, size = 10) {
 export interface RecentActivity {
 	sentCount: number;
 	replyCount: number;
-	aiUsageCount: number;
+	deliveredCount: number;
 	date: string;
 }
 

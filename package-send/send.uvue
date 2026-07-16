@@ -8,7 +8,7 @@ import { useStore } from '@/.cool'
 const { user } = useStore()
 
 const phone = ref('')
-const message = ref('对不起，之前是我太冲动了。其实我一直很在意你的感受，也真心希望我们还能好好说话。如果你愿意，我想认真向你道歉。')
+const message = ref('')
 const isAnonymous = ref(true)
 const isPublic = ref(false)
 const sendMode = ref<'immediate' | 'scheduled'>('immediate')
@@ -25,14 +25,18 @@ const balanceLoaded = ref(false)
 
 const MESSAGE_LIMIT = 500
 
-/** 本次发送计费条数 */
-const smsCount = computed(() => Math.ceil((message.value.length || 1) / 70))
+/** 按次支付计费：每 10 字为一条，不足一条按一条计；每条 1.99 元。 */
+const SMS_CHARS_PER_SEGMENT = 10
+const SMS_FEE_PER_SEGMENT_CENTS = 199
+const paidSmsCount = computed(() =>
+  Math.max(1, Math.ceil((message.value.length || 0) / SMS_CHARS_PER_SEGMENT))
+)
+const estimatedFee = computed(() =>
+  (paidSmsCount.value * SMS_FEE_PER_SEGMENT_CENTS / 100).toFixed(2)
+)
 
-/** 预估费用：按 70 字/条，每条 5 分。 */
-const estimatedFee = computed(() => (smsCount.value * 5 / 100).toFixed(2))
-
-/** 是否有足够配额直接发送 */
-const hasEnoughQuota = computed(() => userQuota.value >= smsCount.value)
+/** 是否有足够套餐配额发送 */
+const hasEnoughQuota = computed(() => userQuota.value >= 1)
 
 const minScheduledAt = computed(() => {
   const date = new Date()
@@ -163,7 +167,7 @@ function handleSelectTemplate(tpl: typeof templates[0]) {
   showTemplatePanel.value = false
 }
 
-/** 点击「确认发送」：根据配额情况走不同路径 */
+/** 点击「确认发送」：套餐配额发送或按次支付 */
 async function handleConfirmSend() {
 	// 登录身份在进入小程序时已静默建立；首次发送才要求绑定手机号。
 	if (!user.info.value?.phone) {
@@ -207,15 +211,15 @@ async function handleConfirmSend() {
     }
 
     if (hasEnoughQuota.value) {
-      // ── 场景 A：配额充足，直接调用发送接口 ──
+      // ── 场景 A：套餐配额充足，服务端生成套餐余额订单并发送 ──
       await sendMessage(messagePayload)
       // 本地更新配额显示
-      userQuota.value = Math.max(0, userQuota.value - smsCount.value)
+      userQuota.value = Math.max(0, userQuota.value - 1)
       uni.showToast({ title: '发送成功，等待审核', icon: 'none' })
       setTimeout(() => uni.navigateBack(), 1500)
     }
     else {
-      // ── 场景 B：无配额，创建订单后跳支付页 ──
+      // ── 场景 B：配额不足，创建按次支付订单后跳支付页 ──
       const order = await createOrder(messagePayload)
       uni.navigateTo({ url: `/package-order/pay?orderId=${order.id}` })
     }
@@ -461,14 +465,14 @@ async function handleConfirmSend() {
     <!-- Fixed bottom action bar -->
     <view class="fixed bottom-0 left-0 right-0 border-t border-t-solid border-t-[#f0e8e4] bg-white px-[24rpx] pb-[48rpx] pt-[20rpx]">
       <view class="flex flex-row items-center justify-between gap-[20rpx]">
-        <view class="flex flex-col flex-shrink-0">
-          <text v-if="hasEnoughQuota" class="text-[22rpx] text-[#7a5147]">
-            扣减 {{ smsCount }} 条配额（剩余 {{ userQuota }} 条）
+        <view class="min-w-0 flex flex-1 flex-col overflow-hidden">
+          <text v-if="hasEnoughQuota" class="block truncate text-[20rpx] text-[#7a5147]">
+            套餐余 {{ userQuota }} 条 · 本次扣 1 条
           </text>
-          <text v-else class="text-[22rpx] text-[#7a5147]">预计费用</text>
+          <text v-else class="block truncate text-[20rpx] text-[#7a5147]">预计费用（每10字 ¥1.99）</text>
           <view class="flex flex-row items-center gap-[6rpx]">
             <text v-if="hasEnoughQuota" class="text-[30rpx] font-[800] leading-[46rpx] text-[#4caf50]">
-              免支付
+              套餐余额
             </text>
             <text v-else class="text-[38rpx] font-[800] leading-[46rpx] text-[#fe8973]">
               ¥{{ estimatedFee }}

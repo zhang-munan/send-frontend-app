@@ -5,7 +5,7 @@ import { mergeOssPath } from '@/utils/oss'
 
 const currentBanner = ref(0)
 const stories = ref<PlazaMessage[]>([])
-const recentActivity = ref<RecentActivity>({ sentCount: 0, replyCount: 0, aiUsageCount: 0, date: '' })
+const recentActivity = ref<RecentActivity>({ sentCount: 0, replyCount: 0, deliveredCount: 0, date: '' })
 
 const bannerList = [
   { image: mergeOssPath('home/banner-1.png') },
@@ -28,7 +28,7 @@ const quickCards = [
 const activityCards = [
   { key: 'sentCount', label: '你发送了', suffix: '条消息', image: mergeOssPath('home/home-icon-send.png') },
   { key: 'replyCount', label: '收到', suffix: '条回复', image: mergeOssPath('home/home-icon-back.png') },
-  { key: 'aiUsageCount', label: 'AI帮写使用', suffix: '次', image: mergeOssPath('home/home-icon-edit.png') },
+  { key: 'deliveredCount', label: '已送达', suffix: '条消息', image: mergeOssPath('home/home-icon-edit.png') },
 ]
 
 function onBannerChange(e: any) {
@@ -88,7 +88,7 @@ async function loadHomeData() {
       getPublicMessageList(1, 4),
     ])
     recentActivity.value = activity
-    stories.value = storyResult.list || []
+    stories.value = (storyResult.list || []).slice(0, 4)
   } catch (err) {
     // 首页保留可用的静态框架；接口恢复后在下次进入页面自动刷新。
   }
