@@ -114,7 +114,7 @@ onShow(loadHomeData)
     <view class="px-[28rpx]">
       <view class="mt-[12rpx] h-[82rpx] flex flex-row items-center rounded-[22rpx] border border-solid border-[#f8dcc7] bg-[#fff5e8] px-[22rpx]">
         <image :src="mergeOssPath('safe.png')" mode="aspectFit" class="h-[43rpx] w-[43rpx]" />
-        <text class="ml-[18rpx] text-[27rpx] text-[#6e3c2a] font-[700]">每一次善意的表达，都可能温暖一个人 💛</text>
+        <text class="ml-[18rpx] text-[27rpx] text-[#6e3c2a] font-[700] flex-1">每一次善意的表达，都可能温暖一个人 💛</text>
       </view>
     </view>
 
@@ -165,7 +165,7 @@ onShow(loadHomeData)
         <view v-for="item in stories" :key="item.id" class="story-card min-h-[192rpx] rounded-[22rpx] border border-solid border-[#f9e7df] bg-[#fffefd] p-[20rpx]">
           <view class="flex flex-row items-center"><view class="story-avatar h-[56rpx] w-[56rpx] flex flex-row items-center justify-center rounded-full text-[24rpx] text-white font-[700]">{{ avatarText(item) }}</view><view class="ml-[13rpx] min-w-0 flex-1"><text class="block truncate text-[23rpx] text-[#674237] font-[700]">{{ senderName(item) }}</text><text class="mt-[5rpx] block text-[19rpx] text-[#9c8178]">{{ formatTime(item.createTime) }}</text></view></view>
           <text class="story-content mt-[18rpx] block text-[23rpx] text-[#5d392f] leading-[34rpx]">{{ item.content }}</text>
-          <text class="mt-[16rpx] block text-[20rpx] text-[#ff806e]">♥ 温暖分享</text>
+          <!-- <text class="mt-[16rpx] block text-[20rpx] text-[#ff806e]">♥ 温暖分享</text> -->
         </view>
       </view>
       <view v-else class="mt-[22rpx] rounded-[22rpx] border border-solid border-[#f9e7df] bg-[#fffefd] px-[24rpx] py-[34rpx] text-center"><text class="text-[24rpx] text-[#9b7e74]">温暖故事正在路上</text></view>

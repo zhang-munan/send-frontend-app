@@ -55,8 +55,8 @@ export function getMyFeedbackList() {
 }
 
 /**
- * 上传图片。上传模块会根据服务端模式自动执行本地上传或 OSS 直传。
+ * 上传反馈图片。OSS 对象存储路径：app/user/feedback/XXX.png。
  */
 export function uploadImage(filePath: string): Promise<string> {
-  return upload(filePath)
+  return upload(filePath, { prefixPath: 'app/user/feedback' })
 }

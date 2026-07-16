@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import { getBalance, getOrderList, type OrderInfo, type UserBalance } from '@/api/order'
 import { formatYuan } from '@/utils/money'
 
@@ -24,12 +24,8 @@ interface MonthGroup {
 }
 
 const list = ref<OrderInfo[]>([])
+const pagingX = ref<any>(null)
 const balance = ref<UserBalance | null>(null)
-const total = ref(0)
-const page = ref(1)
-const pageSize = 20
-const loading = ref(false)
-const noMore = ref(false)
 const activeType = ref<BillType>('all')
 const periodLabel = ref('近30天')
 
@@ -77,45 +73,22 @@ const monthGroups = computed<MonthGroup[]>(() => {
   })
 })
 
-async function loadList(reset = false) {
-  if (loading.value)
-    return
-  if (!reset && noMore.value)
-    return
-
-  if (reset) {
-    page.value = 1
-    noMore.value = false
-    list.value = []
-  }
-
-  loading.value = true
+async function queryList(pageNo: number, pageSize: number) {
   try {
     const [ordersRes, balanceRes] = await Promise.all([
-      getOrderList(page.value, pageSize),
-      reset ? getBalance().catch(() => null) : Promise.resolve(balance.value),
+      getOrderList(pageNo, pageSize),
+      pageNo === 1 ? getBalance().catch(() => null) : Promise.resolve(balance.value),
     ])
-    if (reset) {
-      list.value = ordersRes.list
+    if (pageNo === 1) {
       balance.value = balanceRes
     }
-    else {
-      list.value.push(...ordersRes.list)
-    }
-    total.value = ordersRes.total
-    if (list.value.length >= ordersRes.total)
-      noMore.value = true
-    page.value++
+    pagingX.value?.completeByTotal(ordersRes.list, ordersRes.total)
   }
   catch (err: any) {
     uni.showToast({ title: err?.message || '加载失败', icon: 'none' })
-  }
-  finally {
-    loading.value = false
+    pagingX.value?.completeByError()
   }
 }
-
-onMounted(() => loadList(true))
 
 function goRecharge() {
   uni.navigateTo({ url: '/package-order/recharge' })
@@ -209,31 +182,27 @@ function formatItemTime(time: string) {
 </script>
 
 <template>
-  <view class="min-h-[100vh] bg-[#fffaf9] text-[#412b22]">
-    <cl-topbar
-      title="账单明细"
-      safeAreaTop
-	  fixed
-      backgroundColor="#fffaf9"
-      color="#412b22"
-      height="88rpx"
-      :pt="{ title: { className: 'text-[36rpx] font-[500]' }, back: { size: 22 } }"
-    >
-      <template #append>
-        <view class="mr-[22rpx] h-[72rpx] flex flex-row items-center gap-[8rpx]" @click="showFilter">
-          <cl-icon name="filter-line" :size="19" :pt="{ className: 'text-[#412b22]' }" />
-          <text class="text-[28rpx] text-[#412b22]">
-            筛选
-          </text>
-        </view>
-      </template>
-    </cl-topbar>
+  <z-paging-x ref="pagingX" v-model="list" class="bg-[#fffaf9] text-[#412b22]" refresher-background="#fffaf9" :default-page-size="20" @query="queryList">
+    <template #top>
+      <cl-topbar
+        title="账单明细"
+        safeAreaTop
+        backgroundColor="#fffaf9"
+        color="#412b22"
+        height="88rpx"
+        :pt="{ title: { className: 'text-[36rpx] font-[500]' }, back: { size: 22 } }"
+      >
+        <template #append>
+          <view class="mr-[22rpx] h-[72rpx] flex flex-row items-center gap-[8rpx]" @click="showFilter">
+            <cl-icon name="filter-line" :size="19" :pt="{ className: 'text-[#412b22]' }" />
+            <text class="text-[28rpx] text-[#412b22]">
+              筛选
+            </text>
+          </view>
+        </template>
+      </cl-topbar>
 
-    <scroll-view
-      scroll-y
-      class="h-[calc(100vh-104rpx)] px-[28rpx] pb-[36rpx]"
-      @scrolltolower="loadList(false)"
-    >
+    <view class="px-[28rpx] pb-[36rpx]">
       <!-- summary card -->
       <view
         class="relative mt-[10rpx] h-[236rpx] overflow-hidden rounded-[30rpx] px-[22rpx] py-[36rpx]"
@@ -321,20 +290,20 @@ function formatItemTime(time: string) {
           <cl-icon name="arrow-down-s-line" :size="12" :pt="{ className: 'text-[#827570]' }" />
         </view>
       </view>
+    </view>
+    </template>
 
-      <!-- empty state -->
-      <view v-if="!loading && monthGroups.length === 0" class="flex flex-col items-center justify-center py-[150rpx]">
+    <template #empty>
+      <view class="flex flex-col items-center justify-center py-[150rpx]">
         <cl-icon name="bill-line" :size="44" :pt="{ className: 'text-[#f0c9c2]' }" />
-        <text class="mt-[18rpx] text-[28rpx] text-[#a08a84]">
-          暂无账单记录
-        </text>
+        <text class="mt-[18rpx] text-[28rpx] text-[#a08a84]">暂无账单记录</text>
         <view class="mt-[34rpx] rounded-[32rpx] bg-[#fe8973] px-[48rpx] py-[16rpx]" @click="goRecharge">
-          <text class="text-[28rpx] text-white font-[500]">
-            去充值
-          </text>
+          <text class="text-[28rpx] text-white font-[500]">去充值</text>
         </view>
       </view>
+    </template>
 
+    <view class="px-[28rpx] pb-[36rpx]">
       <!-- grouped list -->
       <view
         v-for="group in monthGroups"
@@ -385,18 +354,6 @@ function formatItemTime(time: string) {
         </view>
       </view>
 
-      <view class="py-[36rpx] text-center">
-        <text v-if="loading" class="text-[24rpx] text-[#c4b3ae]">
-          加载中...
-        </text>
-        <view v-else-if="noMore && monthGroups.length > 0" class="inline-flex flex-row items-center justify-center gap-[18rpx]">
-          <view class="h-[1rpx] w-[72rpx] bg-[#d8ccc8]" />
-          <text class="text-[24rpx] text-[#938784]">
-            上拉加载更多
-          </text>
-          <view class="h-[1rpx] w-[72rpx] bg-[#d8ccc8]" />
-        </view>
-      </view>
-    </scroll-view>
-  </view>
+    </view>
+  </z-paging-x>
 </template>

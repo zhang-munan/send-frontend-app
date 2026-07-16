@@ -8,41 +8,27 @@ const isLogin = computed(() => !!user.info.value?.phone)
 
 // ─── 列表状态 ────────────────────────────────────────
 const list = ref<ConversationInfo[]>([])
-const total = ref(0)
-const page = ref(1)
-const pageSize = 20
-const loading = ref(false)
-const noMore = ref(false)
+const pagingX = ref<any>(null)
 
 const totalUnread = computed(() => list.value.reduce((sum, c) => sum + (c.unreadCount || 0), 0))
 
 // ─── 加载 ────────────────────────────────────────────
-async function loadList(reset = false) {
-  if (!user.info.value?.phone) return
-  if (loading.value) return
-  if (!reset && noMore.value) return
-  if (reset) {
-    page.value = 1
-    noMore.value = false
-    list.value = []
+async function queryList(pageNo: number, pageSize: number) {
+  if (!user.info.value?.phone) {
+    pagingX.value?.complete([])
+    return
   }
-  loading.value = true
   try {
-    const res = await getConversationList(page.value, pageSize)
-    list.value.push(...res.list)
-    total.value = res.total
-    if (list.value.length >= res.total) noMore.value = true
-    page.value++
+    const res = await getConversationList(pageNo, pageSize)
+    pagingX.value?.completeByTotal(res.list, res.total)
   }
   catch (err: any) {
     uni.showToast({ title: err?.message || '加载失败', icon: 'none' })
-  }
-  finally {
-    loading.value = false
+    pagingX.value?.completeByError()
   }
 }
 
-onShow(() => loadList(true))
+onShow(() => pagingX.value?.reload())
 
 // ─── 全部已读 ────────────────────────────────────────
 const markingAll = ref(false)
@@ -132,50 +118,42 @@ function avatarColor(phone: string) {
 </script>
 
 <template>
-  <view class="min-h-[100vh] bg-[#fafafa]" @click="closeSwipe">
-    <cl-topbar
-      title="消息"
-      :showBack="false"
-      safeAreaTop
-      fixed
-      backgroundColor="#fafafa"
-      color="#1a1a1a"
-      height="88rpx"
-      :pt="{ title: { className: 'text-[34rpx] font-[800]' } }"
-    >
-      <template #append>
-        <view
-          v-if="totalUnread > 0"
-          class="mr-[24rpx] rounded-[16rpx] bg-[#f5ece9] px-[20rpx] py-[8rpx]"
-          @click.stop="markAllRead"
-        >
-          <text class="text-[24rpx] font-[600] text-[#fe8973]">{{ markingAll ? '处理中...' : '全部已读' }}</text>
-        </view>
-      </template>
-    </cl-topbar>
-
-    <!-- 未登录 -->
-    <view v-if="!isLogin" class="flex flex-col items-center justify-center py-[160rpx]">
-      <text class="text-[80rpx]">💬</text>
-      <text class="mt-[20rpx] text-[28rpx] text-[#a08a84]">登录后查看消息</text>
-      <view
-        class="mt-[40rpx] rounded-[28rpx] px-[60rpx] py-[20rpx] text-[28rpx] font-[700] text-white"
-        style="background:linear-gradient(135deg,#fe8973,#fe6a5a);"
-        @click="goLogin"
+  <z-paging-x ref="pagingX" v-model="list" class="bg-[#fafafa]" refresher-background="#fafafa" :default-page-size="20" @query="queryList">
+    <template #top>
+      <cl-topbar
+        title="消息"
+        :showBack="false"
+        safeAreaTop
+        backgroundColor="#fafafa"
+        color="#1a1a1a"
+        height="88rpx"
+        :pt="{ title: { className: 'text-[34rpx] font-[800]' } }"
       >
-        去登录
-      </view>
-    </view>
+        <template #append>
+          <view
+            v-if="totalUnread > 0"
+            class="mr-[24rpx] rounded-[16rpx] bg-[#f5ece9] px-[20rpx] py-[8rpx]"
+            @click.stop="markAllRead"
+          >
+            <text class="text-[24rpx] font-[600] text-[#fe8973]">{{ markingAll ? '处理中...' : '全部已读' }}</text>
+          </view>
+        </template>
+      </cl-topbar>
+    </template>
 
-    <!-- 列表 -->
-    <scroll-view
-      v-else
-      scroll-y
-      class="h-[calc(100vh-88rpx)]"
-      @scrolltolower="loadList(false)"
-    >
-      <!-- 空状态 -->
-      <view v-if="!loading && list.length === 0" class="flex flex-col items-center justify-center py-[120rpx]">
+    <template #empty>
+      <view v-if="!isLogin" class="flex flex-col items-center justify-center py-[160rpx]">
+        <text class="text-[80rpx]">💬</text>
+        <text class="mt-[20rpx] text-[28rpx] text-[#a08a84]">登录后查看消息</text>
+        <view
+          class="mt-[40rpx] rounded-[28rpx] px-[60rpx] py-[20rpx] text-[28rpx] font-[700] text-white"
+          style="background:linear-gradient(135deg,#fe8973,#fe6a5a);"
+          @click="goLogin"
+        >
+          去登录
+        </view>
+      </view>
+      <view v-else class="flex flex-col items-center justify-center py-[120rpx]">
         <view class="relative mb-[24rpx]">
           <text class="text-[100rpx]">💬</text>
           <text class="absolute -right-[10rpx] -top-[10rpx] text-[50rpx]">💭</text>
@@ -190,15 +168,14 @@ function avatarColor(phone: string) {
           去发送
         </view>
       </view>
+    </template>
 
-      <!-- 对话列表 -->
-      <view v-else>
-        <view
-          v-for="conv in list"
-          :key="conv.id"
-          class="relative overflow-hidden"
-          @click.stop="goConversation(conv)"
-        >
+    <view
+      v-for="conv in list"
+      :key="conv.id"
+      class="relative overflow-hidden"
+      @click.stop="goConversation(conv)"
+    >
           <!-- 主体行 -->
           <view
             class="flex flex-row items-center gap-[20rpx] bg-white px-[28rpx] py-[24rpx] transition-transform"
@@ -274,14 +251,6 @@ function avatarColor(phone: string) {
 
           <!-- 分割线 -->
           <view class="ml-[136rpx] h-[1rpx] bg-[#f5f5f5]" />
-        </view>
-
-        <!-- 底部提示 -->
-        <view class="py-[30rpx] text-center">
-          <text v-if="loading" class="text-[24rpx] text-[#c4b3ae]">加载中...</text>
-          <text v-else-if="noMore && list.length > 0" class="text-[24rpx] text-[#c4b3ae]">已显示全部对话</text>
-        </view>
-      </view>
-    </scroll-view>
-  </view>
+    </view>
+  </z-paging-x>
 </template>

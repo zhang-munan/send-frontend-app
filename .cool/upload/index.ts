@@ -17,6 +17,8 @@ export type UploadTask = {
 
 // 上传选项类型定义
 export type UploadOptions = {
+	/** 云端对象存储目录，例如 app/user/avatar */
+	prefixPath?: string;
 	onProgressUpdate?: (result: OnProgressUpdateResult) => void; // 上传进度回调
 	onTask?: (task: UploadTask) => void; // 上传任务回调
 };
@@ -67,14 +69,18 @@ async function getUploadMode(): Promise<UploadMode> {
 /**
  * 路径上传
  * @param path 文件路径
+ * @param options 上传选项
  */
-export async function upload(path: string) {
-	return uploadFile({
-		path,
-		size: 0,
-		name: "",
-		type: "image/png"
-	});
+export async function upload(path: string, options: UploadOptions | null = null) {
+	return uploadFile(
+		{
+			path,
+			size: 0,
+			name: "",
+			type: "image/png"
+		},
+		options
+	);
 }
 
 /**
@@ -117,9 +123,11 @@ export async function uploadFile(
 	// 生成唯一key: 原文件名_uuid.扩展名
 	let key = `${filename(fileName)}_${uuid()}.${ext}`;
 
-	// 云上传需要加上时间戳路径
+	// 云上传按业务目录存储；未指定目录时保持原有时间戳目录规则
 	if (isCloud) {
-		key = `app/${Date.now()}/${key}`;
+		key = options?.prefixPath
+			? pathJoin(options.prefixPath, key)
+			: `app/${Date.now()}/${key}`;
 	}
 
 	// 支持多种上传方式

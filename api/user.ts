@@ -158,10 +158,10 @@ export function updatePerson(data: Partial<UserInfo>) {
 }
 
 /**
- * 上传个人头像。上传模块会根据服务端模式自动执行本地上传或 OSS 直传。
+ * 上传个人头像。OSS 对象存储路径：app/user/avatar/XXX.png。
  */
 export function uploadUserAvatar(filePath: string): Promise<string> {
-  return upload(filePath)
+  return upload(filePath, { prefixPath: 'app/user/avatar' })
 }
 
 /** 注销账号 */

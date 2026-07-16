@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import { getRecordList, resendMessage, type MessageRecord } from '@/api/message'
 
 // ─── 状态过滤 ────────────────────────────────────────
@@ -17,11 +17,8 @@ const showFilter = ref(false)
 
 // ─── 列表状态 ────────────────────────────────────────
 const list = ref<MessageRecord[]>([])
+const pagingX = ref<any>(null)
 const total = ref(0)
-const page = ref(1)
-const pageSize = 15
-const loading = ref(false)
-const noMore = ref(false)
 
 // ─── 状态映射 ────────────────────────────────────────
 interface StatusMeta { label: string; color: string; icon: string; bgColor: string }
@@ -69,28 +66,16 @@ function formatTime(t: string) {
 }
 
 // ─── 加载列表 ────────────────────────────────────────
-async function loadList(reset = false) {
-  if (loading.value) return
-  if (!reset && noMore.value) return
-  if (reset) {
-    page.value = 1
-    noMore.value = false
-    list.value = []
-  }
-  loading.value = true
+async function queryList(pageNo: number, pageSize: number) {
   try {
     const statusParam = activeFilter.value === -1 ? undefined : activeFilter.value
-    const res = await getRecordList(page.value, pageSize, statusParam)
-    list.value.push(...res.list)
+    const res = await getRecordList(pageNo, pageSize, statusParam)
     total.value = res.total
-    if (list.value.length >= res.total) noMore.value = true
-    page.value++
+    pagingX.value?.completeByTotal(res.list, res.total)
   }
   catch (err: any) {
     uni.showToast({ title: err?.message || '加载失败', icon: 'none' })
-  }
-  finally {
-    loading.value = false
+    pagingX.value?.completeByError()
   }
 }
 
@@ -98,7 +83,7 @@ async function loadList(reset = false) {
 function switchFilter(val: number) {
   if (activeFilter.value === val) return
   activeFilter.value = val
-  loadList(true)
+  pagingX.value?.reload()
 }
 
 // ─── 重新发送 ────────────────────────────────────────
@@ -109,7 +94,7 @@ async function handleResend(item: MessageRecord) {
   try {
     await resendMessage(item.id)
     uni.showToast({ title: '已重新发送', icon: 'none' })
-    await loadList(true)
+    pagingX.value?.reload()
   }
   catch (err: any) {
     uni.showToast({ title: err?.message || '重新发送失败', icon: 'none' })
@@ -128,34 +113,31 @@ function goSend() {
   uni.switchTab({ url: '/pages/index' })
 }
 
-onMounted(() => loadList(true))
 </script>
 
 <template>
-  <view class="min-h-[100vh] bg-[#fef7f5]">
-    <cl-topbar
-      title="发送记录"
-      safeAreaTop
-      fixed
-      backgroundColor="#fef7f5"
-      color="#4a2b24"
-      height="88rpx"
-      :pt="{ title: { className: 'text-[34rpx] font-[800]' }, back: { size: 20 } }"
-    >
-      <template #append>
-        <view class="mr-[24rpx] h-[72rpx] w-[72rpx] flex flex-row items-center justify-center" @click="showFilter = !showFilter">
-          <cl-icon name="filter-line" :size="18" :pt="{ className: 'text-[#a08a84]' }" />
-        </view>
-      </template>
-    </cl-topbar>
+  <z-paging-x ref="pagingX" v-model="list" class="bg-[#fef7f5]" refresher-background="#fef7f5" :default-page-size="15" @query="queryList">
+    <template #top>
+      <cl-topbar
+        title="发送记录"
+        safeAreaTop
+        backgroundColor="#fef7f5"
+        color="#4a2b24"
+        height="88rpx"
+        :pt="{ title: { className: 'text-[34rpx] font-[800]' }, back: { size: 20 } }"
+      >
+        <template #append>
+          <view class="mr-[24rpx] h-[72rpx] w-[72rpx] flex flex-row items-center justify-center" @click="showFilter = !showFilter">
+            <cl-icon name="filter-line" :size="18" :pt="{ className: 'text-[#a08a84]' }" />
+          </view>
+        </template>
+      </cl-topbar>
 
-    <!-- 状态筛选 tabs -->
-    <scroll-view scroll-x class="whitespace-nowrap px-[20rpx] pb-[16rpx]">
-      <view class="inline-flex flex-row gap-[12rpx]">
+      <view class="flex flex-row gap-[12rpx] px-[20rpx] pb-[16rpx]">
         <view
           v-for="tab in FILTER_TABS"
           :key="tab.value"
-          class="inline-flex flex-row items-center rounded-[28rpx] px-[28rpx] py-[12rpx] text-[24rpx] font-[600] transition-all"
+          class="flex flex-1 flex-row items-center justify-center rounded-[28rpx] px-[10rpx] py-[12rpx] text-[22rpx] font-[600] transition-all"
           :class="activeFilter === tab.value
             ? 'bg-[#fe8973] text-white'
             : 'bg-white text-[#7d6d68]'"
@@ -166,16 +148,10 @@ onMounted(() => loadList(true))
           <text v-if="tab.value === -1 && total > 0" class="ml-[6rpx]">{{ total }}</text>
         </view>
       </view>
-    </scroll-view>
+    </template>
 
-    <!-- 列表 -->
-    <scroll-view
-      scroll-y
-      class="h-[calc(100vh-220rpx)] px-[24rpx]"
-      @scrolltolower="loadList(false)"
-    >
-      <!-- 空状态 -->
-      <view v-if="!loading && list.length === 0" class="flex flex-col items-center justify-center py-[120rpx]">
+    <template #empty>
+      <view class="flex flex-col items-center justify-center py-[120rpx]">
         <text class="text-[80rpx]">📮</text>
         <text class="mt-[20rpx] text-[28rpx] text-[#a08a84]">暂无发送记录</text>
         <view
@@ -185,9 +161,9 @@ onMounted(() => loadList(true))
           <text class="text-[28rpx] font-[700] text-white">去发送</text>
         </view>
       </view>
+    </template>
 
-      <!-- 分组列表 -->
-      <view v-for="group in groupedList" :key="group.date" class="mb-[8rpx]">
+    <view v-for="group in groupedList" :key="group.date" class="mx-[24rpx] mb-[8rpx]">
         <!-- 日期分组标题 -->
         <view class="py-[16rpx]">
           <text class="text-[24rpx] text-[#c4b3ae]">{{ group.date }}</text>
@@ -261,13 +237,6 @@ onMounted(() => loadList(true))
             <cl-icon name="arrow-right-s-line" :size="14" :pt="{ className: 'flex-shrink-0 text-[#d4c4bf]' }" />
           </view>
         </view>
-      </view>
-
-      <!-- 底部提示 -->
-      <view class="py-[30rpx] text-center">
-        <text v-if="loading" class="text-[24rpx] text-[#c4b3ae]">加载中...</text>
-        <text v-else-if="noMore && list.length > 0" class="text-[24rpx] text-[#c4b3ae]">已显示全部记录</text>
-      </view>
-    </scroll-view>
-  </view>
+    </view>
+  </z-paging-x>
 </template>
