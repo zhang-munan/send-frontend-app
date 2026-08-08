@@ -3,6 +3,11 @@ import { computed, ref } from "vue";
 import { getConversationMessages, markConversationRead, type ConversationMessage } from '@/api/conversation'
 import { mergeOssPath } from '@/utils/oss'
 import { formatYuan } from '@/utils/money'
+import {
+  blockConversationSender,
+  getConversationBlockState,
+  type ConversationBlockState,
+} from '@/api/message'
 
 // ─── 路由参数 ────────────────────────────────────────
 const convId = ref(0)
@@ -16,6 +21,7 @@ onLoad((options) => {
   if (convId.value) {
     loadMessages(true)
     markConversationRead(convId.value).catch(() => {})
+    if (viewerRole.value === 'receiver') loadBlockState()
   }
 })
 
@@ -26,6 +32,8 @@ const page = ref(1)
 const pageSize = 20
 const loading = ref(false)
 const noMore = ref(false)
+const blockState = ref<ConversationBlockState | null>(null)
+const blocking = ref(false)
 
 // 消息按时间正序显示
 const sortedMessages = computed(() =>
@@ -54,6 +62,38 @@ async function loadMessages(reset = false) {
   finally {
     loading.value = false
   }
+}
+
+async function loadBlockState() {
+  try {
+    blockState.value = await getConversationBlockState(convId.value)
+  }
+  catch { /* 会话内容仍可正常查看 */ }
+}
+
+function confirmBlock() {
+  if (!blockState.value?.canBlock || blockState.value.isBlocked || blocking.value) return
+  uni.showModal({
+    title: '确认拉黑该发送者？',
+    content: '拉黑后，对方无法再向你的手机号发送短信；你可以在设置的拉黑列表中解除。',
+    confirmText: '确认拉黑',
+    confirmColor: '#e5484d',
+    success: async (result) => {
+      if (!result.confirm) return
+      blocking.value = true
+      try {
+        await blockConversationSender(convId.value)
+        await loadBlockState()
+        uni.showToast({ title: '已拉黑，对方将无法继续发送', icon: 'none' })
+      }
+      catch (err: any) {
+        uni.showToast({ title: err?.message || '拉黑失败，请重试', icon: 'none' })
+      }
+      finally {
+        blocking.value = false
+      }
+    },
+  })
 }
 
 // ─── 提示横幅 ────────────────────────────────────────
@@ -112,6 +152,25 @@ function goSend() {
       height="88rpx"
       :pt="{ className: 'border-b border-b-solid border-b-[#f5f5f5]', title: { className: 'text-[32rpx] font-[800]' }, back: { size: 20 } }"
     />
+
+    <view
+      v-if="viewerRole === 'receiver' && blockState && (blockState.canBlock || blockState.isBlocked)"
+      class="flex flex-row flex-shrink-0 items-center justify-between bg-white px-[28rpx] py-[16rpx]"
+      style="border-bottom:1rpx solid #f1e7e4;"
+    >
+      <text class="text-[23rpx] text-[#8c7771]">
+        {{ blockState.isBlocked ? '已阻止该发送者继续向你发送短信' : `已收到 ${blockState.deliveredMessageCount} 条消息` }}
+      </text>
+      <view
+        class="rounded-[22rpx] border border-solid px-[24rpx] py-[10rpx]"
+        :class="blockState.isBlocked ? 'border-[#d7cbc7] bg-[#f5f2f1]' : 'border-[#e5484d] bg-[#fff5f5]'"
+        @click="confirmBlock"
+      >
+        <text class="text-[24rpx] font-[700]" :class="blockState.isBlocked ? 'text-[#998984]' : 'text-[#e5484d]'">
+          {{ blockState.isBlocked ? '已拉黑' : (blocking ? '处理中...' : '拉黑') }}
+        </text>
+      </view>
+    </view>
 
     <!-- 安全提示横幅 -->
     <view

@@ -135,6 +135,57 @@ export function resendMessage(id: number) {
 	return request({ url: `${PREFIX}/resend/${id}`, method: "POST" });
 }
 
+/** 会话中的拉黑状态。 */
+export interface ConversationBlockState {
+	canBlock: boolean;
+	isBlocked: boolean;
+	blacklistId: number | null;
+	deliveredMessageCount: number;
+	requiredMessageCount: number;
+}
+
+/** 拉黑列表项；匿名发送者的真实身份不会返回到客户端。 */
+export interface BlacklistItem {
+	id: number;
+	sourceConversationId: number | null;
+	deliveredMessageCount: number;
+	lastMessagePreview: string | null;
+	blockedAt: string;
+	label: string;
+}
+
+export function getConversationBlockState(conversationId: number) {
+	return request({
+		url: `${PREFIX.replace('/info', '/blacklist')}/state`,
+		method: "GET",
+		data: { conversationId }
+	});
+}
+
+export function blockConversationSender(conversationId: number) {
+	return request({
+		url: `${PREFIX.replace('/info', '/blacklist')}/block`,
+		method: "POST",
+		data: { conversationId }
+	});
+}
+
+export function getBlacklist(page = 1, size = 20) {
+	return request({
+		url: `${PREFIX.replace('/info', '/blacklist')}/list`,
+		method: "GET",
+		data: { page, size }
+	});
+}
+
+export function unblockSender(id: number) {
+	return request({
+		url: `${PREFIX.replace('/info', '/blacklist')}/unblock`,
+		method: "POST",
+		data: { id }
+	});
+}
+
 /** Public reply-link APIs; the recipient does not need to be signed in. */
 export function getReplyInfo(token: string) {
 	return request({ url: "/app/message/reply/info", method: "GET", data: { token } });

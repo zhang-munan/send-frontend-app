@@ -1,0 +1,75 @@
+<script setup lang="ts">
+import { ref } from 'vue'
+import { getBlacklist, unblockSender, type BlacklistItem } from '@/api/message'
+
+const list = ref<BlacklistItem[]>([])
+const pagingX = ref<any>(null)
+
+async function queryList(page: number, size: number) {
+  try {
+    const result = await getBlacklist(page, size)
+    pagingX.value?.completeByTotal(result.list, result.total)
+  }
+  catch (err: any) {
+    uni.showToast({ title: err?.message || '加载失败', icon: 'none' })
+    pagingX.value?.completeByError()
+  }
+}
+
+function confirmUnblock(item: BlacklistItem) {
+  uni.showModal({
+    title: '解除拉黑？',
+    content: '解除后，该发送者可以再次向你的手机号发送短信。',
+    confirmText: '解除',
+    success: async (result) => {
+      if (!result.confirm) return
+      try {
+        await unblockSender(item.id)
+        list.value = list.value.filter(row => row.id !== item.id)
+        uni.showToast({ title: '已解除拉黑', icon: 'none' })
+      }
+      catch (err: any) {
+        uni.showToast({ title: err?.message || '操作失败', icon: 'none' })
+      }
+    },
+  })
+}
+
+function formatTime(value: string) {
+  return value ? value.replace('T', ' ').slice(0, 16) : ''
+}
+</script>
+
+<template>
+  <z-paging-x ref="pagingX" v-model="list" class="bg-[#f7f3f2]" :default-page-size="20" @query="queryList">
+    <template #top>
+      <cl-topbar title="拉黑列表" safeAreaTop backgroundColor="#f7f3f2" color="#4a2b24" height="88rpx" />
+    </template>
+
+    <template #empty>
+      <view class="flex flex-col items-center justify-center py-[180rpx]">
+        <cl-icon name="forbid-2-line" :size="48" :pt="{ className: 'text-[#cbbab5]' }" />
+        <text class="mt-[24rpx] text-[28rpx] text-[#8c7771]">暂无拉黑用户</text>
+        <text class="mt-[10rpx] text-[23rpx] text-[#b2a19c]">拉黑后，对方将无法继续向你发送短信</text>
+      </view>
+    </template>
+
+    <view v-for="item in list" :key="item.id" class="mx-[24rpx] mt-[20rpx] rounded-[24rpx] bg-white px-[28rpx] py-[26rpx] shadow-[0_8rpx_24rpx_#59392d12]">
+      <view class="flex flex-row items-center justify-between gap-[20rpx]">
+        <view class="h-[76rpx] w-[76rpx] flex flex-shrink-0 items-center justify-center rounded-full bg-[#fff0f1]">
+          <cl-icon name="user-forbid-line" :size="20" :pt="{ className: 'text-[#e5484d]' }" />
+        </view>
+        <view class="min-w-0 flex-1">
+          <text class="block text-[29rpx] font-[700] text-[#35231f]">{{ item.label }}</text>
+          <text class="mt-[6rpx] block text-[22rpx] text-[#9e7e76]">拉黑于 {{ formatTime(item.blockedAt) }}</text>
+        </view>
+        <view class="rounded-[24rpx] border border-solid border-[#d8c8c3] px-[22rpx] py-[12rpx]" @click="confirmUnblock(item)">
+          <text class="text-[24rpx] text-[#6f5750]">解除</text>
+        </view>
+      </view>
+      <text v-if="item.lastMessagePreview" class="mt-[20rpx] block truncate rounded-[14rpx] bg-[#faf7f6] px-[18rpx] py-[14rpx] text-[23rpx] text-[#8c7771]">
+        最近消息：{{ item.lastMessagePreview }}
+      </text>
+    </view>
+  </z-paging-x>
+</template>

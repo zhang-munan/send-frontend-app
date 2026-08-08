@@ -133,6 +133,13 @@
 						"navigationStyle": "custom",
 						"navigationBarTextStyle": "black"
 					}
+				},
+				{
+					"path": "blacklist",
+					"style": {
+						"navigationStyle": "custom",
+						"navigationBarTextStyle": "black"
+					}
 				}
 			]
 		}

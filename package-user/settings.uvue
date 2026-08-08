@@ -59,6 +59,10 @@ function goChangePhone() {
 	uni.navigateTo({ url: "/package-user/change-phone" });
 }
 
+function goBlacklist() {
+	uni.navigateTo({ url: "/package-user/blacklist" });
+}
+
 // ---------- 版本号 ----------
 const appVersion = ref("1.0.0");
 // #ifndef H5
@@ -163,6 +167,21 @@ try {
 				<view
 					class="overflow-hidden rounded-[24rpx] bg-[#ffffff] shadow-[0_8rpx_24rpx_#59392d12]"
 				>
+					<view
+						class="flex flex-row h-[100rpx] items-center justify-between border-b-[1rpx] border-b-solid border-b-[#f0e8e4] px-[32rpx]"
+						@click="goBlacklist"
+					>
+						<view class="flex flex-row items-center gap-[18rpx]">
+							<view class="h-[48rpx] w-[48rpx] flex flex-row items-center justify-center rounded-[14rpx] bg-[#fff0f1]">
+								<cl-icon name="forbid-2-line" :size="13" :pt="{ className: 'text-[#e5484d]' }" />
+							</view>
+							<view>
+								<text class="text-[28rpx] text-[#1a0e0b]">拉黑列表</text>
+								<text class="mt-[4rpx] block text-[22rpx] text-[#9e7e76]">管理不能再向你发送短信的用户</text>
+							</view>
+						</view>
+						<cl-icon name="arrow-right-s-line" :size="13" :pt="{ className: 'text-[#c4b3ae]' }" />
+					</view>
 					<view class="flex flex-row h-[100rpx] items-center justify-between px-[32rpx]">
 						<view class="flex flex-row items-center gap-[18rpx]">
 							<view
