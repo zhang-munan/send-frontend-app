@@ -50,6 +50,16 @@ export interface OrderInfo {
 	tradeNo?: string;
 	clientIp?: string;
 	createTime: string;
+	refundAmount?: number;
+	refundTime?: string;
+	refundReason?: string;
+	/** 0未申请 1待审批 2已退款 3已拒绝 4退款处理中 5退款失败 */
+	refundStatus?: number;
+	refundApplyTime?: string;
+	refundAuditTime?: string;
+	refundRejectReason?: string;
+	refundNo?: string;
+	remark?: string;
 }
 
 /** 创建订单请求（购买套餐） */
@@ -165,6 +175,15 @@ export function getOrderList(page = 1, size = 10) {
 		url: `${ORDER_PREFIX}/orderList`,
 		method: "GET",
 		data: { page, size }
+	});
+}
+
+/** 提交全额退款申请 */
+export function applyOrderRefund(orderId: number, reason: string) {
+	return request({
+		url: `${ORDER_PREFIX}/applyRefund`,
+		method: "POST",
+		data: { orderId, reason }
 	});
 }
 

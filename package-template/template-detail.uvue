@@ -121,11 +121,6 @@ function useTemplate() {
   })
 }
 
-// ─── Share ────────────────────────────────────────────────────────────────────
-function onShare() {
-  uni.showShareMenu({ withShareTicket: true })
-}
-
 // ─── Navigate to similar detail ───────────────────────────────────────────────
 function goSimilar(id: number) {
   uni.navigateTo({ url: `/package-template/template-detail?id=${id}` })
@@ -152,28 +147,7 @@ onLoad((options) => {
       color="#4a2b24"
       height="88rpx"
       :pt="{ title: { className: 'text-[34rpx] font-[800]' }, back: { size: 20 } }"
-    >
-      <template #append>
-        <view class="mr-[24rpx] flex flex-row items-center gap-[16rpx]">
-        <view
-          class="h-[64rpx] w-[64rpx] flex flex-row items-center justify-center rounded-[64rpx] bg-[#ffffffd9]"
-          @click="toggleCollect"
-        >
-          <cl-icon
-            :name="detail?.isCollected ? 'heart-fill' : 'heart-line'"
-            :size="15"
-            :color="detail?.isCollected ? '#fe8973' : '#7a5147'"
-          />
-        </view>
-        <view
-          class="h-[64rpx] w-[64rpx] flex flex-row items-center justify-center rounded-[64rpx] bg-[#ffffffd9]"
-          @click="onShare"
-        >
-          <cl-icon name="share-line" :size="14" :pt="{ className: 'text-[#7a5147]' }" />
-        </view>
-      </view>
-      </template>
-    </cl-topbar>
+    />
 
     <view class="px-[24rpx] pb-[180rpx]">
       <!-- ── 模板内容预览卡片 ── -->

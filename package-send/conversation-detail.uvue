@@ -7,10 +7,12 @@ import { formatYuan } from '@/utils/money'
 // ─── 路由参数 ────────────────────────────────────────
 const convId = ref(0)
 const phoneLabel = ref('')
+const viewerRole = ref<'sender' | 'receiver'>('sender')
 
 onLoad((options) => {
   convId.value = Number(options?.id || 0)
   phoneLabel.value = decodeURIComponent(options?.phone || '')
+  viewerRole.value = options?.role === 'receiver' ? 'receiver' : 'sender'
   if (convId.value) {
     loadMessages(true)
     markConversationRead(convId.value).catch(() => {})
@@ -56,16 +58,6 @@ async function loadMessages(reset = false) {
 
 // ─── 提示横幅 ────────────────────────────────────────
 const showBanner = ref(true)
-
-// ─── 菜单 ────────────────────────────────────────────
-function showMenu() {
-  uni.showActionSheet({
-    itemList: ['发送记录', '举报'],
-    success: (res) => {
-      if (res.tapIndex === 0) uni.navigateTo({ url: '/package-send/send-records' })
-    },
-  })
-}
 
 // ─── 格式化 ────────────────────────────────────────────
 function formatTime(t: string) {
@@ -119,13 +111,7 @@ function goSend() {
       color="#1a1a1a"
       height="88rpx"
       :pt="{ className: 'border-b border-b-solid border-b-[#f5f5f5]', title: { className: 'text-[32rpx] font-[800]' }, back: { size: 20 } }"
-    >
-      <template #append>
-        <view class="mr-[24rpx] h-[72rpx] w-[72rpx] flex flex-row items-center justify-center" @click="showMenu">
-          <cl-icon name="more-2-fill" :size="18" :pt="{ className: 'text-[#a08a84]' }" />
-        </view>
-      </template>
-    </cl-topbar>
+    />
 
     <!-- 安全提示横幅 -->
     <view
@@ -194,7 +180,7 @@ function goSend() {
             <cl-icon name="user-line" :size="18" :pt="{ className: 'text-[#888]' }" />
           </view>
           <view class="max-w-[540rpx]">
-            <text class="mb-[6rpx] block text-[22rpx] text-[#a08a84]">对方回复</text>
+            <text class="mb-[6rpx] block text-[22rpx] text-[#a08a84]">对方发来</text>
             <view
               class="rounded-[24rpx] rounded-tl-[8rpx] bg-white px-[28rpx] py-[20rpx]"
               style="box-shadow:0 2rpx 8rpx #0000000f"
@@ -211,6 +197,7 @@ function goSend() {
 
     <!-- 底部操作栏 -->
     <view
+      v-if="viewerRole === 'sender'"
       class="flex-shrink-0 bg-white px-[24rpx] pb-[40rpx] pt-[20rpx]"
       style="border-top:1rpx solid #f5f5f5; box-shadow:0 -4rpx 20rpx #0000000a;"
     >

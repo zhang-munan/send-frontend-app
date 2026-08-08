@@ -10,8 +10,6 @@ const isLogin = computed(() => !!user.info.value?.phone)
 const list = ref<ConversationInfo[]>([])
 const pagingX = ref<any>(null)
 
-const totalUnread = computed(() => list.value.reduce((sum, c) => sum + (c.unreadCount || 0), 0))
-
 // ─── 加载 ────────────────────────────────────────────
 async function queryList(pageNo: number, pageSize: number) {
   if (!user.info.value?.phone) {
@@ -29,24 +27,6 @@ async function queryList(pageNo: number, pageSize: number) {
 }
 
 onShow(() => pagingX.value?.reload())
-
-// ─── 全部已读 ────────────────────────────────────────
-const markingAll = ref(false)
-async function markAllRead() {
-  const unread = list.value.filter(c => c.unreadCount > 0)
-  if (!unread.length) return
-  markingAll.value = true
-  try {
-    await Promise.all(unread.map(c => markConversationRead(c.id)))
-    list.value.forEach((c) => { c.unreadCount = 0 })
-  }
-  catch {
-    // silent
-  }
-  finally {
-    markingAll.value = false
-  }
-}
 
 // ─── 滑动操作 ────────────────────────────────────────
 const swipedId = ref<number | null>(null)
@@ -75,7 +55,7 @@ function deleteItem(id: number) {
 // ─── 导航 ────────────────────────────────────────────
 function goConversation(conv: ConversationInfo) {
   if (swipedId.value) { closeSwipe(); return }
-  uni.navigateTo({ url: `/package-send/conversation-detail?id=${conv.id}&phone=${encodeURIComponent(conv.receiverPhoneMask)}` })
+  uni.navigateTo({ url: `/package-send/conversation-detail?id=${conv.id}&phone=${encodeURIComponent(conv.peerLabel || conv.receiverPhoneMask)}&role=${conv.viewerRole}` })
 }
 
 function goSend() {
@@ -128,17 +108,7 @@ function avatarColor(phone: string) {
         color="#1a1a1a"
         height="88rpx"
         :pt="{ title: { className: 'text-[34rpx] font-[800]' } }"
-      >
-        <template #append>
-          <view
-            v-if="totalUnread > 0"
-            class="mr-[24rpx] rounded-[16rpx] bg-[#f5ece9] px-[20rpx] py-[8rpx]"
-            @click.stop="markAllRead"
-          >
-            <text class="text-[24rpx] font-[600] text-[#fe8973]">{{ markingAll ? '处理中...' : '全部已读' }}</text>
-          </view>
-        </template>
-      </cl-topbar>
+      />
     </template>
 
     <template #empty>
@@ -184,10 +154,10 @@ function avatarColor(phone: string) {
             <!-- 头像 -->
             <view
               class="relative h-[88rpx] w-[88rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-full"
-              :style="{ backgroundColor: avatarColor(conv.receiverPhoneMask) }"
+              :style="{ backgroundColor: avatarColor(conv.peerLabel || conv.receiverPhoneMask) }"
             >
               <text class="text-[36rpx] font-[700] text-white">
-                {{ avatarChar(conv.receiverPhoneMask) }}
+                {{ avatarChar(conv.peerLabel || conv.receiverPhoneMask) }}
               </text>
               <!-- 退订标记 -->
               <view
@@ -202,7 +172,7 @@ function avatarColor(phone: string) {
             <view class="min-w-0 flex-1">
               <view class="flex flex-row items-center justify-between">
                 <view class="flex flex-row items-center gap-[12rpx]">
-                  <text class="text-[30rpx] font-[700] text-[#1a1a1a]">{{ conv.receiverPhoneMask }}</text>
+                  <text class="text-[30rpx] font-[700] text-[#1a1a1a]">{{ conv.peerLabel || conv.receiverPhoneMask }}</text>
                   <!-- 对方回复了 标签 -->
                   <view
                     v-if="conv.lastMsgIsReply && conv.unreadCount > 0"

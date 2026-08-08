@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { getBalance, getOrderList, type OrderInfo, type UserBalance } from '@/api/order'
+import { computed, ref } from 'vue'
+import { applyOrderRefund, getBalance, getOrderDetail, getOrderList, type OrderInfo, type UserBalance } from '@/api/order'
 import { formatYuan } from '@/utils/money'
 
 type BillType = 'all' | 'recharge' | 'consume' | 'refund'
@@ -28,35 +28,35 @@ const pagingX = ref<any>(null)
 const balance = ref<UserBalance | null>(null)
 const activeType = ref<BillType>('all')
 const periodLabel = ref('近30天')
+const detailVisible = ref(false)
+const detailLoading = ref(false)
+const selectedOrder = ref<OrderInfo | null>(null)
+const refundFormVisible = ref(false)
+const refundReason = ref('')
+const refundSubmitting = ref(false)
 
-const tabs: { label: string, value: BillType }[] = [
+const tabs: { label: string; value: BillType }[] = [
   { label: '全部', value: 'all' },
   { label: '充值', value: 'recharge' },
   { label: '消费', value: 'consume' },
   { label: '退款', value: 'refund' },
 ]
 
-const paidOrders = computed(() => list.value.filter(order => order.status === 1 || order.status === 2))
+const paidOrders = computed(() => list.value.filter((order) => order.status === 1 || order.status === 2))
 const billItems = computed(() => paidOrders.value.map(toBillItem))
 const filteredItems = computed(() => {
-  if (activeType.value === 'all')
-    return billItems.value
-  return billItems.value.filter(item => item.billType === activeType.value)
+  if (activeType.value === 'all') return billItems.value
+  return billItems.value.filter((item) => item.billType === activeType.value)
 })
 
 const currentMonthKey = computed(() => formatMonthKey(new Date()))
-const monthRecharge = computed(() =>
-  sumByType(billItems.value, 'recharge', currentMonthKey.value),
-)
-const monthConsume = computed(() =>
-  Math.abs(sumByType(billItems.value, 'consume', currentMonthKey.value)),
-)
+const monthRecharge = computed(() => sumByType(billItems.value, 'recharge', currentMonthKey.value))
+const monthConsume = computed(() => Math.abs(sumByType(billItems.value, 'consume', currentMonthKey.value)))
 const monthGroups = computed<MonthGroup[]>(() => {
   const groups = new Map<string, BillItem[]>()
   filteredItems.value.forEach((item) => {
     const key = getMonthKey(item.createTime)
-    if (!groups.has(key))
-      groups.set(key, [])
+    if (!groups.has(key)) groups.set(key, [])
     groups.get(key)!.push(item)
   })
 
@@ -72,6 +72,11 @@ const monthGroups = computed<MonthGroup[]>(() => {
     }
   })
 })
+const canApplyRefund = computed(() => {
+  const order = selectedOrder.value
+  if (!order) return false
+  return order.status === 1 && Number(order.payAmount || 0) > 0 && [0, 3].includes(Number(order.refundStatus || 0))
+})
 
 async function queryList(pageNo: number, pageSize: number) {
   try {
@@ -83,8 +88,7 @@ async function queryList(pageNo: number, pageSize: number) {
       balance.value = balanceRes
     }
     pagingX.value?.completeByTotal(ordersRes.list, ordersRes.total)
-  }
-  catch (err: any) {
+  } catch (err: any) {
     uni.showToast({ title: err?.message || '加载失败', icon: 'none' })
     pagingX.value?.completeByError()
   }
@@ -102,6 +106,64 @@ function setActiveType(type: BillType) {
   activeType.value = type
 }
 
+async function showOrderDetail(item: BillItem) {
+  detailVisible.value = true
+  detailLoading.value = true
+  selectedOrder.value = item
+  refundFormVisible.value = false
+  refundReason.value = ''
+  try {
+    selectedOrder.value = await getOrderDetail(item.id)
+  } catch (err: any) {
+    uni.showToast({ title: err?.message || '详情加载失败', icon: 'none' })
+  } finally {
+    detailLoading.value = false
+  }
+}
+
+function startRefund() {
+  refundFormVisible.value = true
+}
+
+async function submitRefund() {
+  const order = selectedOrder.value
+  const reason = refundReason.value.trim()
+  if (!order || refundSubmitting.value) return
+  if (reason.length < 5) {
+    uni.showToast({ title: '请至少填写5个字的退款原因', icon: 'none' })
+    return
+  }
+  refundSubmitting.value = true
+  try {
+    const updated = await applyOrderRefund(order.id, reason)
+    selectedOrder.value = updated
+    const index = list.value.findIndex((item) => item.id === order.id)
+    if (index >= 0) list.value[index] = { ...list.value[index], ...updated }
+    refundFormVisible.value = false
+    uni.showToast({ title: '退款申请已提交', icon: 'success' })
+  } catch (err: any) {
+    uni.showToast({ title: err?.message || '申请失败，请重试', icon: 'none' })
+  } finally {
+    refundSubmitting.value = false
+  }
+}
+
+function getPayMethodText(payMethod?: number) {
+  return ['', '微信支付', '支付宝', '账户余额', '模拟支付', '套餐余额'][Number(payMethod || 0)] || '未知'
+}
+
+function getOrderStatusText(status?: number) {
+  return ['待支付', '已支付', '已退款', '已关闭'][Number(status || 0)] || '未知'
+}
+
+function getRefundStatusText(status?: number) {
+  return ['未申请', '待审批', '已退款', '已拒绝', '退款处理中', '退款失败'][Number(status || 0)] || '未申请'
+}
+
+function formatDetailTime(time?: string) {
+  return time ? time.replace('T', ' ').slice(0, 19) : '-'
+}
+
 function isBalanceRechargeOrder(order: OrderInfo) {
   return !order.productId && Boolean(order.productName?.includes('余额充值'))
 }
@@ -113,17 +175,16 @@ function isPackageOrder(order: OrderInfo) {
 function toBillItem(order: OrderInfo): BillItem {
   const amount = Number(order.payAmount || 0)
   const isRefund = order.status === 2
-  const billType: BillItem['billType'] = isRefund
-    ? 'refund'
-    : isBalanceRechargeOrder(order) ? 'recharge' : 'consume'
+  const billType: BillItem['billType'] = isRefund ? 'refund' : isBalanceRechargeOrder(order) ? 'recharge' : 'consume'
   const signedAmount = billType === 'consume' ? -amount : amount
-  const displayName = billType === 'recharge'
-    ? `余额充值 - ${order.productName || '账户余额'}`
-    : billType === 'refund'
-      ? `退款 - ${order.productName || '发送失败返还'}`
-      : isPackageOrder(order)
-        ? `套餐购买 - ${order.productName || '消息包'}`
-      : `${order.productName || '发送消息'} x${order.quantity || 1}`
+  const displayName =
+    billType === 'recharge'
+      ? `余额充值 - ${order.productName || '账户余额'}`
+      : billType === 'refund'
+        ? `退款 - ${order.productName || '发送失败返还'}`
+        : isPackageOrder(order)
+          ? `套餐购买 - ${order.productName || '消息包'}`
+          : `${order.productName || '发送消息'} x${order.quantity || 1}`
 
   return {
     ...order,
@@ -132,11 +193,12 @@ function toBillItem(order: OrderInfo): BillItem {
     displayTime: formatItemTime(order.createTime),
     amountText: `${signedAmount >= 0 ? '+' : '-'}¥${formatYuan(Math.abs(signedAmount))}`,
     amountColor: billType === 'recharge' ? '#13bf56' : billType === 'refund' ? '#288bf2' : '#ff3d46',
-    iconBg: billType === 'recharge'
-      ? 'background: linear-gradient(135deg, #dcffe6, #c8f5d3);'
-      : billType === 'refund'
-        ? 'background: linear-gradient(135deg, #e4f1ff, #d8eaff);'
-        : 'background: linear-gradient(135deg, #ffe9e8, #ffd9d5);',
+    iconBg:
+      billType === 'recharge'
+        ? 'background: linear-gradient(135deg, #dcffe6, #c8f5d3);'
+        : billType === 'refund'
+          ? 'background: linear-gradient(135deg, #e4f1ff, #d8eaff);'
+          : 'background: linear-gradient(135deg, #ffe9e8, #ffd9d5);',
   }
 }
 
@@ -147,7 +209,7 @@ function getSignedAmount(item: BillItem) {
 
 function sumByType(items: BillItem[], type: BillItem['billType'], monthKey: string) {
   return items
-    .filter(item => item.billType === type && getMonthKey(item.createTime) === monthKey)
+    .filter((item) => item.billType === type && getMonthKey(item.createTime) === monthKey)
     .reduce((sum, item) => sum + getSignedAmount(item), 0)
 }
 
@@ -170,8 +232,7 @@ function formatMonthTitle(key: string) {
 }
 
 function formatItemTime(time: string) {
-  if (!time)
-    return '-'
+  if (!time) return '-'
   const date = parseDate(time)
   const month = `${date.getMonth() + 1}`.padStart(2, '0')
   const day = `${date.getDate()}`.padStart(2, '0')
@@ -182,7 +243,14 @@ function formatItemTime(time: string) {
 </script>
 
 <template>
-  <z-paging-x ref="pagingX" v-model="list" class="bg-[#fffaf9] text-[#412b22]" refresher-background="#fffaf9" :default-page-size="20" @query="queryList">
+  <z-paging-x
+    ref="pagingX"
+    v-model="list"
+    class="bg-[#fffaf9] text-[#412b22]"
+    refresher-background="#fffaf9"
+    :default-page-size="20"
+    @query="queryList"
+  >
     <template #top>
       <cl-topbar
         title="账单明细"
@@ -191,106 +259,91 @@ function formatItemTime(time: string) {
         color="#412b22"
         height="88rpx"
         :pt="{ title: { className: 'text-[36rpx] font-[500]' }, back: { size: 22 } }"
-      >
-        <template #append>
-          <view class="mr-[22rpx] h-[72rpx] flex flex-row items-center gap-[8rpx]" @click="showFilter">
-            <cl-icon name="filter-line" :size="19" :pt="{ className: 'text-[#412b22]' }" />
-            <text class="text-[28rpx] text-[#412b22]">
-              筛选
-            </text>
-          </view>
-        </template>
-      </cl-topbar>
+      />
 
-    <view class="px-[28rpx] pb-[36rpx]">
-      <!-- summary card -->
-      <view
-        class="relative mt-[10rpx] h-[236rpx] overflow-hidden rounded-[30rpx] px-[22rpx] py-[36rpx]"
-        style="background: linear-gradient(112deg, #ffdcb8 0%, #fff3e8 48%, #ffd9c7 100%); border: 1rpx solid #ffffffd9; box-shadow: 0 12rpx 34rpx #e9ab9d18;"
-      >
-        <view class="pointer-events-none absolute right-[-35rpx] top-[18rpx] h-[155rpx] w-[155rpx] rounded-full bg-[#fff9f078]" />
-        <view class="pointer-events-none absolute right-[42rpx] top-[12rpx] h-[44rpx] w-[44rpx] rounded-full border-[10rpx] border-solid border-[#ffffff52]" />
-        <view class="relative z-1 flex flex-row items-center">
-          <view class="flex-1 items-center text-center">
-            <text class="block text-[27rpx] text-[#543a2d]">
-              账户余额
-            </text>
-            <text class="mt-[22rpx] block text-[46rpx] text-[#ff5c63] leading-[54rpx] font-[900]">
-              ¥ {{ balance ? formatYuan(balance.balance) : '0.00' }}
-            </text>
-            <view class="mt-[10rpx] inline-flex flex-row border border-[#ff9b9a] rounded-[32rpx] border-solid px-[22rpx] py-[4rpx]" @click="goRecharge">
-              <text class="text-[24rpx] text-[#ff5960]">
-                去充值
-              </text>
-            </view>
-          </view>
-
-          <view class="mx-[18rpx] h-[76rpx] w-[2rpx] bg-[#fffffff0]" />
-
-          <view class="flex-1 items-center text-center">
-            <text class="block text-[27rpx] text-[#543a2d]">
-              本月消费
-            </text>
-            <text class="mt-[22rpx] block text-[46rpx] text-[#ff5c63] leading-[54rpx] font-[900]">
-              ¥ {{ formatYuan(monthConsume) }}
-            </text>
-            <view class="mt-[15rpx] inline-flex flex-row items-center gap-[6rpx]">
-              <text class="text-[24rpx] text-[#543a2d]">
-                明细
-              </text>
-              <cl-icon name="arrow-right-s-line" :size="13" :pt="{ className: 'text-[#543a2d]' }" />
-            </view>
-          </view>
-
-          <view class="mx-[18rpx] h-[76rpx] w-[2rpx] bg-[#fffffff0]" />
-
-          <view class="flex-1 items-center text-center">
-            <text class="block text-[27rpx] text-[#543a2d]">
-              本月充值
-            </text>
-            <text class="mt-[22rpx] block text-[46rpx] text-[#ff5c63] leading-[54rpx] font-[900]">
-              ¥ {{ formatYuan(monthRecharge) }}
-            </text>
-            <view class="mt-[15rpx] inline-flex flex-row items-center gap-[6rpx]">
-              <text class="text-[24rpx] text-[#543a2d]">
-                明细
-              </text>
-              <cl-icon name="arrow-right-s-line" :size="13" :pt="{ className: 'text-[#543a2d]' }" />
-            </view>
-          </view>
-        </view>
-      </view>
-
-      <!-- filters -->
-      <view class="mt-[32rpx] flex flex-row items-center justify-between">
-        <view class="flex flex-row items-center gap-[22rpx]">
-          <view
-            v-for="tab in tabs"
-            :key="tab.value"
-            class="h-[60rpx] min-w-[102rpx] flex flex-row items-center justify-center px-[20rpx]"
-            :class="activeType === tab.value ? 'rounded-[32rpx] bg-[#ffd9da]' : ''"
-            @click="setActiveType(tab.value)"
-          >
-            <text
-              class="text-[29rpx]"
-              :class="activeType === tab.value ? 'text-[#ff4c54]' : 'text-[#6d6260]'"
-            >
-              {{ tab.label }}
-            </text>
-          </view>
-        </view>
+      <view class="px-[28rpx] pb-[36rpx]">
+        <!-- summary card -->
         <view
-          class="h-[60rpx] flex flex-row items-center gap-[9rpx] border border-[#ddcfca] rounded-[32rpx] border-solid bg-[#ffffffad] px-[20rpx]"
-          @click="showFilter"
+          class="relative mt-[10rpx] h-[236rpx] overflow-hidden rounded-[30rpx] px-[22rpx] py-[36rpx]"
+          style="
+            background: linear-gradient(112deg, #ffdcb8 0%, #fff3e8 48%, #ffd9c7 100%);
+            border: 1rpx solid #ffffffd9;
+            box-shadow: 0 12rpx 34rpx #e9ab9d18;
+          "
         >
-          <cl-icon name="calendar-line" :size="15" :pt="{ className: 'text-[#827570]' }" />
-          <text class="text-[26rpx] text-[#827570]">
-            {{ periodLabel }}
-          </text>
-          <cl-icon name="arrow-down-s-line" :size="12" :pt="{ className: 'text-[#827570]' }" />
+          <view class="pointer-events-none absolute right-[-35rpx] top-[18rpx] h-[155rpx] w-[155rpx] rounded-full bg-[#fff9f078]" />
+          <view
+            class="pointer-events-none absolute right-[42rpx] top-[12rpx] h-[44rpx] w-[44rpx] rounded-full border-[10rpx] border-solid border-[#ffffff52]"
+          />
+          <view class="relative z-1 flex flex-row items-center">
+            <view class="flex-1 items-center text-center">
+              <text class="block text-[27rpx] text-[#543a2d]"> 账户余额 </text>
+              <text class="mt-[22rpx] block text-[46rpx] text-[#ff5c63] leading-[54rpx] font-[900]">
+                ¥ {{ balance ? formatYuan(balance.balance) : '0.00' }}
+              </text>
+              <view
+                class="mt-[10rpx] inline-flex flex-row border border-[#ff9b9a] rounded-[32rpx] border-solid px-[22rpx] py-[4rpx]"
+                @click="goRecharge"
+              >
+                <text class="text-[24rpx] text-[#ff5960]"> 去充值 </text>
+              </view>
+            </view>
+
+            <view class="mx-[18rpx] h-[76rpx] w-[2rpx] bg-[#fffffff0]" />
+
+            <view class="flex-1 items-center text-center">
+              <text class="block text-[27rpx] text-[#543a2d]"> 本月消费 </text>
+              <text class="mt-[22rpx] block text-[46rpx] text-[#ff5c63] leading-[54rpx] font-[900]">
+                ¥ {{ formatYuan(monthConsume) }}
+              </text>
+              <view class="mt-[15rpx] inline-flex flex-row items-center gap-[6rpx]">
+                <text class="text-[24rpx] text-[#543a2d]"> 明细 </text>
+                <cl-icon name="arrow-right-s-line" :size="13" :pt="{ className: 'text-[#543a2d]' }" />
+              </view>
+            </view>
+
+            <view class="mx-[18rpx] h-[76rpx] w-[2rpx] bg-[#fffffff0]" />
+
+            <view class="flex-1 items-center text-center">
+              <text class="block text-[27rpx] text-[#543a2d]"> 本月充值 </text>
+              <text class="mt-[22rpx] block text-[46rpx] text-[#ff5c63] leading-[54rpx] font-[900]">
+                ¥ {{ formatYuan(monthRecharge) }}
+              </text>
+              <view class="mt-[15rpx] inline-flex flex-row items-center gap-[6rpx]">
+                <text class="text-[24rpx] text-[#543a2d]"> 明细 </text>
+                <cl-icon name="arrow-right-s-line" :size="13" :pt="{ className: 'text-[#543a2d]' }" />
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- filters -->
+        <view class="mt-[32rpx] flex flex-row items-center justify-between">
+          <view class="flex flex-row items-center gap-[22rpx]">
+            <view
+              v-for="tab in tabs"
+              :key="tab.value"
+              class="h-[60rpx] min-w-[102rpx] flex flex-row items-center justify-center px-[20rpx]"
+              :class="activeType === tab.value ? 'rounded-[32rpx] bg-[#ffd9da]' : ''"
+              @click="setActiveType(tab.value)"
+            >
+              <text class="text-[29rpx]" :class="activeType === tab.value ? 'text-[#ff4c54]' : 'text-[#6d6260]'">
+                {{ tab.label }}
+              </text>
+            </view>
+          </view>
+          <view
+            class="h-[60rpx] flex flex-row items-center gap-[9rpx] border border-[#ddcfca] rounded-[32rpx] border-solid bg-[#ffffffad] px-[20rpx]"
+            @click="showFilter"
+          >
+            <cl-icon name="calendar-line" :size="15" :pt="{ className: 'text-[#827570]' }" />
+            <text class="text-[26rpx] text-[#827570]">
+              {{ periodLabel }}
+            </text>
+            <cl-icon name="arrow-down-s-line" :size="12" :pt="{ className: 'text-[#827570]' }" />
+          </view>
         </view>
       </view>
-    </view>
     </template>
 
     <template #empty>
@@ -309,16 +362,14 @@ function formatItemTime(time: string) {
         v-for="group in monthGroups"
         :key="group.key"
         class="mt-[28rpx] overflow-hidden rounded-[28rpx] bg-white px-[28rpx] pt-[28rpx]"
-        style="box-shadow: 0 8rpx 28rpx #5e39300d;"
+        style="box-shadow: 0 8rpx 28rpx #5e39300d"
       >
         <view class="mb-[14rpx] flex flex-row items-center justify-between">
           <text class="text-[34rpx] text-[#412b22] font-[500]">
             {{ group.title }}
           </text>
           <view class="flex flex-row items-baseline gap-[10rpx]">
-            <text class="text-[26rpx] text-[#63493f]">
-              当月合计
-            </text>
+            <text class="text-[26rpx] text-[#63493f]"> 当月合计 </text>
             <text class="text-[27rpx] font-[500]" :style="{ color: group.totalColor }">
               {{ group.totalText }}
             </text>
@@ -330,11 +381,9 @@ function formatItemTime(time: string) {
           :key="item.id"
           class="flex flex-row items-center py-[22rpx]"
           :class="index < group.items.length - 1 ? 'border-b border-b-solid border-b-[#f1ecea]' : ''"
+          @click="showOrderDetail(item)"
         >
-          <view
-            class="h-[80rpx] w-[80rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-full"
-            :style="item.iconBg"
-          >
+          <view class="h-[80rpx] w-[80rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-full" :style="item.iconBg">
             <cl-icon v-if="item.billType === 'recharge'" name="line-chart-line" :size="21" :pt="{ className: 'text-[#26bd58]' }" />
             <cl-icon v-else-if="item.billType === 'refund'" name="refund-line" :size="21" :pt="{ className: 'text-[#288bf2]' }" />
             <cl-icon v-else name="arrow-right-down-line" :size="21" :pt="{ className: 'text-[#ff4f59]' }" />
@@ -353,7 +402,99 @@ function formatItemTime(time: string) {
           <cl-icon name="arrow-right-s-line" :size="15" :pt="{ className: 'ml-[12rpx] flex-shrink-0 text-[#8d8581]' }" />
         </view>
       </view>
-
     </view>
+
+    <cl-popup
+      v-model="detailVisible"
+      title="账单详情"
+      direction="bottom"
+      size="82%"
+      :mask-closable="!refundSubmitting"
+      :pt="{ className: 'rounded-t-[34rpx]', container: { className: 'bg-[#fffaf9]' } }"
+    >
+      <scroll-view scroll-y class="max-h-[76vh] px-[30rpx] pb-[calc(32rpx+env(safe-area-inset-bottom))]">
+        <view v-if="detailLoading" class="py-[120rpx] text-center">
+          <text class="text-[27rpx] text-[#a08a84]">加载中...</text>
+        </view>
+        <view v-else-if="selectedOrder" class="pt-[12rpx]">
+          <view class="rounded-[26rpx] bg-white px-[28rpx] py-[30rpx] text-center" style="box-shadow: 0 8rpx 28rpx #5e39300d">
+            <text class="block text-[27rpx] text-[#857873]">{{ selectedOrder.productName || '订单消费' }}</text>
+            <text class="mt-[12rpx] block text-[52rpx] text-[#412b22] font-[900]">¥ {{ formatYuan(selectedOrder.payAmount) }}</text>
+            <text class="mt-[10rpx] block text-[25rpx] text-[#fe766d]">{{ getOrderStatusText(selectedOrder.status) }}</text>
+          </view>
+
+          <view class="mt-[22rpx] rounded-[26rpx] bg-white px-[28rpx] py-[12rpx]">
+            <view class="flex flex-row justify-between border-b border-b-solid border-b-[#f1ecea] py-[20rpx]">
+              <text class="text-[26rpx] text-[#8b7c77]">订单编号</text>
+              <text class="ml-[24rpx] flex-1 text-right text-[26rpx] text-[#3f2d27]">{{ selectedOrder.orderNo }}</text>
+            </view>
+            <view class="flex flex-row justify-between border-b border-b-solid border-b-[#f1ecea] py-[20rpx]">
+              <text class="text-[26rpx] text-[#8b7c77]">支付方式</text>
+              <text class="text-[26rpx] text-[#3f2d27]">{{ getPayMethodText(selectedOrder.payMethod) }}</text>
+            </view>
+            <view class="flex flex-row justify-between border-b border-b-solid border-b-[#f1ecea] py-[20rpx]">
+              <text class="text-[26rpx] text-[#8b7c77]">下单时间</text>
+              <text class="text-[26rpx] text-[#3f2d27]">{{ formatDetailTime(selectedOrder.createTime) }}</text>
+            </view>
+            <view class="flex flex-row justify-between border-b border-b-solid border-b-[#f1ecea] py-[20rpx]">
+              <text class="text-[26rpx] text-[#8b7c77]">支付时间</text>
+              <text class="text-[26rpx] text-[#3f2d27]">{{ formatDetailTime(selectedOrder.payTime) }}</text>
+            </view>
+            <view v-if="selectedOrder.tradeNo" class="flex flex-row justify-between py-[20rpx]">
+              <text class="text-[26rpx] text-[#8b7c77]">支付流水号</text>
+              <text class="ml-[24rpx] flex-1 break-all text-right text-[24rpx] text-[#3f2d27]">{{ selectedOrder.tradeNo }}</text>
+            </view>
+          </view>
+
+          <view v-if="Number(selectedOrder.refundStatus || 0) > 0" class="mt-[22rpx] rounded-[26rpx] bg-[#fff2ef] px-[28rpx] py-[24rpx]">
+            <view class="flex flex-row justify-between">
+              <text class="text-[26rpx] text-[#8b7c77]">退款状态</text>
+              <text class="text-[26rpx] text-[#fe665f] font-[700]">{{ getRefundStatusText(selectedOrder.refundStatus) }}</text>
+            </view>
+            <text v-if="selectedOrder.refundReason" class="mt-[16rpx] block text-[25rpx] text-[#654d45] leading-[38rpx]"
+              >申请原因：{{ selectedOrder.refundReason }}</text
+            >
+            <text v-if="selectedOrder.refundRejectReason" class="mt-[10rpx] block text-[25rpx] text-[#d44c48] leading-[38rpx]"
+              >处理说明：{{ selectedOrder.refundRejectReason }}</text
+            >
+          </view>
+
+          <view v-if="refundFormVisible" class="mt-[22rpx] rounded-[26rpx] bg-white px-[26rpx] py-[24rpx]">
+            <text class="block text-[28rpx] text-[#412b22] font-[700]">退款原因</text>
+            <textarea
+              v-model="refundReason"
+              maxlength="200"
+              placeholder="请说明退款原因（5-200字）"
+              placeholder-class="text-[#b6aaa6]"
+              class="mt-[18rpx] h-[150rpx] w-full rounded-[18rpx] bg-[#fff8f6] p-[20rpx] text-[26rpx] text-[#4a342d] leading-[38rpx]"
+            />
+            <view class="mt-[20rpx] flex flex-row gap-[18rpx]">
+              <view
+                class="h-[78rpx] flex flex-1 items-center justify-center rounded-[40rpx] bg-[#f3ece9]"
+                @click="refundFormVisible = false"
+              >
+                <text class="text-[28rpx] text-[#746661]">取消</text>
+              </view>
+              <view class="h-[78rpx] flex flex-1 items-center justify-center rounded-[40rpx] bg-[#fe8973]" @click="submitRefund">
+                <text class="text-[28rpx] text-white font-[700]">{{ refundSubmitting ? '提交中...' : '提交申请' }}</text>
+              </view>
+            </view>
+          </view>
+
+          <view
+            v-else-if="canApplyRefund"
+            class="mt-[28rpx] h-[86rpx] flex items-center justify-center rounded-[44rpx] bg-[#fe8973]"
+            @click="startRefund"
+          >
+            <text class="text-[29rpx] text-white font-[700]">申请退款</text>
+          </view>
+          <text
+            v-else-if="selectedOrder.status === 1 && Number(selectedOrder.payAmount || 0) === 0"
+            class="mt-[24rpx] block text-center text-[24rpx] text-[#a08a84]"
+            >零元订单不支持退款</text
+          >
+        </view>
+      </scroll-view>
+    </cl-popup>
   </z-paging-x>
 </template>

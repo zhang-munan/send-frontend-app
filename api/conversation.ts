@@ -7,6 +7,10 @@ export interface ConversationInfo {
   id: number
   userId: number
   receiverPhoneMask: string
+  /** 当前用户在会话中的身份 */
+  viewerRole: 'sender' | 'receiver'
+  /** 列表和详情标题使用的对端标签 */
+  peerLabel: string
   lastMsgContent: string
   lastMsgTime: string
   lastMsgIsReply: number

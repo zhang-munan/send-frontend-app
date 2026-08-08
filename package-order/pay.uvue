@@ -216,6 +216,9 @@ function invokeWxPay(params: WxPayParams): Promise<void> {
 			!params.timeStamp ||
 			!params.nonceStr ||
 			!params.package ||
+			!/^prepay_id=.+/.test(params.package) ||
+			params.package.includes("undefined") ||
+			params.package.includes("null") ||
 			!params.signType ||
 			!params.paySign
 		) {

@@ -51,10 +51,6 @@ function goSend() {
 	uni.navigateTo({ url: "/package-send/send" });
 }
 
-function showSearchTip() {
-	uni.showToast({ title: "搜索功能即将开放", icon: "none" });
-}
-
 onShow(() => pagingX.value?.reload());
 </script>
 
@@ -69,16 +65,7 @@ onShow(() => pagingX.value?.reload());
 			color="#3f1c12"
 			height="100rpx"
 			:pt="{ title: { className: 'text-[42rpx] font-[800] tracking-[8rpx]' } }"
-		>
-			<template #append>
-				<view
-					class="mr-[22rpx] h-[72rpx] w-[72rpx] flex flex-row items-center justify-center"
-					@click="showSearchTip"
-				>
-					<cl-icon name="search-line" :size="25" :pt="{ className: 'text-[#17110f]' }" />
-				</view>
-			</template>
-		</cl-topbar>
+		/>
 		</template>
 
 		<template #loading>

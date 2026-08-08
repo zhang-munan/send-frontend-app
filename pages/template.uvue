@@ -178,9 +178,6 @@ onShow(() => {
           />
           <cl-icon v-if="searchInput" @click="onSearchClear" name="close-circle-line" :size="14" :pt="{ className: 'flex-shrink-0 text-[#c4aba4]' }" />
         </view>
-        <view class="h-[72rpx] w-[72rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-[20rpx] bg-[#ffffff] shadow-[0_4rpx_16rpx_#fe89731a]">
-          <cl-icon name="filter-line" :size="15" :pt="{ className: 'text-[#8c756e]' }" />
-        </view>
       </view>
 
       <!-- ── 分类 Tabs ── -->

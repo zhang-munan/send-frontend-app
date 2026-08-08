@@ -1,11 +1,39 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
+import { useStore } from '@/.cool'
 import { getPublicMessageList, getRecentActivity, type PlazaMessage, type RecentActivity } from '@/api/message'
+import { loginByMiniCode } from '@/api/user'
 import { mergeOssPath } from '@/utils/oss'
 
+const { user } = useStore()
 const currentBanner = ref(0)
+const bannerVisible = ref(false)
+const bannerKey = ref(0)
 const stories = ref<PlazaMessage[]>([])
 const recentActivity = ref<RecentActivity>({ sentCount: 0, replyCount: 0, deliveredCount: 0, date: '' })
+const homeInitialized = ref(false)
+let homeInitializing = false
+
+/** 首页最先建立登录态，再发起依赖用户身份的首页请求。 */
+async function initializeUser() {
+  // #ifdef MP-WEIXIN
+  try {
+    const result: any = await new Promise((resolve, reject) => {
+      uni.login({ provider: 'weixin', success: resolve, fail: reject })
+    })
+    if (result.code) {
+      const token = await loginByMiniCode(result.code)
+      user.setToken(token)
+    }
+  }
+  catch (err) {
+    console.warn('小程序静默登录失败', err)
+  }
+  // #endif
+
+  // 小程序静默登录完成后同步资料；App 等端则使用已有 token 同步。
+  await user.get()
+}
 
 const bannerList = [
   { image: mergeOssPath('home/banner-1.png') },
@@ -33,6 +61,16 @@ const activityCards = [
 
 function onBannerChange(e: any) {
   currentBanner.value = e.detail.current
+}
+
+/**
+ * tabBar 页面会被缓存。离开时销毁 swiper，重新进入时用新 key 创建实例，
+ * 避免原生 swiper 的自动播放定时器沿用或叠加。
+ */
+function resetBanner() {
+  currentBanner.value = 0
+  bannerKey.value += 1
+  bannerVisible.value = true
 }
 
 function getBannerOffset(index: number) {
@@ -94,12 +132,36 @@ async function loadHomeData() {
   }
 }
 
+async function initializeHome() {
+  if (homeInitializing || homeInitialized.value)
+    return
+
+  homeInitializing = true
+  try {
+    await initializeUser()
+    await loadHomeData()
+    homeInitialized.value = true
+  }
+  finally {
+    homeInitializing = false
+  }
+}
+
 function goPlaza() {
   uni.switchTab({ url: '/pages/plaza' })
 }
 
-onMounted(loadHomeData)
-onShow(loadHomeData)
+onLoad(initializeHome)
+onShow(() => {
+  resetBanner()
+  // 首次展示由 onLoad 串行初始化，之后切回首页时再刷新数据。
+  if (homeInitialized.value)
+    loadHomeData()
+})
+onHide(() => {
+  bannerVisible.value = false
+  currentBanner.value = 0
+})
 </script>
 
 <template>
@@ -119,7 +181,7 @@ onShow(loadHomeData)
     </view>
 
     <view class="banner-swiper-wrap mt-[20rpx] overflow-visible">
-      <swiper class="banner-swiper h-[304rpx] w-full" :current="currentBanner" :autoplay="true" :interval="3200" :circular="true" previous-margin="80rpx" next-margin="80rpx" @change="onBannerChange">
+      <swiper v-if="bannerVisible" :key="bannerKey" class="banner-swiper h-[304rpx] w-full" :current="currentBanner" :autoplay="true" :interval="3200" :circular="true" previous-margin="80rpx" next-margin="80rpx" @change="onBannerChange">
         <swiper-item v-for="(item, index) in bannerList" :key="item.image" class="banner-swiper-item">
           <view class="px-[4px] overflow-visible">
             <view class="banner-slide relative box-border h-[280rpx] w-full overflow-hidden border-[6rpx] border-white rounded-[28rpx] border-solid" :style="getBannerSlideStyle(index)">

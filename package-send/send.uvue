@@ -142,10 +142,6 @@ const filteredTemplates = computed(() => {
   return templates.filter(t => t.tag === activeCategory.value)
 })
 
-function goRecords() {
-  uni.navigateTo({ url: '/package-send/send-records' })
-}
-
 function selectSendMode(mode: 'immediate' | 'scheduled') {
   sendMode.value = mode
   if (mode === 'scheduled')
@@ -243,16 +239,7 @@ async function handleConfirmSend() {
       color="#4a2b24"
       height="88rpx"
       :pt="{ title: { className: 'text-[34rpx] font-[800]' } }"
-    >
-      <template #append>
-		<!-- #ifdef WEB -->
-        <view class="mr-[24rpx] flex flex-row items-center gap-[6rpx]" @click="goRecords">
-          <cl-icon name="history-line" :size="13" :pt="{ className: 'text-[#7a5147]' }" />
-          <text class="text-[26rpx] text-[#7a5147]">发送记录</text>
-        </view>
-		<!-- #endif -->
-      </template>
-    </cl-topbar>
+    />
 
     <!-- Scrollable content -->
     <view class="px-[24rpx] pb-[200rpx]">

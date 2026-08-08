@@ -14,7 +14,7 @@ export const proxy = {
 		// 官方测试地址
 		target: "https://mljxcloud.com",
 		changeOrigin: true,
-		rewrite: (path: string) => path.replace("/prod", "/api")
+		rewrite: (path: string) => path.replace("/prod", "/bangni_api")
 	}
 };
 

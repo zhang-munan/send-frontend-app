@@ -6,14 +6,14 @@ export const prod = () => {
 	let baseUrl: string;
 
 	// #ifdef H5
-	// H5 始终使用当前访问域名，交给容器 Nginx 把 /api 转发到后端。
+	// H5 与管理后台共用域名，统一通过宿主机 Nginx 的 /bangni_api 访问后端。
 	host = window.location.origin;
-	baseUrl = "/api";
+	baseUrl = "/bangni_api";
 	// #endif
 
 	// #ifndef H5
 	host = get(proxy, `prod.target`) as string;
-	baseUrl = host + "/api";
+	baseUrl = host + "/bangni_api";
 	// #endif
 
 	return {

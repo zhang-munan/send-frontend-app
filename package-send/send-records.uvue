@@ -13,7 +13,6 @@ const FILTER_TABS = [
 
 const activeFilter = ref(-1)
 const filterCounts = ref<Record<number, number>>({})
-const showFilter = ref(false)
 
 // ─── 列表状态 ────────────────────────────────────────
 const list = ref<MessageRecord[]>([])
@@ -125,13 +124,7 @@ function goSend() {
         color="#4a2b24"
         height="88rpx"
         :pt="{ title: { className: 'text-[34rpx] font-[800]' }, back: { size: 20 } }"
-      >
-        <template #append>
-          <view class="mr-[24rpx] h-[72rpx] w-[72rpx] flex flex-row items-center justify-center" @click="showFilter = !showFilter">
-            <cl-icon name="filter-line" :size="18" :pt="{ className: 'text-[#a08a84]' }" />
-          </view>
-        </template>
-      </cl-topbar>
+      />
 
       <view class="flex flex-row gap-[12rpx] px-[20rpx] pb-[16rpx]">
         <view
