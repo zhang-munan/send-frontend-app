@@ -173,7 +173,7 @@ try {
 					>
 						<view class="flex flex-row items-center gap-[18rpx]">
 							<view class="h-[48rpx] w-[48rpx] flex flex-row items-center justify-center rounded-[14rpx] bg-[#fff0f1]">
-								<cl-icon name="forbid-2-line" :size="13" :pt="{ className: 'text-[#e5484d]' }" />
+								<cl-icon name="user-forbid-line" :size="13" :pt="{ className: 'text-[#e5484d]' }" />
 							</view>
 							<view>
 								<text class="text-[28rpx] text-[#1a0e0b]">拉黑列表</text>

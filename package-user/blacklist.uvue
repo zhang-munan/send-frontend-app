@@ -48,7 +48,7 @@ function formatTime(value: string) {
 
     <template #empty>
       <view class="flex flex-col items-center justify-center py-[180rpx]">
-        <cl-icon name="forbid-2-line" :size="48" :pt="{ className: 'text-[#cbbab5]' }" />
+        <cl-icon name="forbid-line" :size="48" :pt="{ className: 'text-[#cbbab5]' }" />
         <text class="mt-[24rpx] text-[28rpx] text-[#8c7771]">暂无拉黑用户</text>
         <text class="mt-[10rpx] text-[23rpx] text-[#b2a19c]">拉黑后，对方将无法继续向你发送短信</text>
       </view>
