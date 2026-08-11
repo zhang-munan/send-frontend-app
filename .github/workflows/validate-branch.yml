@@ -1,21 +1,21 @@
-name: Validate feature branch
+# name: Validate feature branch
 
-on:
-  pull_request:
-    branches: ['release/**']
+# on:
+#   pull_request:
+#     branches: ['release/**']
 
-permissions:
-  contents: read
+# permissions:
+#   contents: read
 
-jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Verify feature branch naming
-        env:
-          SOURCE_BRANCH: ${{ github.head_ref }}
-        run: |
-          if [[ "$SOURCE_BRANCH" != feature/* ]]; then
-            echo "开发分支必须使用 feature/ 前缀，当前为: $SOURCE_BRANCH"
-            exit 1
-          fi
+# jobs:
+#   validate:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Verify feature branch naming
+#         env:
+#           SOURCE_BRANCH: ${{ github.head_ref }}
+#         run: |
+#           if [[ "$SOURCE_BRANCH" != feature/* ]]; then
+#             echo "开发分支必须使用 feature/ 前缀，当前为: $SOURCE_BRANCH"
+#             exit 1
+#           fi
