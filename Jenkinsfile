@@ -58,7 +58,7 @@ pipeline {
                         curl --silent --show-error --fail --location \
                             --header "Authorization: Bearer $GITHUB_TOKEN" \
                             --header "Accept: application/vnd.github+json" \
-                            "https://api.github.com/repos/zhang-munan/send-frontend-app/releases/tags/$H5_VERSION" \
+                            "https://api.github.com/repos/zhang-munan/send-frontend-app/releases/tags/$IMAGE_TAG" \
                             --output release.json
 
                         ASSET_API_URL="$(python3 -c 'import json, sys; data=json.load(open(sys.argv[1])); print(next((item["url"] for item in data.get("assets", []) if item.get("name") == "h5-dist.tar.gz"), ""))' release.json)"
