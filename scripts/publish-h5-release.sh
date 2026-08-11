@@ -45,4 +45,4 @@ gh release create "$version" "$archive#h5-dist.tar.gz" \
   --title "H5 $version" \
   --notes "HBuilderX H5 production build"
 
-echo "H5 Release $version 已创建，GitHub Actions 将开始部署。"
+echo "H5 Release $version 已创建"

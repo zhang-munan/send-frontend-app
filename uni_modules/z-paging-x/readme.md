@@ -120,6 +120,7 @@ setZPXConfig({
 | auto              | mounted后自动调用reload方法(mounted后自动调用接口)           | Boolean | true   | false  |
 | paging-style      | 自定义组件的样式                                             | Object  | {}     | -      |
 | layout-only       | 是否只使用基础布局，设置为true后将关闭mounted自动请求数据、关闭下拉刷新和滚动到底部加载更多，强制隐藏空数据图 | Boolean | false  | true   |
+| use-chat-record-mode | 是否使用倒置聊天记录模式；开启后首屏位于底部，滚动到视觉顶部加载更早消息。接口每页数据需按时间倒序，列表中每条记录需设置`transform: scaleY(-1)` | Boolean | false | true |
 
 #### list-view&scroll-view相关配置
 
@@ -229,4 +230,3 @@ setZPXConfig({
 | empty     | 自定义空数据占位view。<br/>slot-scope="{ isLoadFailed(true: 加载失败，false: 加载成功) }" |
 | backToTop | 自定义点击返回顶部view                                       |
 | loading   | 自定义页面reload时的加载view                                 |
-

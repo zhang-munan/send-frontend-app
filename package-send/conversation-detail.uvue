@@ -1,283 +1,378 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { getConversationMessages, markConversationRead, type ConversationMessage } from '@/api/conversation'
-import { mergeOssPath } from '@/utils/oss'
-import { formatYuan } from '@/utils/money'
+import { computed, nextTick, ref } from "vue";
 import {
-  blockConversationSender,
-  getConversationBlockState,
-  type ConversationBlockState,
-} from '@/api/message'
+	getConversationMessages,
+	markConversationRead,
+	type ConversationMessage
+} from "@/api/conversation";
+import { mergeOssPath } from "@/utils/oss";
+import { formatYuan } from "@/utils/money";
+import {
+	blockConversationSender,
+	getConversationBlockState,
+	type ConversationBlockState
+} from "@/api/message";
 
 // ─── 路由参数 ────────────────────────────────────────
-const convId = ref(0)
-const phoneLabel = ref('')
-const viewerRole = ref<'sender' | 'receiver'>('sender')
+const convId = ref(0);
+const phoneLabel = ref("");
+const viewerRole = ref<"sender" | "receiver">("sender");
 
 onLoad((options) => {
-  convId.value = Number(options?.id || 0)
-  phoneLabel.value = decodeURIComponent(options?.phone || '')
-  viewerRole.value = options?.role === 'receiver' ? 'receiver' : 'sender'
-  if (convId.value) {
-    loadMessages(true)
-    markConversationRead(convId.value).catch(() => {})
-    if (viewerRole.value === 'receiver') loadBlockState()
-  }
-})
+	convId.value = Number(options?.id || 0);
+	phoneLabel.value = decodeURIComponent(options?.phone || "") ?? "";
+	viewerRole.value = options?.role === "receiver" ? "receiver" : "sender";
+	if (convId.value) {
+		nextTick(() => pagingX.value?.reload());
+		markConversationRead(convId.value).catch(() => {});
+		if (viewerRole.value === "receiver") loadBlockState();
+	}
+});
 
 // ─── 消息列表 ────────────────────────────────────────
-const messages = ref<ConversationMessage[]>([])
-const total = ref(0)
-const page = ref(1)
-const pageSize = 20
-const loading = ref(false)
-const noMore = ref(false)
-const blockState = ref<ConversationBlockState | null>(null)
-const blocking = ref(false)
+const messages = ref<ConversationMessage[]>([]);
+const pagingX = ref<any>(null);
+const blockState = ref<ConversationBlockState | null>(null);
+const blocking = ref(false);
+const isSenderBlocked = computed(() => blockState.value?.isBlocked === true);
 
-// 消息按时间正序显示
-const sortedMessages = computed(() =>
-  [...messages.value].sort((a, b) => new Date(a.createTime).getTime() - new Date(b.createTime).getTime()),
-)
+async function queryMessages(pageNo: number, pageSize: number) {
+	if (!convId.value) {
+		pagingX.value?.complete([]);
+		return;
+	}
+	try {
+		const res = await getConversationMessages(convId.value, pageNo, pageSize);
+		if (res == null) {
+			pagingX.value?.completeByError();
+			return;
+		}
+		// 接口按时间倒序返回，正好匹配z-paging-x倒置聊天模式的数据顺序。
+		pagingX.value?.completeByTotal(res.list, res.total);
+	} catch (err: any) {
+		uni.showToast({ title: err?.message || "加载失败", icon: "none" });
+		pagingX.value?.completeByError();
+	}
+}
 
-async function loadMessages(reset = false) {
-  if (loading.value) return
-  if (!reset && noMore.value) return
-  if (reset) {
-    page.value = 1
-    noMore.value = false
-    messages.value = []
-  }
-  loading.value = true
-  try {
-    const res = await getConversationMessages(convId.value, page.value, pageSize)
-    messages.value.push(...res.list)
-    total.value = res.total
-    if (messages.value.length >= res.total) noMore.value = true
-    page.value++
-  }
-  catch (err: any) {
-    uni.showToast({ title: err?.message || '加载失败', icon: 'none' })
-  }
-  finally {
-    loading.value = false
-  }
+function retryMessages() {
+	pagingX.value?.reload();
 }
 
 async function loadBlockState() {
-  try {
-    blockState.value = await getConversationBlockState(convId.value)
-  }
-  catch { /* 会话内容仍可正常查看 */ }
+	try {
+		blockState.value = await getConversationBlockState(convId.value);
+	} catch {
+		/* 会话内容仍可正常查看 */
+	}
 }
 
 function confirmBlock() {
-  if (!blockState.value || blockState.value.isBlocked || blocking.value) return
-  uni.showModal({
-    title: '确认拉黑该发送者？',
-    content: '拉黑后，对方无法再向你的手机号发送短信；你可以在设置的拉黑列表中解除。',
-    confirmText: '确认拉黑',
-    confirmColor: '#e5484d',
-    success: async (result) => {
-      if (!result.confirm) return
-      blocking.value = true
-      try {
-        await blockConversationSender(convId.value)
-        await loadBlockState()
-        uni.showToast({ title: '已拉黑，对方将无法继续发送', icon: 'none' })
-      }
-      catch (err: any) {
-        uni.showToast({ title: err?.message || '拉黑失败，请重试', icon: 'none' })
-      }
-      finally {
-        blocking.value = false
-      }
-    },
-  })
+	if (!blockState.value || blockState.value.isBlocked || blocking.value) return;
+	uni.showModal({
+		title: "确认拉黑该发送者？",
+		content: "拉黑后，对方无法再向你的手机号发送短信；你可以在设置的拉黑列表中解除。",
+		confirmText: "确认拉黑",
+		confirmColor: "#e5484d",
+		success: async (result) => {
+			if (!result.confirm) return;
+			blocking.value = true;
+			try {
+				await blockConversationSender(convId.value);
+				await loadBlockState();
+				uni.showToast({ title: "已拉黑，对方将无法继续发送", icon: "none" });
+			} catch (err: any) {
+				uni.showToast({ title: err?.message || "拉黑失败，请重试", icon: "none" });
+			} finally {
+				blocking.value = false;
+			}
+		}
+	});
 }
 
 // ─── 提示横幅 ────────────────────────────────────────
-const showBanner = ref(true)
+const showBanner = ref(true);
 
 // ─── 格式化 ────────────────────────────────────────────
 function formatTime(t: string) {
-  if (!t) return ''
-  const d = new Date(t.replace('T', ' '))
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const msgDate = new Date(d.getFullYear(), d.getMonth(), d.getDate())
-  const hm = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-  if (msgDate.getTime() === today.getTime()) return hm
-  if (d.getFullYear() === now.getFullYear()) return `${d.getMonth() + 1}-${d.getDate()} ${hm}`
-  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()} ${hm}`
+	if (!t) return "";
+	const d = new Date(t.replace("T", " "));
+	const now = new Date();
+	const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+	const msgDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+	const hm = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+	if (msgDate.getTime() === today.getTime()) return hm;
+	if (d.getFullYear() === now.getFullYear()) return `${d.getMonth() + 1}-${d.getDate()} ${hm}`;
+	return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()} ${hm}`;
 }
 
 // 相邻消息是否需要显示时间戳（间隔>5分钟）
 function shouldShowTime(idx: number): boolean {
-  if (idx === 0) return true
-  const cur = new Date(sortedMessages.value[idx].createTime.replace('T', ' ')).getTime()
-  const prev = new Date(sortedMessages.value[idx - 1].createTime.replace('T', ' ')).getTime()
-  return cur - prev > 5 * 60 * 1000
+	// messages为时间倒序；视觉上后一项会出现在当前消息之前。
+	if (idx === messages.value.length - 1) return true;
+	const cur = new Date(messages.value[idx].createTime.replace("T", " ")).getTime();
+	const prev = new Date(messages.value[idx + 1].createTime.replace("T", " ")).getTime();
+	return cur - prev > 5 * 60 * 1000;
 }
 
 function formatSendCost(msg: ConversationMessage) {
-  if (msg.payType === 1) {
-    return msg.smsCount ? `套餐抵扣 ${msg.smsCount} 条` : '套餐抵扣'
-  }
-  if (msg.feeAmount) {
-    return `¥${formatYuan(msg.feeAmount)}`
-  }
-  return ''
+	if (msg.payType === 1) {
+		return msg.smsCount ? `套餐抵扣 ${msg.smsCount} 条` : "套餐抵扣";
+	}
+	if (msg.feeAmount) {
+		return `¥${formatYuan(msg.feeAmount)}`;
+	}
+	return "";
 }
 
 function sendCostClass(msg: ConversationMessage) {
-  return msg.payType === 1 ? 'text-[#58a05c]' : 'text-[#a08a84]'
+	return msg.payType === 1 ? "text-[#58a05c]" : "text-[#a08a84]";
 }
 
 // ─── 跳转发送 ────────────────────────────────────────
 function goSend() {
-  uni.navigateTo({ url: '/package-send/send' })
+	uni.navigateTo({ url: "/package-send/send" });
 }
-
 </script>
 
 <template>
-  <view class="flex min-h-[100vh] flex-col bg-[#f2f2f7]">
-    <cl-topbar
-      :title="phoneLabel"
-      safeAreaTop
-      fixed
-      backgroundColor="#f2f2f7"
-      color="#1a1a1a"
-      height="88rpx"
-      :pt="{ className: 'border-b border-b-solid border-b-[#f5f5f5]', title: { className: 'text-[32rpx] font-[800]' }, back: { size: 20 } }"
-    />
+	<z-paging-x
+		ref="pagingX"
+		v-model="messages"
+		class="bg-[#f2f2f7]"
+		:auto="false"
+		:default-page-size="20"
+		:show-scrollbar="false"
+		list-is="scroll-view"
+		use-chat-record-mode
+		load-more-default-text="上滑加载更早消息"
+		load-more-loading-text="正在加载更早消息..."
+		load-more-no-more-text="没有更早消息了"
+		@query="queryMessages"
+	>
+		<template #top>
+			<view>
+				<cl-topbar
+					:title="phoneLabel"
+					safeAreaTop
+					backgroundColor="#f2f2f7"
+					color="#1a1a1a"
+					height="88rpx"
+					:pt="{
+						className: 'border-b border-b-solid border-b-[#f5f5f5]',
+						title: { className: 'text-[32rpx] font-[800]' },
+						back: { size: 20 }
+					}"
+				/>
 
-    <view
-      v-if="viewerRole === 'receiver' && blockState"
-      class="flex flex-row flex-shrink-0 items-center justify-between bg-white px-[28rpx] py-[16rpx]"
-      style="border-bottom:1rpx solid #f1e7e4;"
-    >
-      <text class="text-[23rpx] text-[#8c7771]">
-        {{ blockState.isBlocked ? '已阻止该发送者继续向你发送短信' : '你可以随时拉黑该发送者' }}
-      </text>
-      <view
-        class="rounded-[22rpx] border border-solid px-[24rpx] py-[10rpx]"
-        :class="blockState.isBlocked ? 'border-[#d7cbc7] bg-[#f5f2f1]' : 'border-[#e5484d] bg-[#fff5f5]'"
-        @click="confirmBlock"
-      >
-        <text class="text-[24rpx] font-[700]" :class="blockState.isBlocked ? 'text-[#998984]' : 'text-[#e5484d]'">
-          {{ blockState.isBlocked ? '已拉黑' : (blocking ? '处理中...' : '拉黑') }}
-        </text>
-      </view>
-    </view>
+				<view
+					v-if="viewerRole === 'receiver' && blockState"
+					class="flex flex-row flex-shrink-0 items-center justify-between bg-white px-[28rpx] py-[16rpx]"
+					style="border-bottom: 1rpx solid #f1e7e4"
+				>
+					<text class="text-[23rpx] text-[#8c7771]">
+						{{
+							isSenderBlocked
+								? "已阻止该发送者继续向你发送短信"
+								: "你可以随时拉黑该发送者"
+						}}
+					</text>
+					<view
+						class="rounded-[22rpx] border border-solid px-[24rpx] py-[10rpx]"
+						:class="
+							isSenderBlocked
+								? 'border-[#d7cbc7] bg-[#f5f2f1]'
+								: 'border-[#e5484d] bg-[#fff5f5]'
+						"
+						@click="confirmBlock"
+					>
+						<text
+							class="text-[24rpx] font-[700]"
+							:class="isSenderBlocked ? 'text-[#998984]' : 'text-[#e5484d]'"
+						>
+							{{ isSenderBlocked ? "已拉黑" : blocking ? "处理中..." : "拉黑" }}
+						</text>
+					</view>
+				</view>
 
-    <!-- 安全提示横幅 -->
-    <view
-      v-if="showBanner"
-      class="flex flex-row flex-shrink-0 items-center gap-[12rpx] px-[24rpx] py-[16rpx]"
-      style="background:#fffbef; border-bottom:1rpx solid #f5e9c0;"
-    >
-      <image :src="mergeOssPath('safe.png')" mode="aspectFit" class="h-[32rpx] w-[32rpx] flex-shrink-0" />
-      <text class="flex-1 text-[24rpx] leading-[38rpx] text-[#7a6010]">
-        保持真诚和尊重，好的沟通是双向的 💛
-      </text>
-      <view class="h-[40rpx] w-[40rpx] flex flex-row flex-shrink-0 items-center justify-center" @click="showBanner = false">
-        <cl-icon name="close-line" :size="12" :pt="{ className: 'text-[#a0a0a0]' }" />
-      </view>
-    </view>
+				<!-- 安全提示横幅 -->
+				<view
+					v-if="showBanner"
+					class="flex flex-row flex-shrink-0 items-center gap-[12rpx] px-[24rpx] py-[16rpx]"
+					style="background: #fffbef; border-bottom: 1rpx solid #f5e9c0"
+				>
+					<image
+						:src="mergeOssPath('safe.png')"
+						mode="aspectFit"
+						class="h-[32rpx] w-[32rpx] flex-shrink-0"
+					/>
+					<text class="flex-1 text-[24rpx] leading-[38rpx] text-[#7a6010]">
+						保持真诚和尊重，好的沟通是双向的 💛
+					</text>
+					<view
+						class="h-[40rpx] w-[40rpx] flex flex-row flex-shrink-0 items-center justify-center"
+						@click="showBanner = false"
+					>
+						<cl-icon
+							name="close-line"
+							:size="12"
+							:pt="{ className: 'text-[#a0a0a0]' }"
+						/>
+					</view>
+				</view>
+			</view>
+		</template>
 
-    <!-- 消息区域 -->
-    <scroll-view
-      scroll-y
-      scroll-into-view="msg-bottom"
-      class="flex-1 px-[20rpx] pb-[20rpx]"
-    >
-      <!-- 加载更多 -->
-      <view v-if="!noMore" class="py-[20rpx] text-center" @click="loadMessages(false)">
-        <text class="text-[24rpx] text-[#a08a84]">{{ loading ? '加载中...' : '加载更早消息' }}</text>
-      </view>
+		<template #loading>
+			<view class="py-[80rpx] text-center">
+				<text class="text-[24rpx] text-[#a08a84]">正在加载消息...</text>
+			</view>
+		</template>
 
-      <!-- 空状态 -->
-      <view v-if="!loading && sortedMessages.length === 0" class="flex flex-col items-center justify-center py-[80rpx]">
-        <text class="text-[60rpx]">💌</text>
-        <text class="mt-[16rpx] text-[26rpx] text-[#a08a84]">暂无消息记录</text>
-      </view>
+		<template #empty="{ isLoadFailed }">
+			<view class="flex flex-col items-center justify-center py-[80rpx]">
+				<text class="text-[60rpx]">{{ isLoadFailed ? "📭" : "💌" }}</text>
+				<text class="mt-[16rpx] text-[26rpx] text-[#a08a84]">
+					{{ isLoadFailed ? "消息加载失败" : "暂无消息记录" }}
+				</text>
+				<view
+					v-if="isLoadFailed"
+					class="mt-[24rpx] rounded-[24rpx] bg-white px-[32rpx] py-[14rpx]"
+					@click="retryMessages"
+				>
+					<text class="text-[24rpx] font-[600] text-[#fe6a5a]">重新加载</text>
+				</view>
+			</view>
+		</template>
 
-      <!-- 消息气泡 -->
-      <view v-for="(msg, idx) in sortedMessages" :key="msg.id">
-        <!-- 时间戳 -->
-        <view v-if="shouldShowTime(idx)" class="py-[20rpx] text-center">
-          <text
-            class="rounded-[12rpx] px-[16rpx] py-[6rpx] text-[22rpx] text-[#888]"
-            style="width: fit-content; margin: auto;"
-          >
-            {{ formatTime(msg.createTime) }}
-          </text>
-        </view>
+		<!--
+			内容不足一屏时，弹性占位会填充消息下方的剩余空间，让消息从顶部开始；
+			内容超过一屏后，占位自动收缩到最小高度，继续保持标准聊天滚动行为。
+		-->
+		<view v-if="messages.length" class="chat-message-list">
+			<view class="chat-message-spacer" />
 
-        <!-- 发出（右侧粉色气泡）-->
-        <view v-if="msg.direction === 1" class="mb-[16rpx] flex flex-row justify-end gap-[16rpx]">
-          <view class="max-w-[540rpx]">
-            <view
-              class="rounded-[24rpx] rounded-tr-[8rpx] px-[28rpx] py-[20rpx]"
-              style="background:linear-gradient(135deg,#fe8973,#fe6a5a)"
-            >
-              <text class="text-[30rpx] leading-[50rpx] text-white">{{ msg.contentPreview }}</text>
-            </view>
-            <view class="mt-[8rpx] flex flex-row items-center justify-end gap-[12rpx]">
-              <text v-if="formatSendCost(msg)" class="text-[20rpx]" :class="sendCostClass(msg)">{{ formatSendCost(msg) }}</text>
-              <cl-icon name="checkbox-circle-line" :size="11" :pt="{ className: 'text-[#a0a0a0]' }" />
-            </view>
-          </view>
-        </view>
+			<!-- 倒置列表中的每条记录需要再次倒置，恢复正常阅读方向。 -->
+			<view
+				v-for="(msg, idx) in messages"
+				:key="msg.id"
+				class="px-[20rpx]"
+				style="transform: scaleY(-1)"
+			>
+				<!-- 时间戳 -->
+				<view v-if="shouldShowTime(idx)" class="py-[20rpx] text-center">
+					<text
+						class="rounded-[12rpx] px-[16rpx] py-[6rpx] text-[22rpx] text-[#888]"
+						style="width: fit-content; margin: auto"
+					>
+						{{ formatTime(msg.createTime) }}
+					</text>
+				</view>
 
-        <!-- 收到（左侧白色气泡）-->
-        <view v-else-if="msg.direction === 2" class="mb-[16rpx] flex flex-row items-start gap-[16rpx]">
-          <!-- 对方头像 -->
-          <view
-            class="h-[72rpx] w-[72rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-full"
-            style="background:#e0e0e0"
-          >
-            <cl-icon name="user-line" :size="18" :pt="{ className: 'text-[#888]' }" />
-          </view>
-          <view class="max-w-[540rpx]">
-            <text class="mb-[6rpx] block text-[22rpx] text-[#a08a84]">对方发来</text>
-            <view
-              class="rounded-[24rpx] rounded-tl-[8rpx] bg-white px-[28rpx] py-[20rpx]"
-              style="box-shadow:0 2rpx 8rpx #0000000f"
-            >
-              <text class="text-[30rpx] leading-[50rpx] text-[#1a1a1a]">{{ msg.contentPreview }}</text>
-            </view>
-            <text class="mt-[8rpx] block text-[20rpx] text-[#a08a84]">{{ formatTime(msg.createTime) }}</text>
-          </view>
-        </view>
-      </view>
+				<!-- 发出（右侧粉色气泡）-->
+				<view
+					v-if="msg.direction === 1"
+					class="mb-[16rpx] flex flex-row justify-end gap-[16rpx]"
+				>
+					<view class="max-w-[540rpx]">
+						<view
+							class="rounded-[24rpx] rounded-tr-[8rpx] px-[28rpx] py-[20rpx]"
+							style="background: linear-gradient(135deg, #fe8973, #fe6a5a)"
+						>
+							<text class="text-[30rpx] leading-[50rpx] text-white">{{
+								msg.contentPreview
+							}}</text>
+						</view>
+						<view class="mt-[8rpx] flex flex-row items-center justify-end gap-[12rpx]">
+							<text
+								v-if="formatSendCost(msg)"
+								class="text-[20rpx]"
+								:class="sendCostClass(msg)"
+								>{{ formatSendCost(msg) }}</text
+							>
+							<cl-icon
+								name="checkbox-circle-line"
+								:size="11"
+								:pt="{ className: 'text-[#a0a0a0]' }"
+							/>
+						</view>
+					</view>
+				</view>
 
-      <!-- 为固定底部操作栏预留空间，避免遮挡最后一条消息 -->
-      <view id="msg-bottom" class="h-[180rpx]" />
-    </scroll-view>
+				<!-- 收到（左侧白色气泡）-->
+				<view
+					v-else-if="msg.direction === 2"
+					class="mb-[16rpx] flex flex-row items-start gap-[16rpx]"
+				>
+					<!-- 对方头像 -->
+					<view
+						class="h-[72rpx] w-[72rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-full"
+						style="background: #e0e0e0"
+					>
+						<cl-icon name="user-line" :size="18" :pt="{ className: 'text-[#888]' }" />
+					</view>
+					<view class="max-w-[540rpx]">
+						<text class="mb-[6rpx] block text-[22rpx] text-[#a08a84]">对方发来</text>
+						<view
+							class="rounded-[24rpx] rounded-tl-[8rpx] bg-white px-[28rpx] py-[20rpx]"
+							style="box-shadow: 0 2rpx 8rpx #0000000f"
+						>
+							<text class="text-[30rpx] leading-[50rpx] text-[#1a1a1a]">{{
+								msg.contentPreview
+							}}</text>
+						</view>
+						<text class="mt-[8rpx] block text-[20rpx] text-[#a08a84]">{{
+							formatTime(msg.createTime)
+						}}</text>
+					</view>
+				</view>
+			</view>
+		</view>
 
-    <!-- 底部操作栏 -->
-    <view
-      class="fixed bottom-0 left-0 right-0 z-[10] bg-white px-[24rpx] pb-[40rpx] pt-[20rpx]"
-      style="border-top:1rpx solid #f5f5f5; box-shadow:0 -4rpx 20rpx #0000000a;"
-    >
-      <view class="flex flex-row items-center gap-[16rpx]">
-        <text class="flex-1 truncate text-[26rpx] text-[#a08a84]">
-          {{ viewerRole === 'receiver' ? '你可以回复消息给对方' : '你可以发送新消息给对方' }}
-        </text>
-        <view
-          class="flex flex-row flex-shrink-0 items-center gap-[8rpx] rounded-[28rpx] px-[32rpx] py-[18rpx]"
-          style="background:linear-gradient(135deg,#fe8973,#fe6a5a)"
-          @click="goSend"
-        >
-          <cl-icon name="send-plane-fill" :size="14" :pt="{ className: 'text-white' }" />
-          <text class="text-[28rpx] font-[700] text-white">
-            {{ viewerRole === 'receiver' ? '回复消息' : '发送消息' }}
-          </text>
-        </view>
-      </view>
-    </view>
-  </view>
+		<template #bottom>
+			<!-- z-paging固定底部插槽会自动从消息区扣除高度，不再需要手写占位。 -->
+			<view
+				class="bg-white px-[24rpx] pb-[40rpx] pt-[20rpx]"
+				style="border-top: 1rpx solid #f5f5f5; box-shadow: 0 -4rpx 20rpx #0000000a"
+			>
+				<view class="flex flex-row items-center gap-[16rpx]">
+					<text class="flex-1 truncate text-[26rpx] text-[#a08a84]">
+						{{
+							viewerRole === "receiver"
+								? "你可以回复消息给对方"
+								: "你可以发送新消息给对方"
+						}}
+					</text>
+					<view
+						class="flex flex-row flex-shrink-0 items-center gap-[8rpx] rounded-[28rpx] px-[32rpx] py-[18rpx]"
+						style="background: linear-gradient(135deg, #fe8973, #fe6a5a)"
+						@click="goSend"
+					>
+						<cl-icon
+							name="send-plane-fill"
+							:size="14"
+							:pt="{ className: 'text-white' }"
+						/>
+						<text class="text-[28rpx] font-[700] text-white">
+							{{ viewerRole === "receiver" ? "回复消息" : "发送消息" }}
+						</text>
+					</view>
+				</view>
+			</view>
+		</template>
+	</z-paging-x>
 </template>
+
+<style scoped>
+.chat-message-list {
+	display: flex;
+	min-height: 100%;
+	flex-direction: column;
+}
+
+.chat-message-spacer {
+	min-height: 20rpx;
+	flex: 1;
+	transform: scaleY(-1);
+}
+</style>

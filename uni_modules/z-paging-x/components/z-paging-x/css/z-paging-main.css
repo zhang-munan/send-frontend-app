@@ -8,6 +8,18 @@
   flex: 1;
 }
 
+/*
+ * 聊天记录模式通过倒置滚动容器，让scrollTop=0稳定对应聊天底部。
+ * 每条业务记录和组件内置状态节点再反向一次，恢复正常阅读方向。
+ */
+.zpx-chat-list {
+  transform: scaleY(-1);
+}
+
+.zpx-chat-cell {
+  transform: scaleY(-1);
+}
+
 .zpx-back-to-top {
   width: 76rpx;
   height: 76rpx;
