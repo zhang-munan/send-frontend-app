@@ -2,7 +2,7 @@
 set -euo pipefail
 
 version="${1:-}"
-output_dir="unpackage/dist/build/h5"
+output_dir="unpackage/dist/build/web"
 
 if [[ ! "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   echo "用法: bash scripts/publish-h5-release.sh v1.0.0"
