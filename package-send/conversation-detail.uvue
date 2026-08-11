@@ -72,7 +72,7 @@ async function loadBlockState() {
 }
 
 function confirmBlock() {
-  if (!blockState.value?.canBlock || blockState.value.isBlocked || blocking.value) return
+  if (!blockState.value || blockState.value.isBlocked || blocking.value) return
   uni.showModal({
     title: '确认拉黑该发送者？',
     content: '拉黑后，对方无法再向你的手机号发送短信；你可以在设置的拉黑列表中解除。',
@@ -154,12 +154,12 @@ function goSend() {
     />
 
     <view
-      v-if="viewerRole === 'receiver' && blockState && (blockState.canBlock || blockState.isBlocked)"
+      v-if="viewerRole === 'receiver' && blockState"
       class="flex flex-row flex-shrink-0 items-center justify-between bg-white px-[28rpx] py-[16rpx]"
       style="border-bottom:1rpx solid #f1e7e4;"
     >
       <text class="text-[23rpx] text-[#8c7771]">
-        {{ blockState.isBlocked ? '已阻止该发送者继续向你发送短信' : `已收到 ${blockState.deliveredMessageCount} 条消息` }}
+        {{ blockState.isBlocked ? '已阻止该发送者继续向你发送短信' : '你可以随时拉黑该发送者' }}
       </text>
       <view
         class="rounded-[22rpx] border border-solid px-[24rpx] py-[10rpx]"
@@ -208,7 +208,10 @@ function goSend() {
       <view v-for="(msg, idx) in sortedMessages" :key="msg.id">
         <!-- 时间戳 -->
         <view v-if="shouldShowTime(idx)" class="py-[20rpx] text-center">
-          <text class="rounded-[12rpx] bg-[#00000014] px-[16rpx] py-[6rpx] text-[22rpx] text-[#888]">
+          <text
+            class="rounded-[12rpx] px-[16rpx] py-[6rpx] text-[22rpx] text-[#888]"
+            style="width: fit-content; margin: auto;"
+          >
             {{ formatTime(msg.createTime) }}
           </text>
         </view>
@@ -251,24 +254,28 @@ function goSend() {
         </view>
       </view>
 
-      <view id="msg-bottom" class="h-[1rpx]" />
+      <!-- 为固定底部操作栏预留空间，避免遮挡最后一条消息 -->
+      <view id="msg-bottom" class="h-[180rpx]" />
     </scroll-view>
 
     <!-- 底部操作栏 -->
     <view
-      v-if="viewerRole === 'sender'"
-      class="flex-shrink-0 bg-white px-[24rpx] pb-[40rpx] pt-[20rpx]"
+      class="fixed bottom-0 left-0 right-0 z-[10] bg-white px-[24rpx] pb-[40rpx] pt-[20rpx]"
       style="border-top:1rpx solid #f5f5f5; box-shadow:0 -4rpx 20rpx #0000000a;"
     >
       <view class="flex flex-row items-center gap-[16rpx]">
-        <text class="flex-1 truncate text-[26rpx] text-[#a08a84]">你可以发送新消息给对方</text>
+        <text class="flex-1 truncate text-[26rpx] text-[#a08a84]">
+          {{ viewerRole === 'receiver' ? '你可以回复消息给对方' : '你可以发送新消息给对方' }}
+        </text>
         <view
           class="flex flex-row flex-shrink-0 items-center gap-[8rpx] rounded-[28rpx] px-[32rpx] py-[18rpx]"
           style="background:linear-gradient(135deg,#fe8973,#fe6a5a)"
           @click="goSend"
         >
           <cl-icon name="send-plane-fill" :size="14" :pt="{ className: 'text-white' }" />
-          <text class="text-[28rpx] font-[700] text-white">发送消息</text>
+          <text class="text-[28rpx] font-[700] text-white">
+            {{ viewerRole === 'receiver' ? '回复消息' : '发送消息' }}
+          </text>
         </view>
       </view>
     </view>
