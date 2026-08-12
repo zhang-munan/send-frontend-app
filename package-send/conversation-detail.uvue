@@ -2,6 +2,7 @@
 import { computed, nextTick, ref } from "vue";
 import {
 	getConversationMessages,
+	getConversationReplyContext,
 	markConversationRead,
 	type ConversationMessage
 } from "@/api/conversation";
@@ -25,7 +26,10 @@ onLoad((options) => {
 	if (convId.value) {
 		nextTick(() => pagingX.value?.reload());
 		markConversationRead(convId.value).catch(() => {});
-		if (viewerRole.value === "receiver") loadBlockState();
+		if (viewerRole.value === "receiver") {
+			loadBlockState();
+			loadReplyContext();
+		}
 	}
 });
 
@@ -64,6 +68,15 @@ async function loadBlockState() {
 		blockState.value = await getConversationBlockState(convId.value);
 	} catch {
 		/* 会话内容仍可正常查看 */
+	}
+}
+
+async function loadReplyContext() {
+	try {
+		const context = await getConversationReplyContext(convId.value);
+		phoneLabel.value = context.receiverPhoneDisplay;
+	} catch {
+		/* 不影响会话消息查看，发送页还会再次校验回复权限。 */
 	}
 }
 
@@ -131,7 +144,10 @@ function sendCostClass(msg: ConversationMessage) {
 
 // ─── 跳转发送 ────────────────────────────────────────
 function goSend() {
-	uni.navigateTo({ url: "/package-send/send" });
+	const url = viewerRole.value === "receiver"
+		? `/package-send/send?replyConversationId=${convId.value}`
+		: "/package-send/send";
+	uni.navigateTo({ url });
 }
 </script>
 

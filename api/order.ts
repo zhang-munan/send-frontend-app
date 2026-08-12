@@ -71,7 +71,8 @@ export interface CreateOrderByProduct {
 
 /** 创建订单请求（按次发送） */
 export interface CreateOrderBySend {
-	receiverPhone: string;
+	/** 普通发送必填；会话回复由服务端根据 conversationId 安全解析。 */
+	receiverPhone?: string;
 	content: string;
 	isAnonymous?: number;
 	isPublic?: number;

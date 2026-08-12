@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from "vue";
 import { createOrder, getBalance } from '@/api/order'
 import { sendMessage } from '@/api/message'
+import { getConversationReplyContext, type ConversationReplyContext } from '@/api/conversation'
 import { mergeOssPath } from '@/utils/oss'
 import { useStore } from '@/.cool'
 
@@ -17,6 +18,11 @@ const activeCategory = ref('全部')
 const isCreatingOrder = ref(false)
 const scheduledDate = ref('')
 const scheduledTime = ref('')
+const replyConversationId = ref(0)
+const replyContext = ref<ConversationReplyContext | null>(null)
+const replyContextLoading = ref(false)
+const isReplyMode = computed(() => replyConversationId.value > 0)
+const pageTitle = computed(() => isReplyMode.value ? '回复消息' : '表达心意')
 
 /** 用户剩余配额 */
 const userQuota = ref(0)
@@ -70,7 +76,31 @@ onLoad((options) => {
     message.value = decodeURIComponent(options.content)
     showTemplatePanel.value = false
   }
+  const conversationId = Number(options?.replyConversationId || 0)
+  if (conversationId > 0) {
+    replyConversationId.value = conversationId
+    isAnonymous.value = false
+    isPublic.value = false
+    loadReplyContext()
+  }
 })
+
+async function loadReplyContext() {
+  replyContextLoading.value = true
+  try {
+    const context = await getConversationReplyContext(replyConversationId.value)
+    replyContext.value = context
+    phone.value = context.isPeerAnonymous
+      ? ''
+      : context.receiverPhoneDisplay
+  }
+  catch (err: any) {
+    uni.showToast({ title: err?.message || '无法获取回复对象', icon: 'none' })
+  }
+  finally {
+    replyContextLoading.value = false
+  }
+}
 
 async function loadBalance() {
 	if (!user.info.value?.phone) return
@@ -171,8 +201,13 @@ async function handleConfirmSend() {
 		return
 	}
 
+  if (isReplyMode.value && !replyContext.value) {
+    uni.showToast({ title: replyContextLoading.value ? '正在获取回复对象' : '回复对象不可用', icon: 'none' })
+    return
+  }
+
   const rawPhone = phone.value.replace(/\s/g, '')
-  if (!rawPhone || !/^1\d{10}$/.test(rawPhone)) {
+  if (!isReplyMode.value && (!rawPhone || !/^1\d{10}$/.test(rawPhone))) {
     uni.showToast({ title: '请输入正确的11位手机号', icon: 'none' })
     return
   }
@@ -198,11 +233,12 @@ async function handleConfirmSend() {
 
   try {
     const messagePayload = {
-      receiverPhone: rawPhone,
+      ...(!isReplyMode.value ? { receiverPhone: rawPhone } : {}),
       content: message.value,
-      isAnonymous: isAnonymous.value ? 1 : 0,
+      isAnonymous: isReplyMode.value ? 0 : isAnonymous.value ? 1 : 0,
       isPublic: isPublic.value ? 1 : 0,
       sendType: sendMode.value === 'scheduled' ? 2 : 1,
+      ...(isReplyMode.value ? { conversationId: replyConversationId.value } : {}),
       ...(sendMode.value === 'scheduled' ? { scheduledAt: scheduledAt.value } : {}),
     }
 
@@ -232,7 +268,7 @@ async function handleConfirmSend() {
 <template>
   <view class="min-h-[100vh] bg-[#fef7f5] text-[#4a2b24]">
     <cl-topbar
-      title="表达心意"
+      :title="pageTitle"
       safeAreaTop
       fixed
       backgroundColor="#fef7f5"
@@ -255,7 +291,20 @@ async function handleConfirmSend() {
       <!-- 收件人 section -->
       <view class="mt-[20rpx] rounded-[20rpx] bg-white px-[24rpx] pb-[20rpx] pt-[24rpx]" style="box-shadow: 0 4rpx 16rpx #fe89730f;">
         <text class="mb-[14rpx] block text-[28rpx] text-[#4a2b24]">收件人</text>
-        <view class="flex flex-row items-center gap-[16rpx] rounded-[16rpx] border border-solid border-[#f0e0d8] bg-[#fdf9f7] px-[20rpx] py-[14rpx]">
+        <view v-if="isReplyMode" class="flex flex-row items-center gap-[16rpx] rounded-[16rpx] border border-solid border-[#f0e0d8] bg-[#fdf9f7] px-[20rpx] py-[14rpx]">
+          <view class="h-[56rpx] w-[56rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-full bg-[#fff0ed]">
+            <cl-icon name="user-line" :size="16" :pt="{ className: 'text-[#fe8973]' }" />
+          </view>
+          <view class="min-w-0 flex-1">
+            <text class="block text-[28rpx] font-[700] text-[#4a2b24]">
+              {{ replyContextLoading ? '正在获取回复对象...' : replyContext?.receiverPhoneDisplay || '回复对象不可用' }}
+            </text>
+            <text v-if="replyContext?.isPeerAnonymous" class="mt-[4rpx] block text-[21rpx] text-[#a08a84]">
+              对方曾匿名发送，手机号不会展示
+            </text>
+          </view>
+        </view>
+        <view v-else class="flex flex-row items-center gap-[16rpx] rounded-[16rpx] border border-solid border-[#f0e0d8] bg-[#fdf9f7] px-[20rpx] py-[14rpx]">
           <input
             v-model="phone"
             type="number"
@@ -273,7 +322,7 @@ async function handleConfirmSend() {
           -->
         </view>
         <text class="mt-[10rpx] block text-[23rpx] text-[#c4b3ae]">
-          请输入收件人手机号，我们将帮你把心意送达
+          {{ isReplyMode ? '系统会将消息回复给原发送者' : '请输入收件人手机号，我们将帮你把心意送达' }}
         </text>
       </view>
 
@@ -362,14 +411,16 @@ async function handleConfirmSend() {
             <view class="h-[64rpx] w-[64rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-[18rpx] bg-[#fff0ed]">
               <image :src="mergeOssPath('anonymous.png')" mode="aspectFit" class="h-full w-full" />
             </view>
-            <text class="ml-[16rpx] min-w-0 flex-1 text-[28rpx] text-[#4a2b24]">匿名发送</text>
+            <text class="ml-[16rpx] min-w-0 flex-1 text-[28rpx] text-[#4a2b24]">{{ isReplyMode ? '实名回复' : '匿名发送' }}</text>
             <cl-switch
+				v-if="!isReplyMode"
 				class="ml-[16rpx] flex-shrink-0"
 				v-model="isAnonymous"
             ></cl-switch>
+			<text v-else class="rounded-[16rpx] bg-[#f5ece9] px-[18rpx] py-[8rpx] text-[22rpx] text-[#8c7771]">不可更改</text>
           </view>
           <text class="rounded-[18rpx] px-[20rpx] py-[18rpx] border border-solid border-[#f5dcc0] bg-[#fef1e1] mt-[12rpx] block text-[20rpx] text-[#a08a84] leading-[32rpx]">
-            收件人将收到一条来自「帮你说出口」的匿名消息，不会暴露你的身份
+            {{ isReplyMode ? '回复消息不能匿名发送，系统会自动关联到当前对话' : isAnonymous ? '收件人将收到一条来自「帮你说出口」的匿名消息，不会暴露你的身份' : '收件人将看到你的实名发送信息' }}
           </text>
         </view>
         <view class="mt-[18rpx] flex flex-row gap-[16rpx]">

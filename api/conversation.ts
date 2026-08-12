@@ -41,6 +41,13 @@ export interface ConversationMessage {
   createTime: string
 }
 
+/** 收件人回复会话时允许展示的上下文；匿名发送者的真实手机号不会下发。 */
+export interface ConversationReplyContext {
+  conversationId: number
+  receiverPhoneDisplay: string
+  isPeerAnonymous: boolean
+}
+
 /** 获取对话列表 */
 export function getConversationList(page = 1, size = 20) {
   return request({
@@ -56,6 +63,14 @@ export function getConversationMessages(id: number, page = 1, size = 20) {
     url: `${PREFIX}/${id}/messages`,
     method: 'GET',
     data: { page, size },
+  })
+}
+
+/** 获取回复目标。真实发送者仅在其选择实名发送时展示。 */
+export function getConversationReplyContext(id: number) {
+  return request({
+    url: `${PREFIX}/${id}/reply-context`,
+    method: 'GET',
   })
 }
 

@@ -4,7 +4,8 @@ const PREFIX = "/app/message/info";
 
 /** 发送消息参数 */
 export interface SendMessageParams {
-	receiverPhone: string;
+	/** 普通发送必填；会话回复由服务端根据 conversationId 安全解析。 */
+	receiverPhone?: string;
 	content: string;
 	isAnonymous?: number;
 	/** 是否公开展示到广场：0 私密，1 公开 */
