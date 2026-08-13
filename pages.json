@@ -145,7 +145,7 @@
 		}
 	],
 	"globalStyle": {
-		"navigationBarTitleText": "帮你说出口",
+		"navigationBarTitleText": "心语代传",
 		"navigationBarTextStyle": "@navTextStyle",
 		"backgroundColorContent": "@bgContentColor",
 		"backgroundColor": "@bgColor",

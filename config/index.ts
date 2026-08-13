@@ -5,8 +5,12 @@ import { prod } from "./prod";
 // 判断当前是否为开发环境
 export const isDev = process.env.NODE_ENV == "development";
 
-// 忽略 token 校验的接口路径。回复人可能尚未注册或登录。
-export const ignoreTokens: string[] = ["/app/message/reply/info", "/app/message/reply/send"];
+// 无需登录即可访问的公开接口不携带 token，避免本地残留登录态干扰请求。
+export const ignoreTokens: string[] = [
+	"/app/message/info/publicList",
+	"/app/message/reply/info",
+	"/app/message/reply/send"
+];
 
 // 根据环境导出最终配置
 export const config = {

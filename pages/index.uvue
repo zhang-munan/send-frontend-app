@@ -121,14 +121,24 @@ function avatarText(item: PlazaMessage) {
 
 async function loadHomeData() {
   try {
-    const [activity, storyResult] = await Promise.all([
-      getRecentActivity(),
-      getPublicMessageList(1, 4),
-    ])
-    recentActivity.value = activity
+    // 公开故事不依赖登录态，先独立加载，避免个人动态请求失败时一起被丢弃。
+    const storyResult = await getPublicMessageList(1, 4)
     stories.value = (storyResult.list || []).slice(0, 4)
   } catch (err) {
-    // 首页保留可用的静态框架；接口恢复后在下次进入页面自动刷新。
+    stories.value = []
+  }
+
+  // 最近动态是用户数据，H5 未登录时不发起该请求。
+  if (!user.token) {
+    recentActivity.value = { sentCount: 0, replyCount: 0, deliveredCount: 0, date: '' }
+    return
+  }
+
+  try {
+    recentActivity.value = await getRecentActivity()
+  }
+  catch (err) {
+    // 个人动态加载失败不影响公开故事展示。
   }
 }
 
@@ -169,7 +179,7 @@ onHide(() => {
     <cl-topbar :showBack="false" safeAreaTop backgroundColor="#fff8f7" color="#7a5147" height="100rpx">
       <view class="flex flex-row items-center justify-center gap-[12rpx]">
         <image :src="mergeOssPath('logo-heart.png')" mode="aspectFit" class="h-[76rpx] w-[76rpx]" />
-        <text class="text-[40rpx] text-[#7a5147] font-[800] tracking-[2rpx]">帮你说出口</text>
+        <text class="text-[40rpx] text-[#7a5147] font-[800] tracking-[2rpx]">心语代传</text>
       </view>
     </cl-topbar>
 
