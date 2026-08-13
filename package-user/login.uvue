@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref } from 'vue'
 import { bindMiniPhone, bindPhone, getCaptcha, loginByPhone, sendSmsCode } from '@/api/user'
-import { getDoc } from '@/api/setting'
 import { useStore } from '@/.cool'
 import { mergeOssPath } from '@/utils/oss'
 
@@ -11,22 +10,11 @@ const showNotice = ref(false)
 const agreed = ref(false)
 const loading = ref(false)
 
-// 用户协议与隐私政策必须能够在同意前分别、完整阅读。
-const docModal = ref({ visible: false, title: '', content: '' })
-const docLoading = ref(false)
-
-async function openDoc(key: string, fallbackTitle: string) {
-  docModal.value = { visible: true, title: fallbackTitle, content: '' }
-  docLoading.value = true
-  try {
-    const doc = await getDoc(key)
-    docModal.value.title = doc.title
-    docModal.value.content = doc.content
-  } catch {
-    docModal.value.content = '协议暂时无法加载，请稍后重试。'
-  } finally {
-    docLoading.value = false
-  }
+// 用户协议与隐私政策使用独立页面展示，确保 App/小程序端可完整滚动阅读。
+function openDoc(key: string, title: string) {
+  uni.navigateTo({
+    url: `/package-user/legal-document?key=${encodeURIComponent(key)}&title=${encodeURIComponent(title)}`
+  })
 }
 
 // 表单输入
@@ -270,7 +258,7 @@ onUnmounted(() => {
             <image :src="mergeOssPath('logo-heart.png')" mode="aspectFill" class="h-[150rpx] w-[150rpx]" />
           </view>
           <text class="mt-[20rpx] block w-full text-center text-[48rpx] text-[#8c6255] leading-[62rpx] font-[900]">
-            心语代传
+            余语传话
           </text>
           <text class="mt-[8rpx] block w-full text-center text-[28rpx] text-[#9b756a] leading-[38rpx]">
             那些说不出口的话，我们帮你送达
@@ -466,7 +454,7 @@ onUnmounted(() => {
         </view>
         <scroll-view scroll-y class="mt-[24rpx] max-h-[360rpx]" :show-scrollbar="true">
           <text class="block text-[25rpx] text-[#5b3f37] leading-[38rpx]">
-            感谢你来到「心语代传」。在使用之前，请了解以下约定：
+            感谢你来到「余语传话」。在使用之前，请了解以下约定：
           </text>
           <view v-for="(item, index) in noticeList" :key="item" class="mt-[14rpx] flex flex-row">
             <text class="w-[40rpx] text-[25rpx] text-[#5b3f37] leading-[38rpx]"> {{ index + 1 }}. </text>
@@ -484,31 +472,5 @@ onUnmounted(() => {
       </view>
     </view>
 
-    <!-- 用户协议 / 隐私政策 -->
-    <view
-      v-if="docModal.visible"
-      class="fixed inset-[0rpx] z-[40] flex flex-row items-end justify-center bg-[#2c1e1952]"
-      @click.self="docModal.visible = false"
-    >
-      <view class="h-[82vh] w-full overflow-hidden rounded-t-[32rpx] bg-[#fffefa]">
-        <view
-          class="h-[96rpx] flex flex-row items-center justify-between border-b-[1rpx] border-b-solid border-b-[#f0e8e4] px-[36rpx]"
-        >
-          <text class="text-[32rpx] text-[#1a0e0b] font-[700]">{{ docModal.title }}</text>
-          <view
-            class="h-[56rpx] w-[56rpx] flex flex-row items-center justify-center rounded-[56rpx] bg-[#f5eeec]"
-            @click="docModal.visible = false"
-          >
-            <cl-icon name="close-line" :size="14" :pt="{ className: 'text-[#7a5147]' }" />
-          </view>
-        </view>
-        <scroll-view scroll-y class="h-[calc(82vh-96rpx)] px-[36rpx] py-[28rpx]">
-          <view v-if="docLoading" class="flex flex-row items-center justify-center py-[80rpx]">
-            <text class="text-[28rpx] text-[#c4b3ae]">加载中...</text>
-          </view>
-          <rich-text v-else :nodes="docModal.content" class="text-[28rpx] text-[#4a2b24] leading-[52rpx]" />
-        </scroll-view>
-      </view>
-    </view>
   </view>
 </template>

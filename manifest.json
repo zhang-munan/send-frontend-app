@@ -1,7 +1,7 @@
 {
-    "name" : "心语代传",
+    "name" : "余语传话",
     "appid" : "__UNI__B321409",
-    "description" : "完全开源、永久免费、上手容易、效率极高的开发脚手架",
+    "description" : "那些说不出口的话，我们帮你送达",
     "versionName" : "1.0.0",
     "versionCode" : "100",
     "uni-app-x" : {},
@@ -46,7 +46,7 @@
             "mode" : "",
             "base" : "./"
         },
-        "title" : "心语代传"
+        "title" : "余语传话"
     },
     "app-harmony" : {
         "distribute" : {

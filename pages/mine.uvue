@@ -100,15 +100,15 @@ interface ServiceGroup {
 }
 
 const serviceGroups: ServiceGroup[] = [
-  {
-    title: '消息服务',
-    icon: 'heart-fill',
-    iconColor: '#ff5b67',
-    items: [
-      { title: '发送记录', icon: 'time-fill', bg: '#3f97f4' },
-      { title: '我的对话', icon: 'phone-fill', bg: '#8c66ee' },
-    ],
-  },
+  // {
+  //   title: '消息服务',
+  //   icon: 'heart-fill',
+  //   iconColor: '#ff5b67',
+  //   items: [
+  //     { title: '发送记录', icon: 'time-fill', bg: '#3f97f4' },
+  //     { title: '我的对话', icon: 'phone-fill', bg: '#8c66ee' },
+  //   ],
+  // },
   {
     title: '财务管理',
     icon: 'star-fill',
@@ -342,7 +342,7 @@ function handleItemClick(item: ServiceItem) {
         </view>
         <scroll-view scroll-y class="mt-[22rpx] max-h-[360rpx]" :show-scrollbar="true">
           <text class="block text-[25rpx] text-[#5b3f37] leading-[38rpx]">
-            感谢你来到「心语代传」。在使用之前，请了解以下约定：
+            感谢你来到「余语传话」。在使用之前，请了解以下约定：
           </text>
           <view v-for="(item, index) in noticeList" :key="item" class="mt-[14rpx] flex flex-row">
             <text class="w-[40rpx] flex-shrink-0 text-[25rpx] text-[#7a5147] leading-[38rpx]">

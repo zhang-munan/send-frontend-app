@@ -9,14 +9,15 @@ export const isDev = process.env.NODE_ENV == "development";
 export const ignoreTokens: string[] = [
 	"/app/message/info/publicList",
 	"/app/message/reply/info",
-	"/app/message/reply/send"
+	"/app/message/reply/send",
+	"/app/setting/doc/get"
 ];
 
 // 根据环境导出最终配置
 export const config = {
-	name: "Cool Unix",
+	name: "余语传话",
 	locale: "zh-tw",
-	website: "https://cool-js.com",
+	website: "https://mljxcloud.com",
 	showDarkButton: isMp() ? false : true,
 	isCustomTabBar: true,
 	backTop: true,

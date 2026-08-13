@@ -179,7 +179,7 @@ onHide(() => {
     <cl-topbar :showBack="false" safeAreaTop backgroundColor="#fff8f7" color="#7a5147" height="100rpx">
       <view class="flex flex-row items-center justify-center gap-[12rpx]">
         <image :src="mergeOssPath('logo-heart.png')" mode="aspectFit" class="h-[76rpx] w-[76rpx]" />
-        <text class="text-[40rpx] text-[#7a5147] font-[800] tracking-[2rpx]">心语代传</text>
+        <text class="text-[40rpx] text-[#7a5147] font-[800] tracking-[2rpx]">余语传话</text>
       </view>
     </cl-topbar>
 

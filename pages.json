@@ -140,12 +140,19 @@
 						"navigationStyle": "custom",
 						"navigationBarTextStyle": "black"
 					}
+				},
+				{
+					"path": "legal-document",
+					"style": {
+						"navigationStyle": "custom",
+						"navigationBarTextStyle": "black"
+					}
 				}
 			]
 		}
 	],
 	"globalStyle": {
-		"navigationBarTitleText": "心语代传",
+		"navigationBarTitleText": "余语传话",
 		"navigationBarTextStyle": "@navTextStyle",
 		"backgroundColorContent": "@bgContentColor",
 		"backgroundColor": "@bgColor",

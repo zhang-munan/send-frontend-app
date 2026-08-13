@@ -1,0 +1,115 @@
+<script setup lang="ts">
+import { ref } from "vue";
+import { getDoc } from "@/api/setting";
+
+const allowedDocs: Record<string, string> = {
+	user_agreement: "用户协议",
+	privacy_policy: "隐私政策"
+};
+
+const docKey = ref("");
+const title = ref("协议文档");
+const content = ref("");
+const loading = ref(true);
+const loadFailed = ref(false);
+
+/**
+ * 后台富文本同时用于管理端和移动端。移动端需要限制块级元素及表格宽度，
+ * 否则 App 的 rich-text 会被长英文或多列表格撑出屏幕。
+ */
+function normalizeMobileContent(html: string) {
+	return html
+		.replace(
+			/<div\s+style="/i,
+			'<div style="width:100%;max-width:100%;box-sizing:border-box;word-break:break-word;overflow-wrap:anywhere;'
+		)
+		.replace(
+			/<table\s+style="/gi,
+			'<table style="width:100%;max-width:100%;table-layout:fixed;box-sizing:border-box;word-break:break-all;'
+		)
+		.replace(
+			/<(th|td)\s+style="/gi,
+			'<$1 style="box-sizing:border-box;word-break:break-all;overflow-wrap:anywhere;'
+		)
+		.replace(
+			/<code>/gi,
+			'<code style="white-space:normal;word-break:break-all;overflow-wrap:anywhere;">'
+		);
+}
+
+onLoad((options) => {
+	const key = decodeURIComponent(options?.key || "");
+	if (!allowedDocs[key]) {
+		loading.value = false;
+		loadFailed.value = true;
+		return;
+	}
+
+	docKey.value = key;
+	title.value = decodeURIComponent(options?.title || allowedDocs[key]);
+	loadDoc();
+});
+
+async function loadDoc() {
+	loading.value = true;
+	loadFailed.value = false;
+	try {
+		const doc = await getDoc(docKey.value);
+		title.value = doc.title || allowedDocs[docKey.value];
+		content.value = normalizeMobileContent(doc.content || "");
+		loadFailed.value = !content.value;
+	} catch {
+		loadFailed.value = true;
+	} finally {
+		loading.value = false;
+	}
+}
+</script>
+
+<template>
+	<view class="h-[100vh] flex flex-col overflow-hidden bg-[#fffefa]">
+		<cl-topbar
+			:title="title"
+			safeAreaTop
+			backgroundColor="#fffefa"
+			color="#4a2b24"
+			height="88rpx"
+			:pt="{
+				className: 'border-b-[1rpx] border-b-solid border-b-[#f0e8e4]',
+				title: { className: 'text-[32rpx] font-[700]' },
+				back: { size: 20 }
+			}"
+		/>
+
+		<view v-if="loading" class="flex flex-row items-center justify-center py-[160rpx]">
+			<text class="text-[28rpx] text-[#9e7e76]">加载中...</text>
+		</view>
+
+		<view
+			v-else-if="loadFailed"
+			class="flex flex-col items-center justify-center px-[48rpx] py-[160rpx]"
+		>
+			<text class="text-[30rpx] text-[#4a2b24] font-[600]">协议暂时无法加载</text>
+			<text class="mt-[16rpx] text-center text-[24rpx] text-[#9e7e76] leading-[38rpx]">
+				请检查网络后重试
+			</text>
+			<button
+				class="mt-[36rpx] h-[72rpx] border-[0rpx] rounded-[18rpx] bg-[#fe8973] px-[48rpx] text-[28rpx] text-[#ffffff] leading-[72rpx]"
+				@click="loadDoc"
+			>
+				重新加载
+			</button>
+		</view>
+
+		<scroll-view v-else scroll-y class="min-w-0 w-full flex-1" :show-scrollbar="true">
+			<view
+				class="box-border w-full overflow-hidden px-[36rpx] py-[32rpx] pb-[calc(40rpx+env(safe-area-inset-bottom))]"
+			>
+				<rich-text
+					:nodes="content"
+					class="box-border block max-w-full w-full overflow-hidden text-[28rpx] text-[#4a2b24] leading-[52rpx]"
+				/>
+			</view>
+		</scroll-view>
+	</view>
+</template>

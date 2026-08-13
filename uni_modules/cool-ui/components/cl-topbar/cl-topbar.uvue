@@ -218,7 +218,7 @@ function back() {
 <style lang="scss" scoped>
 .cl-topbar {
 	&__inner {
-		@apply flex flex-row items-center w-full;
+		@apply relative flex flex-row items-center w-full;
 	}
 
 	&__icon {

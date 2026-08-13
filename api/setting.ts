@@ -11,6 +11,7 @@ export interface UserSetting {
   notifyReply: number
   notifyActivity: number
   defaultAnonymous: number
+  blockAllSms: number
 }
 
 /** 协议文档 */

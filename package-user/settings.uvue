@@ -1,30 +1,25 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import type { UserSetting } from "@/api/setting";
-import { getDoc, getUserSetting, updateUserSetting } from "@/api/setting";
-import { useStore } from "@/.cool";
-
-const { user } = useStore();
-
-// 四个用户偏好开关暂不对外展示，恢复时统一调整此处。
-const showSettingSwitches = false;
+import { getUserSetting, updateUserSetting } from "@/api/setting";
 
 // ---------- 用户设置 ----------
 const setting = ref<UserSetting>({
 	notifySendResult: 1,
 	notifyReply: 1,
 	notifyActivity: 1,
-	defaultAnonymous: 1
+	defaultAnonymous: 1,
+	blockAllSms: 0
 });
 
 onShow(() => {
-	if (showSettingSwitches && user.info.value?.phone) fetchSetting();
+	fetchSetting();
 });
 
 async function fetchSetting() {
 	try {
 		const data = await getUserSetting();
-		setting.value = data;
+		setting.value = { ...setting.value, ...data };
 	} catch {}
 }
 
@@ -39,22 +34,11 @@ async function onToggle(key: keyof UserSetting, val: boolean) {
 	}
 }
 
-// ---------- 文档弹窗 ----------
-const docModal = ref({ visible: false, title: "", content: "" });
-const docLoading = ref(false);
-
-async function openDoc(key: string, fallbackTitle: string) {
-	docModal.value = { visible: true, title: fallbackTitle, content: "" };
-	docLoading.value = true;
-	try {
-		const doc = await getDoc(key);
-		docModal.value.title = doc.title;
-		docModal.value.content = doc.content;
-	} catch {
-		docModal.value.content = "暂无内容";
-	} finally {
-		docLoading.value = false;
-	}
+// ---------- 法律文档 ----------
+function openDoc(key: string, title: string) {
+	uni.navigateTo({
+		url: `/package-user/legal-document?key=${encodeURIComponent(key)}&title=${encodeURIComponent(title)}`
+	});
 }
 
 // ---------- 修改手机号 ----------
@@ -94,7 +78,7 @@ try {
 
 		<scroll-view scroll-y class="px-[24rpx] pb-[40rpx]">
 			<!-- 通知设置 -->
-			<view v-if="showSettingSwitches" class="mt-[24rpx]">
+			<view class="mt-[24rpx]">
 				<text class="mb-[12rpx] block pl-[8rpx] text-[24rpx] text-[#9e7e76]">
 					通知设置
 				</text>
@@ -171,12 +155,7 @@ try {
 					class="overflow-hidden rounded-[24rpx] bg-[#ffffff] shadow-[0_8rpx_24rpx_#59392d12]"
 				>
 					<view
-						:class="[
-							'flex flex-row h-[100rpx] items-center justify-between px-[32rpx]',
-							showSettingSwitches
-								? 'border-b-[1rpx] border-b-solid border-b-[#f0e8e4]'
-								: ''
-						]"
+						class="flex flex-row h-[100rpx] items-center justify-between border-b-[1rpx] border-b-solid border-b-[#f0e8e4] px-[32rpx]"
 						@click="goBlacklist"
 					>
 						<view class="flex flex-row items-center gap-[18rpx]">
@@ -203,9 +182,32 @@ try {
 						/>
 					</view>
 					<view
-						v-if="showSettingSwitches"
-						class="flex flex-row h-[100rpx] items-center justify-between px-[32rpx]"
+						class="flex flex-row min-h-[112rpx] items-center justify-between border-b-[1rpx] border-b-solid border-b-[#f0e8e4] px-[32rpx] py-[12rpx]"
 					>
+						<view class="mr-[24rpx] flex flex-1 flex-row items-center gap-[18rpx]">
+							<view
+								class="h-[48rpx] w-[48rpx] flex flex-shrink-0 flex-row items-center justify-center rounded-[14rpx] bg-[#fff0f1]"
+							>
+								<cl-icon
+									name="forbid-2-line"
+									:size="13"
+									:pt="{ className: 'text-[#e5484d]' }"
+								/>
+							</view>
+							<view class="flex-1">
+								<text class="text-[28rpx] text-[#1a0e0b]">屏蔽所有短信</text>
+								<text
+									class="mt-[4rpx] block text-[22rpx] text-[#9e7e76] leading-[30rpx]"
+									>开启后，任何人都不能向你的手机号发送消息</text
+								>
+							</view>
+						</view>
+						<cl-switch
+							:model-value="!!setting.blockAllSms"
+							@change="(value: boolean) => onToggle('blockAllSms', value)"
+						/>
+					</view>
+					<view class="flex flex-row h-[100rpx] items-center justify-between px-[32rpx]">
 						<view class="flex flex-row items-center gap-[18rpx]">
 							<view
 								class="h-[48rpx] w-[48rpx] flex flex-row items-center justify-center rounded-[14rpx] bg-[#e8f6ff]"
@@ -334,45 +336,5 @@ try {
 
 			<view class="h-[60rpx]" />
 		</scroll-view>
-
-		<!-- 文档弹窗 -->
-		<view
-			v-if="docModal.visible"
-			class="fixed inset-0 z-50 flex flex-row items-end justify-center bg-[#2c1e1952]"
-			@click.self="docModal.visible = false"
-		>
-			<view class="h-[82vh] w-full overflow-hidden rounded-t-[32rpx] bg-[#fffefa]">
-				<!-- 弹窗头部 -->
-				<view
-					class="flex flex-row h-[96rpx] items-center justify-between border-b-[1rpx] border-b-solid border-b-[#f0e8e4] px-[36rpx]"
-				>
-					<text class="text-[32rpx] text-[#1a0e0b] font-[700]">{{ docModal.title }}</text>
-					<view
-						class="h-[56rpx] w-[56rpx] flex flex-row items-center justify-center rounded-[56rpx] bg-[#f5eeec]"
-						@click="docModal.visible = false"
-					>
-						<cl-icon
-							name="close-line"
-							:size="14"
-							:pt="{ className: 'text-[#7a5147]' }"
-						/>
-					</view>
-				</view>
-				<!-- 内容 -->
-				<scroll-view scroll-y class="h-[calc(82vh-96rpx)] px-[36rpx] py-[28rpx]">
-					<view
-						v-if="docLoading"
-						class="flex flex-row items-center justify-center py-[80rpx]"
-					>
-						<text class="text-[28rpx] text-[#c4b3ae]">加载中...</text>
-					</view>
-					<rich-text
-						v-else
-						:nodes="docModal.content"
-						class="text-[28rpx] text-[#4a2b24] leading-[52rpx]"
-					/>
-				</scroll-view>
-			</view>
-		</view>
 	</view>
 </template>

@@ -6,8 +6,6 @@ import { mergeOssPath } from "@/utils/oss";
 const list = ref<PlazaMessage[]>([]);
 const pagingX = ref<any>(null);
 
-const defaultAvatar = mergeOssPath("user-default-avatar.png");
-
 function formatTime(value: string) {
 	if (!value) return "";
 	const date = new Date(value.replace(/-/g, "/"));
@@ -33,8 +31,12 @@ function formatReplyTime(value: string | null) {
 }
 
 function senderName(item: PlazaMessage) {
-	if (item.isAnonymous) return "匿名";
+	if (item.isAnonymous) return "匿名用户";
 	return item.senderSignature || "暖心用户";
+}
+
+function avatarText(item: PlazaMessage) {
+	return senderName(item).slice(0, 1);
 }
 
 async function queryList(pageNo: number, pageSize: number) {
@@ -120,19 +122,22 @@ onShow(() => pagingX.value?.reload());
 					class="mb-[20rpx] flex flex-row rounded-[24rpx] border border-solid border-[#f7e8df] bg-[#fffdfb] px-[20rpx] py-[22rpx]"
 					style="box-shadow: 0 5rpx 18rpx #7d42300c"
 				>
-					<image
-						:src="defaultAvatar"
-						mode="aspectFill"
-						class="mr-[18rpx] h-[132rpx] w-[132rpx] flex-shrink-0 rounded-[66rpx] border-[4rpx] border-solid border-white"
-					/>
+					<view
+						class="story-avatar mr-[18rpx] h-[56rpx] w-[56rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-full text-[24rpx] text-white font-[700]"
+					>{{ avatarText(item) }}</view>
 					<view class="min-w-0 flex-1">
 						<view class="flex flex-row items-center justify-between">
-							<text class="text-[25rpx] text-[#967970]">{{
-								formatTime(item.createTime)
-							}}</text>
+							<view class="min-w-0 flex-1">
+								<text class="block truncate text-[25rpx] text-[#674237] font-[700]">{{
+									senderName(item)
+								}}</text>
+								<text class="mt-[4rpx] block text-[21rpx] text-[#967970]">{{
+									formatTime(item.createTime)
+								}}</text>
+							</view>
 							<text
 								class="rounded-[20rpx] bg-[#fff1ea] px-[13rpx] py-[4rpx] text-[21rpx] text-[#ed725c]"
-								>{{ senderName(item) }}</text
+								>{{  }}</text
 							>
 						</view>
 						<text
@@ -161,3 +166,9 @@ onShow(() => pagingX.value?.reload());
 		</view>
 	</z-paging-x>
 </template>
+
+<style scoped>
+.story-avatar {
+	background: linear-gradient(145deg, #ffc2ae, #f58f83);
+}
+</style>
