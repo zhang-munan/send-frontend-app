@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref } from "vue";
-import { bindMiniPhone, bindPhone, getCaptcha, sendSmsCode } from '@/api/user'
+import { bindMiniPhone, bindPhone, getCaptcha, loginByPhone, sendSmsCode } from '@/api/user'
 import { useStore } from '@/.cool'
 import { mergeOssPath } from '@/utils/oss'
 
@@ -135,7 +135,7 @@ function goAfterLogin() {
     uni.switchTab({ url: '/pages/index' })
 }
 
-/** 手机号验证码绑定。页面文案仍保持“登录”，实际不会切换用户身份。 */
+/** 手机号 + 验证码登录；小程序已有静默身份时绑定手机号。 */
 async function handlePhoneLogin() {
   if (!isValidPhone(phone.value)) {
     uni.showToast({ title: '请输入正确的手机号', icon: 'none' })
@@ -149,7 +149,13 @@ async function handlePhoneLogin() {
     return
   try {
     loading.value = true
-    const token = await bindPhone(phone.value, smsCode.value)
+    let token
+    // #ifdef MP-WEIXIN
+    token = await bindPhone(phone.value, smsCode.value)
+    // #endif
+    // #ifndef MP-WEIXIN
+    token = await loginByPhone(phone.value, smsCode.value)
+    // #endif
     user.setToken(token)
     await user.get()
     uni.showToast({ title: '登录成功', icon: 'none' })
