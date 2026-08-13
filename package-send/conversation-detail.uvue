@@ -146,7 +146,7 @@ function sendCostClass(msg: ConversationMessage) {
 function goSend() {
 	const url = viewerRole.value === "receiver"
 		? `/package-send/send?replyConversationId=${convId.value}`
-		: "/package-send/send";
+		: `/package-send/send?conversationId=${convId.value}`;
 	uni.navigateTo({ url });
 }
 </script>

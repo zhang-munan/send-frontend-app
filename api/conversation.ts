@@ -48,6 +48,12 @@ export interface ConversationReplyContext {
   isPeerAnonymous: boolean
 }
 
+/** 原发送者在已有会话中继续发送时使用的收件人上下文。 */
+export interface ConversationSendContext {
+  conversationId: number
+  receiverPhone: string
+}
+
 /** 获取对话列表 */
 export function getConversationList(page = 1, size = 20) {
   return request({
@@ -70,6 +76,14 @@ export function getConversationMessages(id: number, page = 1, size = 20) {
 export function getConversationReplyContext(id: number) {
   return request({
     url: `${PREFIX}/${id}/reply-context`,
+    method: 'GET',
+  })
+}
+
+/** 获取已有会话的继续发送目标；仅原发送者可调用。 */
+export function getConversationSendContext(id: number) {
+  return request({
+    url: `${PREFIX}/${id}/send-context`,
     method: 'GET',
   })
 }

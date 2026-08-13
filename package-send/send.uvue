@@ -2,7 +2,11 @@
 import { computed, onMounted, ref } from "vue";
 import { createOrder, getBalance } from '@/api/order'
 import { sendMessage } from '@/api/message'
-import { getConversationReplyContext, type ConversationReplyContext } from '@/api/conversation'
+import {
+  getConversationReplyContext,
+  getConversationSendContext,
+  type ConversationReplyContext,
+} from '@/api/conversation'
 import { mergeOssPath } from '@/utils/oss'
 import { useStore } from '@/.cool'
 
@@ -19,8 +23,11 @@ const isCreatingOrder = ref(false)
 const scheduledDate = ref('')
 const scheduledTime = ref('')
 const replyConversationId = ref(0)
+const sendConversationId = ref(0)
 const replyContext = ref<ConversationReplyContext | null>(null)
 const replyContextLoading = ref(false)
+const sendContextLoading = ref(false)
+const sendContextReady = ref(false)
 const isReplyMode = computed(() => replyConversationId.value > 0)
 const pageTitle = computed(() => isReplyMode.value ? '回复消息' : '表达心意')
 
@@ -83,7 +90,27 @@ onLoad((options) => {
     isPublic.value = false
     loadReplyContext()
   }
+  const continuingConversationId = Number(options?.conversationId || 0)
+  if (continuingConversationId > 0) {
+    sendConversationId.value = continuingConversationId
+    loadSendContext()
+  }
 })
+
+async function loadSendContext() {
+  sendContextLoading.value = true
+  try {
+    const context = await getConversationSendContext(sendConversationId.value)
+    phone.value = context.receiverPhone
+    sendContextReady.value = true
+  }
+  catch (err: any) {
+    uni.showToast({ title: err?.message || '无法获取收件人手机号', icon: 'none' })
+  }
+  finally {
+    sendContextLoading.value = false
+  }
+}
 
 async function loadReplyContext() {
   replyContextLoading.value = true
@@ -201,6 +228,16 @@ async function handleConfirmSend() {
 		return
 	}
 
+  if (sendContextLoading.value) {
+    uni.showToast({ title: '正在获取收件人手机号', icon: 'none' })
+    return
+  }
+
+  if (sendConversationId.value > 0 && !sendContextReady.value) {
+    uni.showToast({ title: '收件人手机号获取失败，请返回重试', icon: 'none' })
+    return
+  }
+
   if (isReplyMode.value && !replyContext.value) {
     uni.showToast({ title: replyContextLoading.value ? '正在获取回复对象' : '回复对象不可用', icon: 'none' })
     return
@@ -239,6 +276,9 @@ async function handleConfirmSend() {
       isPublic: isPublic.value ? 1 : 0,
       sendType: sendMode.value === 'scheduled' ? 2 : 1,
       ...(isReplyMode.value ? { conversationId: replyConversationId.value } : {}),
+      ...(!isReplyMode.value && sendConversationId.value > 0
+        ? { conversationId: sendConversationId.value }
+        : {}),
       ...(sendMode.value === 'scheduled' ? { scheduledAt: scheduledAt.value } : {}),
     }
 
@@ -308,8 +348,9 @@ async function handleConfirmSend() {
           <input
             v-model="phone"
             type="number"
+            :disabled="sendConversationId > 0"
             class="min-w-0 flex-1 h-[56rpx] bg-transparent leading-[56rpx] text-[#4a2b24]"
-            placeholder="请输入收件人手机号"
+            :placeholder="sendContextLoading ? '正在获取收件人手机号...' : '请输入收件人手机号'"
             placeholder-style="color: #d4c4be; font-weight: 400;"
           />
           <!--
