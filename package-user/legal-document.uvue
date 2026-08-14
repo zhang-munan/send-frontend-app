@@ -4,7 +4,8 @@ import { getDoc } from "@/api/setting";
 
 const allowedDocs: Record<string, string> = {
 	user_agreement: "用户协议",
-	privacy_policy: "隐私政策"
+	privacy_policy: "隐私政策",
+	refund_rules: "退款规则"
 };
 
 const docKey = ref("");
@@ -89,7 +90,7 @@ async function loadDoc() {
 			v-else-if="loadFailed"
 			class="flex flex-col items-center justify-center px-[48rpx] py-[160rpx]"
 		>
-			<text class="text-[30rpx] text-[#4a2b24] font-[600]">协议暂时无法加载</text>
+			<text class="text-[30rpx] text-[#4a2b24] font-[600]">文档暂时无法加载</text>
 			<text class="mt-[16rpx] text-center text-[24rpx] text-[#9e7e76] leading-[38rpx]">
 				请检查网络后重试
 			</text>

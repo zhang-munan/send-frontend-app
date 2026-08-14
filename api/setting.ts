@@ -39,7 +39,7 @@ export function updateUserSetting(data: Partial<UserSetting>) {
   })
 }
 
-/** 获取协议文档（user_agreement | privacy_policy | usage_guide） */
+/** 获取协议文档（user_agreement | privacy_policy | refund_rules | usage_guide） */
 export function getDoc(key: string) {
   return request({
     url: `${DOC_PREFIX}/get`,
