@@ -55,8 +55,8 @@ export function getMyFeedbackList() {
 }
 
 /**
- * 上传反馈图片。OSS 对象存储路径：app/user/feedback/XXX.png。
+ * 上传反馈图片。OSS 对象存储路径：send/app/user/feedback/XXX.png。
  */
 export function uploadImage(filePath: string): Promise<string> {
-  return upload(filePath, { prefixPath: 'app/user/feedback' })
+  return upload(filePath, { prefixPath: 'send/app/user/feedback' })
 }
