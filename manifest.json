@@ -44,7 +44,7 @@
 		"darkmode": true,
 		"router": {
 			"mode": "history",
-			"base": "./"
+			"base": "/bangni_h5/"
 		},
 		"title": "余语传话"
 	},
