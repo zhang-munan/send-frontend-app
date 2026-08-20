@@ -3,14 +3,27 @@ import { assign, getUrlParam, storage } from "../utils";
 import { request } from "../service";
 import { t } from "../locale";
 import { config } from "@/config";
+import { useStore } from "../store";
 
 // #ifdef H5
 import wx from "weixin-js-sdk";
 // #endif
 
+const MP_OAUTH_TRIED_KEY = "wx_mp_oauth_tried";
+const MP_RETURN_HASH_KEY = "wx_mp_return_hash";
+const MP_CODE_KEY = "mpCode";
+
 // 微信配置类型
 type WxConfig = {
 	appId: string;
+};
+
+type MpOauthResult = {
+	appid: string;
+	scope: string;
+	state: string;
+	redirectUri: string;
+	oauthUrl: string;
 };
 
 // 微信相关功能封装类
@@ -45,6 +58,9 @@ export class Wx {
 		appId: ""
 	};
 
+	private jsSdkReady = false;
+	private jsSdkUrl = "";
+
 	/**
 	 * 判断当前是否为微信浏览器
 	 */
@@ -58,18 +74,72 @@ export class Wx {
 	}
 
 	/**
+	 * 当前网页授权回调地址，不含 hash 和已有 query，避免微信把 code 拼到错误位置。
+	 */
+	getOauthRedirectUri() {
+		return `${window.location.origin}${window.location.pathname}`;
+	}
+
+	/**
+	 * 从回调 URL 取出 code，并去掉 code/state，防止刷新重复消耗。
+	 */
+	takeOauthCode(): string | null {
+		const code = getUrlParam("code");
+		if (code == null || code == "") {
+			return null;
+		}
+
+		const url = window.location.href.replace(/(\?[^#]*)#/, "#").replace(/\?[^#]*$/, "");
+		window.history.replaceState({}, "", url);
+
+		const lastCode = storage.get(MP_CODE_KEY);
+		if (code == lastCode) {
+			return null;
+		}
+		storage.set(MP_CODE_KEY, code, 300);
+		return code;
+	}
+
+	private restoreReturnHash() {
+		const hash = sessionStorage.getItem(MP_RETURN_HASH_KEY);
+		sessionStorage.removeItem(MP_RETURN_HASH_KEY);
+		if (hash != null && hash != "" && hash != window.location.hash) {
+			window.location.hash = hash;
+		}
+	}
+
+	/**
 	 * 获取公众号配置信息，并初始化微信JS-SDK
 	 */
-	getMpConfig() {
-		if (this.isWxBrowser()) {
+	getMpConfig(): Promise<void> {
+		return new Promise((resolve) => {
+			if (!this.isWxBrowser()) {
+				resolve();
+				return;
+			}
+
+			const url = window.location.href.split("#")[0];
+			if (this.jsSdkReady && this.jsSdkUrl == url) {
+				resolve();
+				return;
+			}
+
 			request({
-				url: "/app/user/common/wxMpConfig",
+				url: "/app/user/comm/wxMpConfig",
 				method: "POST",
+				header: {
+					Authorization: null
+				},
 				data: {
-					url: `${location.origin}${location.pathname}`
+					url
 				}
-			}).then((res) => {
-				if (res != null) {
+			})
+				.then((res) => {
+					if (res == null) {
+						resolve();
+						return;
+					}
+
 					wx.config({
 						debug: config.wx.debug,
 						jsApiList: res.jsApiList || ["chooseWXPay"],
@@ -80,79 +150,136 @@ export class Wx {
 						openTagList: res.openTagList
 					});
 
-					// 合并配置到mpConfig
 					assign(this.mpConfig, res);
-				}
-			});
-		}
-	}
-
-	/**
-	 * 跳转到微信授权页面
-	 */
-	mpAuth() {
-		const { appId } = this.mpConfig;
-
-		const redirect_uri = encodeURIComponent(
-			`${location.origin}${location.pathname}#/pages/user/login`
-		);
-		const response_type = "code";
-		const scope = "snsapi_userinfo";
-		const state = "STATE";
-
-		const url = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appId}&redirect_uri=${redirect_uri}&response_type=${response_type}&scope=${scope}&state=${state}#wechat_redirect`;
-
-		location.href = url;
-	}
-
-	/**
-	 * 公众号登录，获取code
-	 */
-	mpLogin() {
-		return new Promise((resolve) => {
-			const code = getUrlParam("code");
-			const mpCode = storage.get("mpCode");
-
-			// 去除url中的code参数，避免重复
-			const url = window.location.href.replace(/(\?[^#]*)#/, "#");
-			window.history.replaceState({}, "", url);
-
-			if (code != mpCode) {
-				storage.set("mpCode", code, 1000 * 60 * 5);
-				resolve(code);
-			} else {
-				resolve(null);
-			}
+					this.jsSdkUrl = url;
+					wx.ready(() => {
+						this.jsSdkReady = true;
+						resolve();
+					});
+					wx.error(() => {
+						this.jsSdkReady = false;
+						resolve();
+					});
+				})
+				.catch(() => {
+					resolve();
+				});
 		});
+	}
+
+	/**
+	 * 跳转到微信静默授权页面。
+	 * 授权链接参数顺序必须与微信文档一致。
+	 */
+	async mpAuth() {
+		const redirectUri = this.getOauthRedirectUri();
+		const res = (await request({
+			url: "/app/user/login/mpOauthUrl",
+			method: "GET",
+			header: {
+				Authorization: null
+			},
+			data: {
+				redirectUri,
+				scope: "snsapi_base",
+				state: "silent"
+			}
+		})) as MpOauthResult | null;
+
+		if (res == null || res.oauthUrl == null || res.oauthUrl == "") {
+			throw { message: t("未获取到微信授权链接") };
+		}
+
+		this.mpConfig.appId = res.appid;
+		window.location.href = res.oauthUrl;
+	}
+
+	/**
+	 * 公众号静默登录：有 code 则换 token，无登录态则跳转 snsapi_base。
+	 */
+	async ensureSilentLogin(): Promise<boolean> {
+		if (!this.isWxBrowser()) {
+			return false;
+		}
+
+		const { user } = useStore();
+		const code = this.takeOauthCode();
+
+		if (code != null && code != "") {
+			try {
+				const token = await request({
+					url: "/app/user/login/mp",
+					method: "POST",
+					header: {
+						Authorization: null
+					},
+					data: { code }
+				});
+				if (token != null) {
+					user.setToken(token);
+					sessionStorage.removeItem(MP_OAUTH_TRIED_KEY);
+				}
+			} catch (err) {
+				console.warn("公众号静默登录失败", err);
+			}
+			this.restoreReturnHash();
+			await this.getMpConfig();
+			return user.token != null;
+		}
+
+		if (user.token != null) {
+			await this.getMpConfig();
+			return true;
+		}
+
+		if (sessionStorage.getItem(MP_OAUTH_TRIED_KEY) == "1") {
+			return false;
+		}
+
+		sessionStorage.setItem(MP_OAUTH_TRIED_KEY, "1");
+		sessionStorage.setItem(MP_RETURN_HASH_KEY, window.location.hash || "");
+		try {
+			await this.mpAuth();
+		} catch (err) {
+			sessionStorage.removeItem(MP_OAUTH_TRIED_KEY);
+			console.warn("跳转微信授权失败", err);
+		}
+		return false;
 	}
 
 	/**
 	 * 公众号微信支付
 	 * @param params 支付参数
 	 */
-	mpPay(params: wx.IchooseWXPay & { timeStamp: number }): Promise<void> {
+	mpPay(params: { timeStamp: string; nonceStr: string; package: string; signType: string; paySign: string }): Promise<void> {
 		return new Promise((resolve, reject) => {
 			if (!this.isWxBrowser()) {
-				return reject({ message: t("请在微信浏览器中打开") });
+				reject({ message: t("请在微信浏览器中打开") });
+				return;
 			}
 
-			wx.chooseWXPay({
-				...params,
-				timestamp: params.timeStamp,
-				success() {
-					resolve();
-				},
-				complete(e: { errMsg: string }) {
-					switch (e.errMsg) {
-						case "chooseWXPay:cancel":
+			this.getMpConfig()
+				.then(() => {
+					wx.chooseWXPay({
+						timestamp: Number(params.timeStamp),
+						nonceStr: params.nonceStr,
+						package: params.package,
+						signType: params.signType,
+						paySign: params.paySign,
+						success() {
+							resolve();
+						},
+						cancel() {
 							reject({ message: t("已取消支付") });
-							break;
-
-						default:
+						},
+						fail() {
 							reject({ message: t("支付失败") });
-					}
-				}
-			});
+						}
+					});
+				})
+				.catch(() => {
+					reject({ message: t("微信支付初始化失败") });
+				});
 		});
 	}
 	// #endif
@@ -230,18 +357,40 @@ export class Wx {
 }
 
 /**
+ * 单例，供 H5 启动时静默登录和支付复用，避免每页重复授权。
+ */
+export const wxHelper = new Wx();
+
+let silentLoginPromise: Promise<boolean> | null = null;
+
+/**
+ * 微信内打开 H5 时静默登录。非微信浏览器直接跳过。
+ */
+export function ensureWechatMpSilentLogin(): Promise<boolean> {
+	// #ifdef H5
+	if (silentLoginPromise != null) {
+		return silentLoginPromise;
+	}
+	silentLoginPromise = wxHelper.ensureSilentLogin().catch((err) => {
+		silentLoginPromise = null;
+		console.warn("公众号静默登录异常", err);
+		return false;
+	});
+	return silentLoginPromise;
+	// #endif
+
+	return Promise.resolve(false);
+}
+
+/**
  * useWx 钩子函数，后续可扩展
  */
 export const useWx = (): Wx => {
-	const wx = new Wx();
+	const instance = wxHelper;
 
 	onReady(() => {
-		wx.getCode();
-
-		// #ifdef H5
-		wx.getMpConfig();
-		// #endif
+		instance.getCode();
 	});
 
-	return wx;
+	return instance;
 };

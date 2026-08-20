@@ -1,5 +1,9 @@
 import { request } from "@/.cool";
 
+// #ifdef H5
+import { wxHelper } from "@/.cool/hooks/wx";
+// #endif
+
 const PRODUCT_PREFIX = "/app/order/product";
 const BALANCE_PREFIX = "/app/order/balance";
 const ORDER_PREFIX = "/app/order/info";
@@ -147,7 +151,7 @@ export function createOrder(data: CreateOrderByProduct | CreateOrderBySend) {
 export function payOrder(
 	orderId: number,
 	payMethod: number,
-	params?: { tradeType?: WxTradeType; code?: string }
+	params?: { tradeType?: WxTradeType; code?: string; wxType?: number }
 ) {
 	return request({
 		url: `${ORDER_PREFIX}/pay`,
@@ -211,7 +215,11 @@ export async function wxPayFlow(
 	return pollOrderStatus(order.id);
 }
 
-async function getWxPayRequestParams(): Promise<{ tradeType: WxTradeType; code?: string }> {
+async function getWxPayRequestParams(): Promise<{
+	tradeType: WxTradeType;
+	code?: string;
+	wxType?: number;
+}> {
 	// #ifdef MP-WEIXIN
 	const code = await new Promise<string>((resolve, reject) => {
 		uni.login({
@@ -228,6 +236,9 @@ async function getWxPayRequestParams(): Promise<{ tradeType: WxTradeType; code?:
 	// #endif
 
 	// #ifdef H5
+	if (wxHelper.isWxBrowser()) {
+		return { tradeType: "JSAPI", wxType: 1 };
+	}
 	return { tradeType: "H5" };
 	// #endif
 
@@ -237,13 +248,33 @@ async function getWxPayRequestParams(): Promise<{ tradeType: WxTradeType; code?:
 function invokeWxPayment(payParams: WxPayParams): Promise<void> {
 	return new Promise((resolve, reject) => {
 		// #ifdef H5
+		if (
+			wxHelper.isWxBrowser() &&
+			payParams.timeStamp &&
+			payParams.nonceStr &&
+			payParams.package &&
+			payParams.signType &&
+			payParams.paySign
+		) {
+			wxHelper
+				.mpPay({
+					timeStamp: payParams.timeStamp,
+					nonceStr: payParams.nonceStr,
+					package: payParams.package,
+					signType: payParams.signType,
+					paySign: payParams.paySign
+				})
+				.then(() => resolve())
+				.catch((err: any) => reject(new Error(err?.message || "微信支付失败")));
+			return;
+		}
 		const h5Url = payParams.h5Url || payParams.mwebUrl;
 		if (h5Url) {
 			window.location.href = h5Url;
 			resolve();
 			return;
 		}
-		reject(new Error("未获取到微信H5支付链接"));
+		reject(new Error("未获取到微信支付参数"));
 		return;
 		// #endif
 

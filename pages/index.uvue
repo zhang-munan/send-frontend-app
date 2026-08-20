@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useStore } from '@/.cool'
 import { getPublicMessageList, getRecentActivity, type PlazaMessage, type RecentActivity } from '@/api/message'
 import { loginByMiniCode } from '@/api/user'
+import { ensureWechatMpSilentLogin } from '@/.cool/hooks/wx'
 import { mergeOssPath } from '@/utils/oss'
 
 const { user } = useStore()
@@ -31,7 +32,11 @@ async function initializeUser() {
   }
   // #endif
 
-  // 小程序静默登录完成后同步资料；App 等端则使用已有 token 同步。
+  // #ifdef H5
+  await ensureWechatMpSilentLogin()
+  // #endif
+
+  // 静默登录完成后同步资料；未登录的 H5 则跳过。
   await user.get()
 }
 

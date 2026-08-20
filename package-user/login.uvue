@@ -157,7 +157,9 @@ async function handlePhoneLogin() {
     token = await bindPhone(phone.value, smsCode.value)
     // #endif
     // #ifndef MP-WEIXIN
-    token = await loginByPhone(phone.value, smsCode.value)
+    token = user.token
+      ? await bindPhone(phone.value, smsCode.value)
+      : await loginByPhone(phone.value, smsCode.value)
     // #endif
     user.setToken(token)
     await user.get()

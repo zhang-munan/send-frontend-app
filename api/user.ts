@@ -122,6 +122,36 @@ export function loginByMiniCode(code: string) {
   })
 }
 
+/** 公众号网页授权 code 静默登录 */
+export function loginByMp(code: string) {
+  return request({
+    url: `${LOGIN_PREFIX}/mp`,
+    method: 'POST',
+    data: { code },
+    header: { Authorization: null },
+  })
+}
+
+/** 构造公众号网页授权链接 */
+export function getMpOauthUrl(data: { redirectUri: string, scope?: string, state?: string }) {
+  return request({
+    url: `${LOGIN_PREFIX}/mpOauthUrl`,
+    method: 'GET',
+    data,
+    header: { Authorization: null },
+  })
+}
+
+/** 获取公众号 JSSDK 签名配置 */
+export function getWxMpConfig(url: string) {
+  return request({
+    url: '/app/user/comm/wxMpConfig',
+    method: 'POST',
+    data: { url },
+    header: { Authorization: null },
+  })
+}
+
 /** 为当前静默登录用户绑定短信验证的手机号 */
 export function bindPhone(phone: string, smsCode: string) {
   return request({

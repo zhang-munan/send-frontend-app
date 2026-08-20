@@ -316,7 +316,7 @@ async function handleConfirmSend() {
       await sendMessage(messagePayload)
       // 本地更新配额显示
       userQuota.value = Math.max(0, userQuota.value - 1)
-      uni.showToast({ title: '发送成功，等待审核', icon: 'none' })
+      uni.showToast({ title: '已发送', icon: 'none' })
       setTimeout(() => uni.navigateBack(), 1500)
     }
     else {

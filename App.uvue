@@ -1,7 +1,14 @@
 <script lang="ts">
+// #ifdef H5
+import { ensureWechatMpSilentLogin } from "@/.cool/hooks/wx";
+// #endif
+
 export default {
 	onLaunch: function () {
 		console.log("App Launch");
+		// #ifdef H5
+		ensureWechatMpSilentLogin();
+		// #endif
 	},
 	onShow: function () {
 		console.log("App Show");

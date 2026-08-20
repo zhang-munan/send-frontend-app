@@ -10,7 +10,10 @@ export const ignoreTokens: string[] = [
 	"/app/message/info/publicList",
 	"/app/message/reply/info",
 	"/app/message/reply/send",
-	"/app/setting/doc/get"
+	"/app/setting/doc/get",
+	"/app/user/login/mp",
+	"/app/user/login/mpOauthUrl",
+	"/app/user/comm/wxMpConfig"
 ];
 
 // 根据环境导出最终配置
