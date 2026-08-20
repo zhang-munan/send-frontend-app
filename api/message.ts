@@ -64,6 +64,7 @@ export interface MessageRecord {
 /** 费用计算结果 */
 export interface FeeResult {
 	feeAmount: number;
+	pricingVersion: number;
 }
 
 /** 使用套餐配额发送消息（服务端会同步生成套餐余额订单） */
@@ -72,7 +73,7 @@ export function sendMessage(data: SendMessageParams) {
 }
 
 /** 计算消息费用 */
-export function calculateFee(content: string) {
+export function calculateFee(content: string): Promise<FeeResult> {
 	return request({ url: `${PREFIX}/calculateFee`, method: "POST", data: { content } });
 }
 

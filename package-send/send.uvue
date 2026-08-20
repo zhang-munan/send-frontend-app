@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { createOrder, getBalance } from '@/api/order'
-import { sendMessage } from '@/api/message'
+import { calculateFee, sendMessage } from '@/api/message'
 import {
   getConversationReplyContext,
   getConversationSendContext,
@@ -38,15 +38,41 @@ const balanceLoaded = ref(false)
 
 const MESSAGE_LIMIT = 500
 
-/** 按次支付计费：每 10 字为一条，不足一条按一条计；每条 1.99 元。 */
-const SMS_CHARS_PER_SEGMENT = 10
-const SMS_FEE_PER_SEGMENT_CENTS = 199
-const paidSmsCount = computed(() =>
-  Math.max(1, Math.ceil((message.value.length || 0) / SMS_CHARS_PER_SEGMENT))
-)
+/** 金额由服务端当前生效的规则实时计算，手机端不保存或展示内部公式。 */
+const estimatedFeeCents = ref<number | null>(null)
+const feeLoading = ref(false)
+let feeTimer: any = null
+let feeRequestSequence = 0
 const estimatedFee = computed(() =>
-  (paidSmsCount.value * SMS_FEE_PER_SEGMENT_CENTS / 100).toFixed(2)
+  estimatedFeeCents.value === null ? '--' : (estimatedFeeCents.value / 100).toFixed(2)
 )
+
+async function loadEstimatedFee() {
+  const sequence = ++feeRequestSequence
+  const content = message.value
+  feeLoading.value = true
+  try {
+    const result = await calculateFee(content)
+    if (sequence === feeRequestSequence && content === message.value)
+      estimatedFeeCents.value = Number(result.feeAmount)
+  }
+  catch {
+    if (sequence === feeRequestSequence)
+      estimatedFeeCents.value = null
+  }
+  finally {
+    if (sequence === feeRequestSequence)
+      feeLoading.value = false
+  }
+}
+
+function queueEstimatedFee() {
+  if (feeTimer)
+    clearTimeout(feeTimer)
+  feeTimer = setTimeout(loadEstimatedFee, 300)
+}
+
+watch(message, queueEstimatedFee, { immediate: true })
 
 /** 是否有足够套餐配额发送 */
 const hasEnoughQuota = computed(() => userQuota.value >= 1)
@@ -142,7 +168,10 @@ async function loadBalance() {
 }
 
 onMounted(loadBalance)
-onShow(loadBalance)
+onShow(() => {
+  loadBalance()
+  queueEstimatedFee()
+})
 
 function pad(n: number) {
   return n < 10 ? `0${n}` : `${n}`
@@ -548,7 +577,7 @@ async function handleConfirmSend() {
           <text v-if="hasEnoughQuota" class="block truncate text-[20rpx] text-[#7a5147]">
             套餐余 {{ userQuota }} 条 · 本次扣 1 条
           </text>
-          <text v-else class="block truncate text-[20rpx] text-[#7a5147]">预计费用（每10字 ¥1.99）</text>
+          <text v-else class="block truncate text-[20rpx] text-[#7a5147]">{{ feeLoading ? '正在计算预估费用' : '预估费用' }}</text>
           <view class="flex flex-row items-center gap-[6rpx]">
             <text v-if="hasEnoughQuota" class="text-[30rpx] font-[800] leading-[46rpx] text-[#4caf50]">
               套餐余额
