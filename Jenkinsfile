@@ -104,12 +104,30 @@ pipeline {
                 sshagent(credentials: ['server-ssh']) {
                     sh """
                         ssh -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_IP} '
-                            cd ${BUILD_DIR} &&
-                            docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -f Dockerfile.h5 . &&
-                            cd ${DEPLOY_DIR} &&
-                            sed -i "s|^H5_IMAGE=.*|H5_IMAGE=${IMAGE_NAME}:${IMAGE_TAG}|" .env.production &&
-                            docker compose --env-file .env.production -f compose.yml up -d --no-deps h5 &&
-                            curl --fail --silent --show-error --retry 10 --retry-delay 2 --retry-connrefused http://127.0.0.1:8102/healthz &&
+                            set -eu
+                            cd ${BUILD_DIR}
+                            docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -f Dockerfile.h5 .
+                            cd ${DEPLOY_DIR}
+                            sed -i "s|^H5_IMAGE=.*|H5_IMAGE=${IMAGE_NAME}:${IMAGE_TAG}|" .env.production
+                            docker compose --env-file .env.production -f compose.yml up -d --no-deps h5
+                            # compose 返回只表示容器已创建；端口刚切换时常见 Connection reset，
+                            # curl --retry-connrefused 不会重试 56，这里轮询 host:8102/healthz。
+                            ready=0
+                            n=1
+                            while [ "\$n" -le 30 ]; do
+                                if curl --fail --silent --connect-timeout 2 --max-time 5 http://127.0.0.1:8102/healthz >/dev/null 2>&1; then
+                                    ready=1
+                                    break
+                                fi
+                                n=\$((n + 1))
+                                sleep 1
+                            done
+                            if [ "\$ready" -ne 1 ]; then
+                                echo "H5 健康检查失败: http://127.0.0.1:8102/healthz"
+                                docker compose --env-file .env.production -f compose.yml ps || true
+                                docker compose --env-file .env.production -f compose.yml logs --tail 80 h5 || true
+                                exit 1
+                            fi
                             echo "✅ 构建部署完成: ${IMAGE_NAME}:${IMAGE_TAG}"
                         '
                     """
