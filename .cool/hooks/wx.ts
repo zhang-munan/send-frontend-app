@@ -223,7 +223,9 @@ export class Wx {
 				console.warn("公众号静默登录失败", err);
 			}
 			this.restoreReturnHash();
-			await this.getMpConfig();
+			if (user.token != null) {
+				await this.getMpConfig();
+			}
 			return user.token != null;
 		}
 
