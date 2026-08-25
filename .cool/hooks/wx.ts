@@ -181,7 +181,7 @@ export class Wx {
 			},
 			data: {
 				redirectUri,
-				scope: "snsapi_base",
+				scope: "snsapi_userinfo",
 				state: "silent"
 			}
 		})) as MpOauthResult | null;
