@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref } from "vue";
-import { bindMiniPhone, bindPhone, getCaptcha, sendSmsCode } from "@/api/user";
+import {
+	bindMiniPhone,
+	bindPhone,
+	getCaptcha,
+	getCaptchaImageSrc,
+	sendSmsCode
+} from "@/api/user";
 import { useStore } from "@/.cool";
 
 const { user } = useStore();
@@ -38,7 +44,7 @@ async function refreshCaptcha() {
 		captchaLoading.value = true;
 		const res = await getCaptcha({ width: 150, height: 50, color: "#fe8973" });
 		captchaId.value = res.captchaId;
-		captchaImg.value = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(res.data)}`;
+		captchaImg.value = getCaptchaImageSrc(res.data);
 	} finally {
 		captchaLoading.value = false;
 	}

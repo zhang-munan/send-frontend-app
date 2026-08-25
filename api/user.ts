@@ -20,8 +20,14 @@ export interface LoginToken {
 export interface CaptchaResult {
   /** 验证码 ID */
   captchaId: string
-  /** SVG 字符串 */
+  /** SVG 字符串或完整的 data URL */
   data: string
+}
+
+/** 将接口返回的验证码内容转换为 image 可直接使用的地址。 */
+export function getCaptchaImageSrc(data: string) {
+  if (data.startsWith('data:')) return data
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(data)}`
 }
 
 /** 用户信息 */

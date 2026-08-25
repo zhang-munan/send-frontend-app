@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref } from 'vue'
-import { bindMiniPhone, bindPhone, getCaptcha, loginByPhone, sendSmsCode } from '@/api/user'
+import {
+  bindMiniPhone,
+  bindPhone,
+  getCaptcha,
+  getCaptchaImageSrc,
+  loginByPhone,
+  sendSmsCode
+} from '@/api/user'
 import { useStore } from '@/.cool'
 import { mergeOssPath } from '@/utils/oss'
 
@@ -91,7 +98,7 @@ async function refreshCaptcha() {
     captchaLoading.value = true
     const res = await getCaptcha({ width: 150, height: 50, color: '#fe8973' })
     captchaId.value = res.captchaId
-    captchaImg.value = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(res.data)}`
+    captchaImg.value = getCaptchaImageSrc(res.data)
   } catch {
     // 错误已在请求层统一提示
   } finally {
