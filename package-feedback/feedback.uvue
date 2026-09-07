@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import { useStore } from '@/.cool'
+import { ensureWechatMpSilentLogin } from '@/.cool/hooks/wx'
 import { FEEDBACK_TYPES, submitFeedback, uploadImage } from '@/api/feedback'
+import { loginByMiniCode } from '@/api/user'
 import { mergeOssPath } from "@/utils/oss";
 
 const MAX_CONTENT = 500
 const MAX_IMAGES = 4
 
+const { user } = useStore()
 const selectedType = ref(1)
 const content = ref('')
 const contact = ref('')
@@ -14,6 +18,47 @@ const submitting = ref(false)
 
 const contentLen = computed(() => content.value.length)
 const typeRequired = ref(false)
+let userInitializationPromise: Promise<void> | null = null
+
+/** 直达反馈页时，先按首页相同的流程建立静默登录态。 */
+async function establishUser() {
+  // #ifdef MP-WEIXIN
+  try {
+    const result: any = await new Promise((resolve, reject) => {
+      uni.login({ provider: 'weixin', success: resolve, fail: reject })
+    })
+    if (result.code) {
+      const token = await loginByMiniCode(result.code)
+      user.setToken(token)
+    }
+  }
+  catch (err) {
+    console.warn('小程序静默登录失败', err)
+  }
+  // #endif
+
+  // #ifdef H5
+  await ensureWechatMpSilentLogin()
+  // #endif
+
+  await user.get()
+}
+
+function initializeUser() {
+  if (userInitializationPromise === null)
+    userInitializationPromise = establishUser()
+  return userInitializationPromise
+}
+
+/** 有页面栈则正常返回；公众号直达时回到首页。 */
+function goBack() {
+  const pages = getCurrentPages()
+  if (pages.length > 1) {
+    uni.navigateBack()
+    return
+  }
+  uni.switchTab({ url: '/pages/index' })
+}
 
 function selectType(val: number) {
   selectedType.value = val
@@ -21,6 +66,7 @@ function selectType(val: number) {
 }
 
 async function chooseImage() {
+  await initializeUser()
   if (images.value.length >= MAX_IMAGES) {
     uni.showToast({ title: `最多上传 ${MAX_IMAGES} 张`, icon: 'none' })
     return
@@ -65,6 +111,7 @@ async function handleSubmit() {
     uni.showToast({ title: '请填写反馈内容', icon: 'none' })
     return
   }
+  await initializeUser()
   submitting.value = true
   try {
     await submitFeedback({
@@ -74,7 +121,7 @@ async function handleSubmit() {
       contact: contact.value.trim() || undefined,
     })
     uni.showToast({ title: '已收到反馈，感谢您的支持', icon: 'none', duration: 2000 })
-    setTimeout(() => uni.navigateBack(), 2000)
+    setTimeout(goBack, 2000)
   }
   catch {
     // error toast handled in request util
@@ -83,6 +130,8 @@ async function handleSubmit() {
     submitting.value = false
   }
 }
+
+onLoad(initializeUser)
 </script>
 
 <template>
@@ -95,7 +144,14 @@ async function handleSubmit() {
       color="#302725"
       height="96rpx"
       :pt="{ title: { className: 'text-[34rpx] font-[700]' }, back: { size: 22 } }"
-    />
+      :showBack="false"
+    >
+      <template #prepend>
+        <view class="h-full w-[60rpx] flex flex-row items-center justify-center" @tap="goBack">
+          <cl-icon name="arrow-left-s-line" :size="22" color="#302725" />
+        </view>
+      </template>
+    </cl-topbar>
 
     <!-- Banner -->
     <view class="mx-[28rpx] mb-[20rpx] flex flex-row items-center gap-[24rpx] rounded-[28rpx] border border-solid border-[#ffddb0] bg-[#fdedd9] px-[28rpx] py-[24rpx] shadow-[0_8rpx_24rpx_#f4b97b26]">
