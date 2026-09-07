@@ -2,6 +2,7 @@ import { request } from "@/.cool";
 
 const USER_SETTING_PREFIX = '/app/setting/userSetting'
 const DOC_PREFIX = '/app/setting/doc'
+const PUBLIC_PARAM_PREFIX = '/app/base/comm/param'
 
 /** 用户设置 */
 export interface UserSetting {
@@ -39,7 +40,16 @@ export function updateUserSetting(data: Partial<UserSetting>) {
   })
 }
 
-/** 获取协议文档（user_agreement | privacy_policy | refund_rules | usage_guide） */
+/** 获取允许下发到手机端的后台参数 */
+export function getPublicParam(key: string) {
+  return request({
+    url: PUBLIC_PARAM_PREFIX,
+    method: 'GET',
+    data: { key },
+  })
+}
+
+/** 获取协议文档（含推广大使规则等后台配置文档） */
 export function getDoc(key: string) {
   return request({
     url: `${DOC_PREFIX}/get`,

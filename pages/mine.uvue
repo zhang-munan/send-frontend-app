@@ -116,6 +116,8 @@ const serviceGroups: ServiceGroup[] = [
     items: [
       { title: '充值中心', icon: 'sparkling-fill', bg: '#ff8618', badge: '首充优惠' },
       { title: '账单明细', icon: 'eye-fill', bg: '#35c96d' },
+      // 推广大使功能暂不在手机端展示，恢复时取消下面一行的注释。
+      // { title: '推广大使', icon: 'team-fill', bg: '#ef6f68', badge: '赚取佣金' },
       // { title: '优惠券', icon: 'percent-fill', bg: '#ff5365', extra: '3 张可用' },
     ],
   },
@@ -142,7 +144,11 @@ const noticeList = [
 ]
 
 /** 需要登录才能访问的页面 */
-const AUTH_PAGES = new Set(['/package-order/orders'])
+const AUTH_PAGES = new Set([
+  '/package-order/orders',
+  // 推广大使入口恢复后，同时恢复此登录校验地址。
+  // '/package-promotion/ambassador',
+])
 
 function handleItemClick(item: ServiceItem) {
   const { action, title } = item
@@ -153,6 +159,8 @@ function handleItemClick(item: ServiceItem) {
   const navMap: Record<string, string> = {
     '充值中心': '/package-order/recharge',
     '账单明细': '/package-order/orders',
+    // 推广大使功能暂不在手机端展示，恢复入口时取消下面一行的注释。
+    // '推广大使': '/package-promotion/ambassador',
     '发送记录': '/package-send/send-records',
     '我的对话': '/pages/message',
     '设置': '/package-user/settings',

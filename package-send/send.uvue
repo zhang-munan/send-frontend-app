@@ -8,13 +8,15 @@ import {
   type ConversationReplyContext,
 } from '@/api/conversation'
 import { mergeOssPath } from '@/utils/oss'
+import { getPublicParam } from '@/api/setting'
 import { useStore } from '@/.cool'
 
 const { user } = useStore()
 
 const phone = ref('')
 const message = ref('')
-const isAnonymous = ref(true)
+const isAnonymous = ref(false)
+const anonymousSmsEnabled = ref(false)
 const isPublic = ref(false)
 const sendMode = ref<'immediate' | 'scheduled'>('immediate')
 const showTemplatePanel = ref(false)
@@ -167,7 +169,29 @@ async function loadBalance() {
   }
 }
 
-onMounted(loadBalance)
+function isEnabledConfig(value: any) {
+  if (value === true || value === 1)
+    return true
+
+  return ['1', 'true', 'yes', 'on', 'enabled'].includes(String(value ?? '').trim().toLowerCase())
+}
+
+/** 后台未配置或读取失败时按关闭处理，避免页面误展示匿名能力。 */
+async function loadAnonymousSmsConfig() {
+  try {
+    anonymousSmsEnabled.value = isEnabledConfig(await getPublicParam('anonymousSmsEnabled'))
+  }
+  catch {
+    anonymousSmsEnabled.value = false
+  }
+
+  isAnonymous.value = anonymousSmsEnabled.value && !isReplyMode.value
+}
+
+onMounted(() => {
+  loadBalance()
+  loadAnonymousSmsConfig()
+})
 onShow(() => {
   loadBalance()
   queueEstimatedFee()
@@ -301,7 +325,7 @@ async function handleConfirmSend() {
     const messagePayload = {
       ...(!isReplyMode.value ? { receiverPhone: rawPhone } : {}),
       content: message.value,
-      isAnonymous: isReplyMode.value ? 0 : isAnonymous.value ? 1 : 0,
+      isAnonymous: !isReplyMode.value && anonymousSmsEnabled.value && isAnonymous.value ? 1 : 0,
       isPublic: isPublic.value ? 1 : 0,
       sendType: sendMode.value === 'scheduled' ? 2 : 1,
       ...(isReplyMode.value ? { conversationId: replyConversationId.value } : {}),
@@ -476,7 +500,7 @@ async function handleConfirmSend() {
       <!-- 发送方式 section -->
       <view class="mt-[16rpx] rounded-[20rpx] bg-white px-[24rpx] py-[24rpx]" style="box-shadow: 0 4rpx 16rpx #fe89730f;">
         <text class="mb-[16rpx] block text-[28rpx] text-[#4a2b24]">发送方式</text>
-        <view class="">
+        <view v-if="isReplyMode || anonymousSmsEnabled">
           <view class="flex flex-row items-center justify-between">
             <view class="h-[64rpx] w-[64rpx] flex flex-row flex-shrink-0 items-center justify-center rounded-[18rpx] bg-[#fff0ed]">
               <image :src="mergeOssPath('anonymous.png')" mode="aspectFit" class="h-full w-full" />

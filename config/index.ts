@@ -10,6 +10,7 @@ export const ignoreTokens: string[] = [
 	"/app/message/info/publicList",
 	"/app/message/reply/info",
 	"/app/message/reply/send",
+	"/app/base/comm/param",
 	"/app/setting/doc/get",
 	"/app/user/login/mp",
 	"/app/user/login/mpOauthUrl",

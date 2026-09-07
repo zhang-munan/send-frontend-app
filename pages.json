@@ -87,6 +87,23 @@
 			]
 		},
 		{
+			"root": "package-promotion",
+			"pages": [
+				{
+					"path": "ambassador",
+					"style": {
+						"navigationStyle": "custom"
+					}
+				},
+				{
+					"path": "withdraw",
+					"style": {
+						"navigationStyle": "custom"
+					}
+				}
+			]
+		},
+		{
 			"root": "package-feedback",
 			"pages": [
 				{

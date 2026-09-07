@@ -1,0 +1,106 @@
+<script setup lang="ts">
+import { computed, ref } from 'vue'
+import { applyWithdrawal, cancelWithdrawal, getPromotionOverview, getWithdrawalList } from '@/api/promotion'
+import { formatYuan } from '@/utils/money'
+
+const overview = ref<any>(null)
+const records = ref<any[]>([])
+const amountYuan = ref('')
+const withdrawMethod = ref(1)
+const accountName = ref('')
+const accountNo = ref('')
+const bankName = ref('')
+const submitting = ref(false)
+
+const available = computed(() => Number(overview.value?.ambassador?.availableBalance || 0))
+const config = computed(() => overview.value?.config || {})
+
+onShow(() => load())
+
+async function load() {
+  const [summary, history] = await Promise.all([getPromotionOverview(), getWithdrawalList(1, 50)])
+  overview.value = summary
+  records.value = history.list || []
+}
+
+function fillAll() {
+  amountYuan.value = formatYuan(Math.max(available.value, 0))
+}
+
+async function submit() {
+  const amount = Math.round(Number(amountYuan.value) * 100)
+  if (!Number.isFinite(amount) || amount <= 0) return uni.showToast({ title: '请输入正确的提现金额', icon: 'none' })
+  if (!accountName.value.trim() || !accountNo.value.trim()) return uni.showToast({ title: '请完整填写收款信息', icon: 'none' })
+  submitting.value = true
+  try {
+    await applyWithdrawal({ amount, withdrawMethod: withdrawMethod.value, accountName: accountName.value.trim(), accountNo: accountNo.value.trim(), bankName: bankName.value.trim() })
+    uni.showToast({ title: '提现申请已提交', icon: 'none' })
+    amountYuan.value = ''
+    await load()
+  } finally {
+    submitting.value = false
+  }
+}
+
+async function cancel(item: any) {
+  await cancelWithdrawal(item.id)
+  uni.showToast({ title: '已取消，金额已退回', icon: 'none' })
+  await load()
+}
+
+function statusText(status: number) {
+  return ['待审核', '打款中', '已打款', '已驳回', '已取消'][status] || '未知'
+}
+</script>
+
+<template>
+  <view class="min-h-[100vh] bg-[#fff8f4] text-[#4a2b24]">
+    <cl-topbar title="余额提现" safeAreaTop backgroundColor="#fff8f4" />
+    <view class="px-[28rpx] pb-[80rpx]">
+      <view class="rounded-[26rpx] bg-[linear-gradient(135deg,#ff8c79,#e85f70)] px-[32rpx] py-[34rpx] text-white">
+        <text class="text-[24rpx] opacity-85">可提现余额</text>
+        <text class="mt-[10rpx] block text-[48rpx] font-[900]">¥{{ formatYuan(available) }}</text>
+        <text class="mt-[12rpx] block text-[22rpx] opacity-85">最低 ¥{{ formatYuan(config.minWithdrawAmount || 0) }}，单笔最高 ¥{{ formatYuan(config.maxWithdrawAmount || 0) }}</text>
+      </view>
+
+      <view class="mt-[24rpx] rounded-[24rpx] bg-white px-[28rpx] py-[30rpx]">
+        <text class="text-[29rpx] font-[800]">提现金额</text>
+        <view class="mt-[18rpx] flex flex-row items-center border-b-[1rpx] border-b-solid border-[#eaded9] pb-[14rpx]">
+          <text class="text-[42rpx] font-[700]">¥</text>
+          <input v-model="amountYuan" type="digit" class="ml-[16rpx] h-[72rpx] flex-1 text-[42rpx]" placeholder="0.00" />
+          <text class="text-[25rpx] text-[#ef746a]" @click="fillAll">全部提现</text>
+        </view>
+
+        <text class="mt-[28rpx] block text-[29rpx] font-[800]">收款方式</text>
+        <view class="mt-[16rpx] flex flex-row gap-[14rpx]">
+          <view v-for="item in [{label:'微信',value:1},{label:'支付宝',value:2},{label:'银行卡',value:3}]" :key="item.value" class="flex-1 border-[1rpx] rounded-[14rpx] py-[15rpx] text-center text-[25rpx]" :class="withdrawMethod === item.value ? 'border-[#fe8973] bg-[#fff3ef] text-[#e9615b]' : 'border-[#e7dad5]'" @click="withdrawMethod = item.value">{{ item.label }}</view>
+        </view>
+
+        <input v-model="accountName" class="mt-[22rpx] h-[76rpx] border-[1rpx] border-[#eaded9] rounded-[14rpx] px-[20rpx] text-[27rpx]" placeholder="本人真实姓名" />
+        <input v-model="accountNo" class="mt-[16rpx] h-[76rpx] border-[1rpx] border-[#eaded9] rounded-[14rpx] px-[20rpx] text-[27rpx]" :placeholder="withdrawMethod === 1 ? '微信号或绑定手机号' : withdrawMethod === 2 ? '支付宝账号' : '银行卡号'" />
+        <input v-if="withdrawMethod === 3" v-model="bankName" class="mt-[16rpx] h-[76rpx] border-[1rpx] border-[#eaded9] rounded-[14rpx] px-[20rpx] text-[27rpx]" placeholder="开户银行及支行" />
+        <text class="mt-[18rpx] block text-[22rpx] text-[#a0877f] leading-[34rpx]">提现由平台人工审核并打款。请确认收款人为本人、信息准确；提交后金额会暂时冻结。</text>
+        <button class="mt-[24rpx] h-[82rpx] w-full border-0 rounded-[20rpx] bg-[#fe8973] text-[29rpx] text-white leading-[82rpx]" :disabled="submitting" @click="submit">{{ submitting ? '提交中...' : '提交提现申请' }}</button>
+      </view>
+
+      <view class="mt-[24rpx] rounded-[24rpx] bg-white px-[28rpx] py-[28rpx]">
+        <text class="text-[29rpx] font-[800]">提现记录</text>
+        <view v-if="!records.length" class="py-[36rpx] text-center text-[25rpx] text-[#a0877f]">暂无提现记录</view>
+        <view v-for="item in records" :key="item.id" class="border-b-[1rpx] border-b-solid border-[#f1e7e3] py-[22rpx] last:border-b-0">
+          <view class="flex flex-row items-center">
+            <view class="min-w-0 flex-1">
+              <text class="block text-[26rpx]">{{ item.withdrawalNo }}</text>
+              <text class="mt-[6rpx] block text-[22rpx] text-[#9d827a]">{{ item.accountNo }} · {{ item.createTime }}</text>
+            </view>
+            <view class="text-right">
+              <text class="block text-[28rpx] font-[700]">¥{{ formatYuan(item.amount) }}</text>
+              <text class="mt-[5rpx] block text-[22rpx] text-[#ef746a]">{{ statusText(item.status) }}</text>
+            </view>
+          </view>
+          <view v-if="item.status === 0" class="mt-[12rpx] text-right"><text class="text-[23rpx] text-[#8d736b]" @click="cancel(item)">取消申请</text></view>
+          <text v-if="item.auditRemark" class="mt-[10rpx] block text-[22rpx] text-[#a0877f]">处理说明：{{ item.auditRemark }}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>

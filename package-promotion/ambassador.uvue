@@ -1,0 +1,156 @@
+<script setup lang="ts">
+import { computed, ref } from 'vue'
+import { applyAmbassador, getCommissionList, getPromotionOverview, getReferralList, type PromotionOverview } from '@/api/promotion'
+import { getDoc } from '@/api/setting'
+import { formatYuan } from '@/utils/money'
+
+const loading = ref(true)
+const applying = ref(false)
+const agreed = ref(false)
+const overview = ref<PromotionOverview | null>(null)
+const rulesContent = ref('')
+const commissions = ref<any[]>([])
+const referrals = ref<any[]>([])
+
+const account = computed(() => overview.value?.ambassador)
+const rateText = computed(() => `${((overview.value?.config.commissionRateBps || 0) / 100).toFixed(0)}%`)
+
+onShow(() => load())
+
+async function load() {
+  loading.value = true
+  try {
+    const [summary, rules] = await Promise.all([getPromotionOverview(), getDoc('ambassador_rules')])
+    overview.value = summary
+    rulesContent.value = rules.content || ''
+    if (summary.isAmbassador) {
+      const [commissionRes, referralRes] = await Promise.all([getCommissionList(1, 5), getReferralList(1, 5)])
+      commissions.value = commissionRes.list || []
+      referrals.value = referralRes.list || []
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+async function apply() {
+  if (!agreed.value) {
+    uni.showToast({ title: '请先阅读并同意推广大使规则', icon: 'none' })
+    return
+  }
+  applying.value = true
+  try {
+    await applyAmbassador()
+    uni.showToast({ title: '申请成功，推广码已生成', icon: 'none' })
+    await load()
+  } finally {
+    applying.value = false
+  }
+}
+
+function copyCode() {
+  if (!account.value?.promotionCode) return
+  uni.setClipboardData({ data: account.value.promotionCode, success: () => uni.showToast({ title: '推广码已复制', icon: 'none' }) })
+}
+
+function goWithdraw() {
+  uni.navigateTo({ url: '/package-promotion/withdraw' })
+}
+
+function statusText(status: number) {
+  return ['待结算', '已结算', '已冲正'][status] || '未知'
+}
+</script>
+
+<template>
+  <view class="min-h-[100vh] bg-[#fff8f4] text-[#4a2b24]">
+    <cl-topbar title="推广大使" safeAreaTop backgroundColor="#fff8f4" />
+
+    <view v-if="loading" class="py-[180rpx] text-center text-[28rpx] text-[#9b7d75]">加载中...</view>
+
+    <view v-else class="px-[28rpx] pb-[80rpx]">
+      <template v-if="overview?.isAmbassador">
+        <view class="overflow-hidden rounded-[28rpx] bg-[linear-gradient(135deg,#ff8c79,#e85f70)] px-[34rpx] py-[38rpx] text-white shadow-[0_16rpx_40rpx_#d85f6230]">
+          <text class="block text-[25rpx] opacity-85">我的推广码</text>
+          <view class="mt-[12rpx] flex flex-row items-center">
+            <text class="text-[48rpx] font-[900] tracking-[5rpx]">{{ account?.promotionCode }}</text>
+            <button class="ml-auto h-[56rpx] border-[1rpx] border-white/60 rounded-[28rpx] bg-white/15 px-[22rpx] text-[24rpx] text-white leading-[54rpx]" @click="copyCode">复制</button>
+          </view>
+          <text class="mt-[18rpx] block text-[23rpx] opacity-85">好友注册登录时填写，可获得 {{ overview?.config.referralRewardQuota }} 次免费短信</text>
+        </view>
+
+        <view class="mt-[24rpx] grid grid-cols-2 gap-[18rpx]">
+          <view class="rounded-[22rpx] bg-white px-[26rpx] py-[26rpx] shadow-[0_6rpx_24rpx_#6a42300d]">
+            <text class="text-[23rpx] text-[#9b7d75]">可提现余额</text>
+            <text class="mt-[10rpx] block text-[36rpx] font-[800]">¥{{ formatYuan(account?.availableBalance || 0) }}</text>
+          </view>
+          <view class="rounded-[22rpx] bg-white px-[26rpx] py-[26rpx] shadow-[0_6rpx_24rpx_#6a42300d]">
+            <text class="text-[23rpx] text-[#9b7d75]">待结算</text>
+            <text class="mt-[10rpx] block text-[36rpx] font-[800]">¥{{ formatYuan(overview?.pendingBalance || 0) }}</text>
+          </view>
+          <view class="rounded-[22rpx] bg-white px-[26rpx] py-[26rpx] shadow-[0_6rpx_24rpx_#6a42300d]">
+            <text class="text-[23rpx] text-[#9b7d75]">累计推广用户</text>
+            <text class="mt-[10rpx] block text-[36rpx] font-[800]">{{ account?.totalReferrals || 0 }} 人</text>
+          </view>
+          <view class="rounded-[22rpx] bg-white px-[26rpx] py-[26rpx] shadow-[0_6rpx_24rpx_#6a42300d]">
+            <text class="text-[23rpx] text-[#9b7d75]">累计有效佣金</text>
+            <text class="mt-[10rpx] block text-[36rpx] font-[800]">¥{{ formatYuan(account?.totalCommission || 0) }}</text>
+          </view>
+        </view>
+
+        <button class="mt-[24rpx] h-[84rpx] w-full border-0 rounded-[22rpx] bg-[#fe8973] text-[30rpx] text-white leading-[84rpx]" @click="goWithdraw">余额提现</button>
+
+        <view class="mt-[28rpx] rounded-[24rpx] bg-white px-[28rpx] py-[26rpx]">
+          <text class="text-[30rpx] font-[800]">收益说明</text>
+          <text class="mt-[12rpx] block text-[25rpx] text-[#80665e] leading-[40rpx]">好友的合格现金订单按 {{ rateText }} 计算佣金，支付后等待 {{ overview?.config.settlementDays }} 天结算；退款订单会同步冲回佣金。</text>
+        </view>
+
+        <view class="mt-[24rpx] rounded-[24rpx] bg-white px-[28rpx] py-[26rpx]">
+          <text class="text-[30rpx] font-[800]">最近佣金</text>
+          <view v-if="!commissions.length" class="py-[34rpx] text-center text-[25rpx] text-[#aa9189]">还没有佣金记录</view>
+          <view v-for="item in commissions" :key="item.id" class="flex flex-row items-center border-b-[1rpx] border-b-solid border-[#f2e8e4] py-[22rpx] last:border-b-0">
+            <view class="min-w-0 flex-1">
+              <text class="block truncate text-[26rpx]">订单 {{ item.orderNo }}</text>
+              <text class="mt-[6rpx] block text-[22rpx] text-[#a0877f]">{{ statusText(item.status) }} · {{ item.createTime }}</text>
+            </view>
+            <text class="ml-[16rpx] text-[28rpx] font-[700]" :class="item.status === 2 ? 'text-[#999]' : 'text-[#ef6b67]'">+¥{{ formatYuan(item.commissionAmount) }}</text>
+          </view>
+        </view>
+
+        <view class="mt-[24rpx] rounded-[24rpx] bg-white px-[28rpx] py-[26rpx]">
+          <text class="text-[30rpx] font-[800]">最近推广用户</text>
+          <view v-if="!referrals.length" class="py-[34rpx] text-center text-[25rpx] text-[#aa9189]">还没有用户绑定你的推广码</view>
+          <view v-for="item in referrals" :key="item.id" class="flex flex-row items-center border-b-[1rpx] border-b-solid border-[#f2e8e4] py-[22rpx] last:border-b-0">
+            <view class="h-[62rpx] w-[62rpx] flex flex-row items-center justify-center rounded-full bg-[#fff0eb] text-[26rpx] text-[#ef7168]">新</view>
+            <view class="ml-[18rpx] min-w-0 flex-1">
+              <text class="block truncate text-[26rpx]">{{ item.referredUserName }}</text>
+              <text class="mt-[5rpx] block text-[22rpx] text-[#a0877f]">{{ item.referredUserPhone || '未绑定手机号' }}</text>
+            </view>
+            <text class="text-[22rpx] text-[#a0877f]">赠送 {{ item.rewardQuota }} 次</text>
+          </view>
+        </view>
+      </template>
+
+      <template v-else>
+        <view class="rounded-[28rpx] bg-[linear-gradient(135deg,#ffd1bf,#fff0e8)] px-[34rpx] py-[38rpx]">
+          <text class="block text-[38rpx] font-[900]">分享善意，也分享收获</text>
+          <text class="mt-[16rpx] block text-[26rpx] text-[#76564c] leading-[42rpx]">申请后获得专属推广码。新用户填写后获赠 {{ overview?.config.referralRewardQuota }} 次短信机会，你可按合格实付金额的 {{ rateText }} 获得推广佣金。</text>
+        </view>
+
+        <view class="mt-[24rpx] rounded-[24rpx] bg-white px-[28rpx] py-[30rpx]">
+          <text class="block text-center text-[32rpx] font-[800]">推广大使规则</text>
+          <scroll-view scroll-y class="mt-[22rpx] h-[680rpx] rounded-[16rpx] bg-[#fffaf7] px-[20rpx] py-[16rpx]">
+            <rich-text :nodes="rulesContent" class="text-[25rpx] text-[#5f4841] leading-[44rpx]" />
+          </scroll-view>
+          <view class="mt-[24rpx] flex flex-row items-start" @click="agreed = !agreed">
+            <view class="mt-[2rpx] h-[34rpx] w-[34rpx] flex flex-row items-center justify-center border-[1rpx] rounded-[8rpx]" :class="agreed ? 'border-[#fe8973] bg-[#fe8973]' : 'border-[#cbb9b2] bg-white'">
+              <text v-if="agreed" class="text-[23rpx] text-white">✓</text>
+            </view>
+            <text class="ml-[14rpx] flex-1 text-[24rpx] text-[#725c55] leading-[36rpx]">我已阅读、理解并同意《推广大使规则》，确认提交申请</text>
+          </view>
+          <button class="mt-[26rpx] h-[84rpx] w-full border-0 rounded-[22rpx] bg-[#fe8973] text-[30rpx] text-white leading-[84rpx] disabled:opacity-50" :disabled="applying" @click="apply">{{ applying ? '申请中...' : '申请成为推广大使' }}</button>
+        </view>
+      </template>
+    </view>
+  </view>
+</template>

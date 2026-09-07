@@ -71,11 +71,11 @@ export function sendSmsCode(data: { phone: string, captchaId: string, code: stri
 }
 
 /** 手机号验证码登录 */
-export function loginByPhone(phone: string, smsCode: string) {
+export function loginByPhone(phone: string, smsCode: string, promotionCode?: string) {
   return request({
     url: `${LOGIN_PREFIX}/phone`,
     method: 'POST',
-    data: { phone, smsCode },
+    data: { phone, smsCode, promotionCode },
     header: {
       Authorization: null,
     },
@@ -159,16 +159,16 @@ export function getWxMpConfig(url: string) {
 }
 
 /** 为当前静默登录用户绑定短信验证的手机号 */
-export function bindPhone(phone: string, smsCode: string) {
+export function bindPhone(phone: string, smsCode: string, promotionCode?: string) {
   return request({
     url: `${LOGIN_PREFIX}/bindPhone`,
     method: 'POST',
-    data: { phone, smsCode },
+    data: { phone, smsCode, promotionCode },
   })
 }
 
 /** 为当前静默登录用户绑定微信授权手机号 */
-export function bindMiniPhone(data: { code: string, encryptedData: string, iv: string }) {
+export function bindMiniPhone(data: { code: string, encryptedData: string, iv: string, promotionCode?: string }) {
   return request({
     url: `${LOGIN_PREFIX}/bindMiniPhone`,
     method: 'POST',

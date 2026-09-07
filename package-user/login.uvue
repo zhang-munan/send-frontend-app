@@ -27,6 +27,8 @@ function openDoc(key: string, title: string) {
 // 表单输入
 const phone = ref('')
 const smsCode = ref('')
+// 推广大使功能暂不在手机端展示，恢复推广码输入框时取消下面一行的注释。
+// const promotionCode = ref('')
 
 // 获取验证码倒计时
 const countdown = ref(0)
@@ -161,6 +163,7 @@ async function handlePhoneLogin() {
     loading.value = true
     let token
     // #ifdef MP-WEIXIN
+    // 推广码入口恢复后，将 promotionCode 作为第三个参数传入。
     token = await bindPhone(phone.value, smsCode.value)
     // #endif
     // #ifndef MP-WEIXIN
@@ -217,7 +220,9 @@ async function handleWxPhone(e: any) {
     const token = await bindMiniPhone({
       code,
       encryptedData: e.detail.encryptedData,
-      iv: e.detail.iv
+      iv: e.detail.iv,
+      // 推广码入口恢复后，取消下面一行的注释。
+      // promotionCode: promotionCode.value.trim().toUpperCase()
     })
     user.setToken(token)
     await user.get()
@@ -347,6 +352,21 @@ onUnmounted(() => {
               {{ sendBtnText }}
             </cl-button>
           </view>
+
+          <!-- 推广大使推广码入口暂不展示，恢复时取消下面这段代码的注释。
+          <view
+            class="mt-[22rpx] h-[78rpx] flex flex-row items-center border-solid border-[1px] border-[#eadbd5] rounded-[16rpx] bg-[#fffdfc] px-[26rpx]"
+          >
+            <cl-icon name="coupon-3-line" :size="16" color="#a6857b" />
+            <input
+              v-model="promotionCode"
+              class="ml-[18rpx] h-[70rpx] flex-1 text-[28rpx] text-[#33201c] uppercase leading-[70rpx]"
+              placeholder="推广码（选填，新用户可获赠 2 次）"
+              placeholder-class="text-[#b9aaa4]"
+              :maxlength="16"
+            />
+          </view>
+          -->
 
           <cl-button size="large" class="mt-[30rpx]" @click="handlePhoneLogin"> 登录/注册 </cl-button>
 

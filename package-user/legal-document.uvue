@@ -5,7 +5,8 @@ import { getDoc } from "@/api/setting";
 const allowedDocs: Record<string, string> = {
 	user_agreement: "用户协议",
 	privacy_policy: "隐私政策",
-	refund_rules: "退款规则"
+	refund_rules: "退款规则",
+	ambassador_rules: "推广大使规则"
 };
 
 const docKey = ref("");
