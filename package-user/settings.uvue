@@ -1,7 +1,24 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import type { UserSetting } from "@/api/setting";
-import { getUserSetting, updateUserSetting } from "@/api/setting";
+import { getPublicParam, getUserSetting, updateUserSetting } from "@/api/setting";
+
+const anonymousSmsEnabled = ref(false);
+
+function isEnabledConfig(value: any) {
+	if (value === true || value === 1) return true;
+
+	return ["1", "true", "yes", "on", "enabled"].includes(String(value ?? "").trim().toLowerCase());
+}
+
+/** 后台未配置或读取失败时按关闭处理，与发送页保持一致。 */
+async function loadAnonymousSmsConfig() {
+	try {
+		anonymousSmsEnabled.value = isEnabledConfig(await getPublicParam("anonymousSmsEnabled"));
+	} catch {
+		anonymousSmsEnabled.value = false;
+	}
+}
 
 // ---------- 用户设置 ----------
 const setting = ref<UserSetting>({
@@ -14,6 +31,7 @@ const setting = ref<UserSetting>({
 
 onShow(() => {
 	fetchSetting();
+	loadAnonymousSmsConfig();
 });
 
 async function fetchSetting() {
@@ -138,7 +156,10 @@ try {
 							@change="(value: boolean) => onToggle('blockAllSms', value)"
 						/>
 					</view>
-					<view class="flex flex-row h-[100rpx] items-center justify-between px-[32rpx]">
+					<view
+						v-if="anonymousSmsEnabled"
+						class="flex flex-row h-[100rpx] items-center justify-between px-[32rpx]"
+					>
 						<view class="flex flex-row items-center gap-[18rpx]">
 							<view
 								class="h-[48rpx] w-[48rpx] flex flex-row items-center justify-center rounded-[14rpx] bg-[#e8f6ff]"
