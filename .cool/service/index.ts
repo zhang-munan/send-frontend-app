@@ -14,6 +14,7 @@ export type RequestOptions = {
 	withCredentials?: boolean; // 是否携带凭证
 	firstIpv4?: boolean; // 是否优先使用IPv4
 	enableChunked?: boolean; // 是否启用分块传输
+	silent?: boolean; // 报错时不弹统一错误提示（轮询、静默登录等后台场景）
 };
 
 // 响应数据类型定义
@@ -28,6 +29,23 @@ let requests: ((token: string) => void)[] = [];
 
 // 标记token是否正在刷新
 let isRefreshing = false;
+
+/**
+ * 统一错误提示（接口报错时弹出 toast）
+ * @param message 错误信息
+ * @param silent 是否静默（不弹提示）
+ */
+function toastError(message: string | undefined, silent?: boolean) {
+	if (silent) {
+		return;
+	}
+
+	uni.showToast({
+		title: message || t("服务异常"),
+		icon: "none",
+		duration: 2500
+	});
+}
 
 // 判断当前url是否忽略token校验
 const isIgnoreToken = (url: string) => {
@@ -79,15 +97,17 @@ export function request(options: RequestOptions): Promise<any | null> {
 				},
 				timeout,
 
-				success(res) {
+			success(res) {
 					// 401 无权限
 					if (res.statusCode == 401) {
 						user.logout();
+						toastError(t("请先登录"), options.silent);
 						reject({ message: t("无权限") } as Response);
 					}
 
 					// 502 服务异常
 					else if (res.statusCode == 502) {
+						toastError(t("服务异常"), options.silent);
 						reject({
 							message: t("服务异常")
 						} as Response);
@@ -95,6 +115,7 @@ export function request(options: RequestOptions): Promise<any | null> {
 
 					// 404 未找到
 					else if (res.statusCode == 404) {
+						toastError(`[404] ${url}`, options.silent);
 						return reject({
 							message: `[404] ${url}`
 						} as Response);
@@ -117,17 +138,20 @@ export function request(options: RequestOptions): Promise<any | null> {
 									resolve(data);
 									break;
 								default:
+									toastError(message, options.silent);
 									reject({ message, code } as Response);
 									break;
 							}
 						}
 					} else {
+						toastError(t("服务异常"), options.silent);
 						reject({ message: t("服务异常") } as Response);
 					}
 				},
 
 				// 网络请求失败
 				fail(err) {
+					toastError(t("网络异常，请检查网络"), options.silent);
 					reject({ message: err.errMsg } as Response);
 				}
 			});

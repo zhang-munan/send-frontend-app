@@ -160,12 +160,13 @@ export function payOrder(
 	});
 }
 
-/** 查询订单支付状态（前端轮询用） */
+/** 查询订单支付状态（前端轮询用，静默避免轮询失败刷屏） */
 export function queryOrderStatus(orderId: number) {
 	return request({
 		url: `${ORDER_PREFIX}/status`,
 		method: "GET",
-		data: { orderId }
+		data: { orderId },
+		silent: true
 	});
 }
 

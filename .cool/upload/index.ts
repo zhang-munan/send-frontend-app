@@ -163,25 +163,35 @@ export async function uploadFile(
 					...(data as UTSJSONObject),
 					key
 				},
-				success(res) {
-					if (isLocal) {
-						// 本地上传返回处理
-						const { code, data, message } = parseObject<LocalUploadResponse>(res.data)!;
+			success(res) {
+				if (isLocal) {
+					// 本地上传返回处理
+					const { code, data, message } = parseObject<LocalUploadResponse>(res.data)!;
 
-						if (code == 1000) {
-							resolve(data);
-						} else {
-							reject(message);
-						}
+					if (code == 1000) {
+						resolve(data);
 					} else {
-						// 云上传直接拼接url
-						resolve(pathJoin(preview ?? url, key!));
+						uni.showToast({
+							title: message || "上传失败",
+							icon: "none",
+							duration: 2500
+						});
+						reject(message);
 					}
-				},
-				fail(err) {
-					console.error(err);
-					reject(err);
+				} else {
+					// 云上传直接拼接url
+					resolve(pathJoin(preview ?? url, key!));
 				}
+			},
+			fail(err) {
+				console.error(err);
+				uni.showToast({
+					title: "上传失败，请检查网络",
+					icon: "none",
+					duration: 2500
+				});
+				reject(err);
+			}
 			});
 
 			// 上传任务回调

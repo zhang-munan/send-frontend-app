@@ -118,23 +118,25 @@ export function loginByMini(data: { code: string, encryptedData: string, iv: str
   })
 }
 
-/** 小程序 code 静默登录 */
+/** 小程序 code 静默登录（失败不弹提示，保持游客态） */
 export function loginByMiniCode(code: string) {
   return request({
     url: `${LOGIN_PREFIX}/miniCode`,
     method: 'POST',
     data: { code },
     header: { Authorization: null },
+    silent: true,
   })
 }
 
-/** 公众号网页授权 code 静默登录 */
+/** 公众号网页授权 code 静默登录（失败不弹提示，保持游客态） */
 export function loginByMp(code: string) {
   return request({
     url: `${LOGIN_PREFIX}/mp`,
     method: 'POST',
     data: { code },
     header: { Authorization: null },
+    silent: true,
   })
 }
 
