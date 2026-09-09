@@ -114,7 +114,7 @@ const serviceGroups: ServiceGroup[] = [
     icon: 'star-fill',
     iconColor: '#ffae2d',
     items: [
-      { title: '充值中心', icon: 'sparkling-fill', bg: '#ff8618', badge: '首充优惠' },
+      { title: '充值中心', icon: 'sparkling-fill', bg: '#ff8618', badge: '' },
       { title: '账单明细', icon: 'eye-fill', bg: '#35c96d' },
       // 推广大使功能暂不在手机端展示，恢复时取消下面一行的注释。
       // { title: '推广大使', icon: 'team-fill', bg: '#ef6f68', badge: '赚取佣金' },
